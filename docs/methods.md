@@ -34,10 +34,10 @@ an omnibus test. The user chooses:
 
 - Each condition vs. a baseline: m = k − 1 comparisons
 - Every pair: m = k(k − 1)/2 comparisons
-- With two or more independent variables: main-effect comparisons
-  (levels of one variable, averaged across the others) and, optionally,
-  interaction comparisons (a difference of differences). Interaction
-  comparisons are flagged: they typically need far more participants.
+- With two or more independent variables: comparisons between specific
+  combinations of levels, and main-effect comparisons (levels of one
+  variable, averaged across the others). See section 1.5. Interaction
+  comparisons are planned for a later version (section 13).
 
 ### 1.3 Adjusting for multiple comparisons
 
@@ -59,6 +59,45 @@ The user chooses how the comparisons will be used:
   pairwise comparisons.
 - The sample size is based on the pairwise comparisons.
 
+### 1.5 Comparisons with two or more independent variables
+
+**Within subjects.** Every comparison is reduced to one contrast score
+per participant, then sized as a paired (one-sample) t-test on that
+score, as in section 4:
+
+- Specific combination: one cell minus another
+  (e.g., A seated − Current seated).
+- Main effect: one level of a variable minus another, each averaged
+  over all levels of the other variables
+  (e.g., A averaged over postures − Current averaged over postures).
+
+Inputs describe the comparison itself, worded to match it, using the
+options in section 3.1: the smallest difference that matters for that
+comparison, and its variability (SD of the contrast score) or the
+user's estimate ("at that difference, how many of 10 participants
+would show it?"). Examples:
+- "When seated, what's the smallest difference that would matter?"
+- "Averaged across postures, what's the smallest difference that would
+  matter?"
+Because inputs describe the contrast score directly, no correlations
+between cells are needed.
+
+**Between subjects.**
+- Specific combination: independent t-test between two cells, n per
+  cell (section 4).
+- Main effect: independent t-test between two levels of one variable,
+  each group pooling every cell at that level. The group n from
+  section 4 is divided across those cells: n per cell = group n ÷
+  (number of cells per level), rounded up.
+
+**Measure types.** Main effects apply to time, count, rating scale, and
+other numeric measures. Success / failure measures support comparisons
+between specific combinations only.
+
+**All designs.** m in section 1.3 counts every comparison the user
+selects, of any type. Counterbalancing (section 6) is unchanged: the
+Latin square covers every combination of levels.
+
 ## 2. Measures
 
 Each measure has a name, a result type, and a unit. One measure is
@@ -75,7 +114,12 @@ marked primary.
 Each measure also records whether each participant gives one value per
 condition. Several trials per participant are averaged into one value
 per condition. If values can't be linked to a participant, the measure
-is treated as an independent comparison.
+is treated as an independent comparison. In a within-subjects study,
+such a measure is analysed as independent groups (independent t-test,
+Mann–Whitney, or two-proportion test), but the number of participants
+is the per-condition n, not n × the number of conditions, since every
+participant still experiences every condition. That n is then rounded
+up for counterbalancing (section 6).
 
 Presets: NASA-TLX (rating scale, 0 to 100, raw TLX), SUS (rating scale,
 0 to 100), SEQ (rating scale, 1 to 7).
@@ -84,7 +128,10 @@ Presets: NASA-TLX (rating scale, 0 to 100, raw TLX), SUS (rating scale,
 
 - Sized with the corresponding t-test (section 4), then divided by the
   asymptotic relative efficiency 3/π ≈ 0.955 (about +5%) (Hodges &
-  Lehmann, 1956).
+  Lehmann, 1956). The exact value 3/π is used in every calculation;
+  the trail displays it as "÷ 0.955 (3/π)".
+- Order of rounding: the t-test n is rounded up first, then divided by
+  3/π, then rounded up again (e.g., 18 ÷ 0.955 = 18.85, so 19).
 - This is a conservative upper bound. The 0.955 figure applies under
   normality; for right-skewed data such as task times, rank-based tests
   are usually more efficient than the t-test, so the true requirement
@@ -97,9 +144,7 @@ Presets: NASA-TLX (rating scale, 0 to 100, raw TLX), SUS (rating scale,
 - For a scale with minimum a and maximum b, the SD cannot exceed
   √((b − mean)(mean − a)) (Bhatia & Davis, 2000). The tool rejects an
   entered SD above this bound.
-- When an expected mean sits near either end of the scale, the tool
-  flags a possible ceiling or floor effect. The threshold is to be set
-  from a published source.
+- A ceiling or floor flag is planned for a later version (section 13).
 
 ## 3. Describing the improvement
 
@@ -111,9 +156,10 @@ The user chooses one per measure.
 variability. Variability is given one of two ways:
 
 - Known: the SD between participants (σ). Within subjects, also how
-  consistent participants are across conditions: Low, Medium, or High,
-  mapped to a correlation ρ of 0.3, 0.5, or 0.7. Then
-  σ_diff = σ·√(2(1 − ρ)). "Not sure" shows results for all three.
+  consistent participants are across conditions (consistency): Low,
+  Medium, or High, mapped to a correlation ρ of 0.3, 0.5, or 0.7. Then
+  σ_diff = σ·√(2(1 − ρ)). The default is Low, labeled as the cautious
+  choice (it gives the largest σ_diff).
   Advanced: enter σ_diff directly.
 - Your estimate: "At a difference of Δ, how many of 10 participants
   would do better on the new condition?" (k, from 6 to 9).
@@ -134,14 +180,20 @@ variability. Variability is given one of two ways:
   validation with Noether's (1987) method, which works from this
   probability directly.
 
-**Cohen's d (advanced).** Entered directly, from a prior study.
+These are the two input modes in version 1. Entering Cohen's d directly
+is planned for a later version (section 13).
 
 ### 3.2 Success / failure
 
 Inputs: expected success rate in each condition. Within subjects, also
 the expected discordance ψ: the share of participants who succeed in
 one condition and fail in the other. Default: ψ = p₁(1 − p₂) + p₂(1 − p₁),
-assuming outcomes are unrelated; the most conservative choice.
+assuming outcomes are unrelated. This is conservative compared with the
+positive relationship typical within subjects, which lowers ψ. It is
+not the largest possible ψ: negatively related outcomes give a larger
+one (for 0.60 vs. 0.80, ψ can reach 0.60, against 0.44 when unrelated).
+An entered ψ must be at least |p₂ − p₁|, and no more than
+min(p₁, 1 − p₂) + min(p₂, 1 − p₁), the largest share the two rates allow.
 
 ## 4. Sample size
 
@@ -152,8 +204,16 @@ distribution: df = n − 1, noncentrality = dz·√n.
 distribution: df = 2(n − 1), noncentrality = d·√(n/2), n per condition.
 Total = n × number of conditions.
 
+**Power, t-tests.** Two-sided power counts both rejection regions, as
+the pwr package does: P(T′ > t_c) + P(T′ < −t_c), where t_c = t(1 − α/2,
+df) and T′ is noncentral t. n is solved as a continuous value, then
+rounded up.
+
 **Two-proportion test.** Cohen's h = 2·arcsin(√p₁) − 2·arcsin(√p₂)
-(Cohen, 1988). n per condition = ((z₁₋α/₂ + z₁₋β) / h)².
+(Cohen, 1988). n per condition = 2·((z₁₋α/₂ + z₁₋β) / h)², as in
+pwr.2p.test. The factor 2 is there because the difference of two
+arcsine-transformed proportions, each from n participants, has variance
+2/n.
 
 **McNemar's test.** With δ = p₂ − p₁ (Connor, 1987):
 n = [z₁₋α/₂·√ψ + z₁₋β·√(ψ − δ²)]² / δ².
@@ -194,8 +254,28 @@ For the number of participants the user can actually recruit (n):
 - **Precision:** the expected half-width of the 95% confidence interval
   for the difference: t(0.975, df) × SE, where SE = σ_diff / √n
   (within) or σ·√(2/n) (between). Binary measures use the normal
-  approximation. Intervals are not adjusted for multiple comparisons
-  (open decision, to be reviewed).
+  approximation (below). Intervals are not adjusted for multiple
+  comparisons (open decision, to be reviewed).
+
+Power and detectable difference use the per-comparison alpha (section
+1.3). By measure:
+
+- **Rank-based measures (Time, Count):** power and detectable
+  difference use the t-test at an effective n of n × 3/π. Precision uses
+  the t formula above at the actual n.
+- **Two proportions:** power = Φ(|h|·√(n/2) − z₁₋α/₂) +
+  Φ(−|h|·√(n/2) − z₁₋α/₂), as in pwr.2p.test. Precision =
+  z₀.₉₇₅·√(p₁(1 − p₁)/n + p₂(1 − p₂)/n).
+- **McNemar:** power = Φ((|δ|·√n − z₁₋α/₂·√ψ) / √(ψ − δ²)), Connor's
+  formula solved for power. Precision = z₀.₉₇₅·√((ψ − δ²)/n).
+- **Detectable difference, success / failure:** p₁ is held fixed and the
+  smallest p₂ (in the direction the user entered) that reaches the
+  chosen power is solved numerically. Reported in percentage points. The
+  default ψ is recalculated at each p₂; an entered ψ is held fixed.
+- **"In participants" mode:** the detectable difference is converted
+  back to the user's terms, e.g. "at least 8.4 of 10 participants do
+  better": 10·Φ(dz) within subjects, 10·Φ(d/√2) between. Precision is
+  not reported, since there are no units.
 
 ### 7.1 Visuals
 
@@ -206,10 +286,6 @@ For the number of participants the user can actually recruit (n):
   as the chance of detecting it. Redrawn as n changes. The displayed
   power number always comes from the exact calculation above.
 - **Precision bar:** the expected result with its ± range.
-- **Simulator (collapsed by default):** draws n simulated participants
-  from a normal distribution with the assumed difference and SD,
-  computes each study's average and 95% interval with the t multiplier,
-  and tracks how often the interval contains the true difference.
 
 ## 8. How these numbers were reached
 
@@ -254,6 +330,8 @@ Otherwise the tool asks the user. Sources: to be researched.
 
 Every calculation is compared against a reference before release.
 Tolerance: exact match on the rounded-up n, except McNemar (±2).
+Each value's status (confirmed in R or G*Power, or provisional) is
+recorded in validation/answer-key.md.
 
 | Case | Reference | Expected |
 |---|---|---|
@@ -265,8 +343,8 @@ Tolerance: exact match on the rounded-up n, except McNemar (±2).
 | Variability from your estimate: Δ = 10, k = 8 | Hand calculation | σ_diff = 11.88 s |
 | Confidence report: n = 12, σ_diff = 11.88, alpha 0.025 | Hand / R | power 0.63; detectable 12.0 s; ± 7.5 s |
 | Rank adjustment and Latin square: 18 ÷ 0.955, 3 conditions | Hand calculation | 19, rounded to 24 |
-| Two proportions, 0.60 vs. 0.80 | pwr.2p.test | Run |
-| McNemar, 0.60 vs. 0.80, default ψ | G*Power | Run |
+| Two proportions, 0.60 vs. 0.80 | pwr.2p.test | 81 per condition |
+| McNemar, 0.60 vs. 0.80, default ψ | G*Power | 84 |
 | Problem discovery, p = 0.31, P = 0.85 | Hand calculation | 6 |
 | Problem discovery, p = 0.10, P = 0.80 | Hand calculation | 16 |
 
@@ -275,6 +353,25 @@ Tolerance: exact match on the rounded-up n, except McNemar (±2).
 - 1.1: log-scale planning for time (O'Keeffe, Ambler & Barber, 2017);
   a simulation check of the plan against skewed data.
 - Later: check mode (upload data, confirm the method), mixed designs.
+- Later: interaction comparisons (a difference of differences). These
+  are usually smaller than main effects and need many more
+  participants; between subjects they need a different calculation.
+- Later: Cohen's d as an input mode (entered directly from a prior
+  study).
+- Later: a simulator that draws simulated studies and shows how often
+  the 95% interval contains the true difference.
+- Later: showing results for all three consistency levels side by side.
+- Later: a ceiling or floor flag on bounded scales, when an expected
+  mean sits near either end of the scale. The threshold is to be set
+  from a published source.
+
+## 14. Limitations
+
+- Interaction comparisons are planned for a later version (section 13).
+- For success / failure measures, only comparisons between specific
+  conditions are supported; main effects are not.
+- In the interface, these options are shown as disabled with a short
+  explanation.
 
 ## References
 
