@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Step 2: Measures</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0;background:#0E1214}
+a{color:#4FD1C5}a:hover{color:#7FE3D9}
+input{background:#0E1214;color:#E3E8E6}input::placeholder{color:#9AA6A3}button{color:#E3E8E6}
+input[type=range]{accent-color:#4FD1C5}
+a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid #4FD1C5;outline-offset:2px}
+</style>
+</head>
+<body>
+<div style="font-family: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif; color: #E3E8E6; background: #0E1214; padding-bottom: 48px">
+<header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 32px; border-bottom: 1px solid #6E7D80; background: #161C1F">
+<a href="0-start.html" style="font-weight: 600; font-size: 18px; color: #E3E8E6; text-decoration: none">Study Planner</a>
+<nav aria-label="Steps" style="display: flex; flex-wrap: wrap; gap: 8px; font-size: 14px">
+<a href="1-conditions.html" style="padding: 6px 14px; border-radius: 999px; border: 1px solid #E3E8E6; color: #E3E8E6; text-decoration: none">1 Conditions ✓</a>
+<span style="padding: 6px 14px; border-radius: 999px; background: #4FD1C5; color: #0E1214">2 Measures</span>
+<span style="padding: 6px 14px; border-radius: 999px; border: 1px solid #6E7D80; color: #9AA6A3">3 Inputs</span>
+<span style="padding: 6px 14px; border-radius: 999px; border: 1px solid #6E7D80; color: #9AA6A3">4 Plan</span>
+</nav>
+</header>
+<div style="max-width: 1200px; margin: 0 auto; padding: 40px 32px; display: flex; flex-wrap: wrap; gap: 32px; align-items: flex-start">
+<main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 24px">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<h1 style="margin: 0; font-size: 32px; font-weight: 600">What are you measuring?</h1>
+<p style="margin: 0; font-size: 16px; color: #9AA6A3">Add each dependent variable. Mark the one your decision rests on as primary.</p>
+</div>
+
+<section style="background: #161C1F; border: 2px solid #E3E8E6; border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 18px">
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap">
+<div style="font-size: 14px; font-family: 'IBM Plex Mono', ui-monospace, monospace; color: #9AA6A3">Measure 1</div>
+<button type="button" aria-pressed="true" style="height: 36px; padding: 0 14px; border-radius: 999px; border: 2px solid #4FD1C5; background: #173B38; font: inherit; font-size: 14px; font-weight: 500; color: #E3E8E6; cursor: pointer">★ Primary</button>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px">
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 500">Name
+<input type="text" placeholder="Task time" style="height: 44px; padding: 0 12px; border: 1px solid #6E7D80; border-radius: 8px; font: inherit; font-size: 16px; font-weight: 400">
+</label>
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 500">Unit
+<input type="text" placeholder="seconds" style="height: 44px; padding: 0 12px; border: 1px solid #6E7D80; border-radius: 8px; font: inherit; font-size: 16px; font-weight: 400">
+</label>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="font-size: 14px; font-weight: 500">Result type</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<button type="button" aria-pressed="true" style="height: 44px; padding: 0 16px; border-radius: 8px; border: 2px solid #4FD1C5; background: #173B38; font: inherit; font-size: 15px; cursor: pointer">Time</button>
+<button type="button" aria-pressed="false" style="height: 44px; padding: 0 16px; border-radius: 8px; border: 1px solid #6E7D80; background: #161C1F; font: inherit; font-size: 15px; cursor: pointer">Success / failure</button>
+<button type="button" aria-pressed="false" style="height: 44px; padding: 0 16px; border-radius: 8px; border: 1px solid #6E7D80; background: #161C1F; font: inherit; font-size: 15px; cursor: pointer">Count</button>
+<button type="button" aria-pressed="false" style="height: 44px; padding: 0 16px; border-radius: 8px; border: 1px solid #6E7D80; background: #161C1F; font: inherit; font-size: 15px; cursor: pointer">Rating scale</button>
+<button type="button" aria-pressed="false" style="height: 44px; padding: 0 16px; border-radius: 8px; border: 1px solid #6E7D80; background: #161C1F; font: inherit; font-size: 15px; cursor: pointer">Other numeric</button>
+</div>
+<div style="font-size: 13px; color: #9AA6A3">Time: usually right-skewed, so the plan uses a rank-based test.</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="font-size: 14px; font-weight: 500">Does each participant give one value per condition?</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<button type="button" aria-pressed="true" style="height: 44px; padding: 0 16px; border-radius: 8px; border: 2px solid #4FD1C5; background: #173B38; font: inherit; font-size: 15px; cursor: pointer">Yes</button>
+<button type="button" aria-pressed="false" style="height: 44px; padding: 0 16px; border-radius: 8px; border: 1px solid #6E7D80; background: #161C1F; font: inherit; font-size: 15px; cursor: pointer">No, values aren't linked to a participant</button>
+</div>
+<div style="font-size: 13px; color: #9AA6A3">Several trials per participant? Average them into one value per condition, then choose Yes.</div>
+</div>
+</section>
+
+<section style="background: #161C1F; border: 1px solid #2A3337; border-radius: 12px; padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<div style="font-size: 17px; font-weight: 600">Task success</div>
+<div style="font-size: 14px; color: #9AA6A3">Success / failure · one value per participant per condition</div>
+</div>
+<button type="button" style="height: 40px; padding: 0 14px; border: 1px solid #6E7D80; border-radius: 8px; background: #161C1F; font: inherit; font-size: 14px; cursor: pointer">Edit</button>
+</section>
+
+<section style="background: #161C1F; border: 1px solid #2A3337; border-radius: 12px; padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<div style="font-size: 17px; font-weight: 600">NASA-TLX <span style="font-size: 12px; font-weight: 500; padding: 2px 8px; border: 1px solid #6E7D80; border-radius: 999px; margin-left: 6px">Preset</span></div>
+<div style="font-size: 14px; color: #9AA6A3">Rating scale, 0 to 100 (raw TLX) · one value per participant per condition</div>
+</div>
+<button type="button" style="height: 40px; padding: 0 14px; border: 1px solid #6E7D80; border-radius: 8px; background: #161C1F; font: inherit; font-size: 14px; cursor: pointer">Edit</button>
+</section>
+
+<div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
+<button type="button" style="height: 48px; padding: 0 20px; border: 1.5px dashed #6E7D80; border-radius: 10px; background: transparent; font: inherit; font-size: 15px; color: #9AA6A3; cursor: pointer">+ Add measure</button>
+<span style="font-size: 14px; color: #9AA6A3; margin-left: 8px">Presets:</span>
+<button type="button" style="height: 44px; padding: 0 14px; border: 1px solid #6E7D80; border-radius: 999px; background: #161C1F; font: inherit; font-size: 14px; cursor: pointer">NASA-TLX</button>
+<button type="button" style="height: 44px; padding: 0 14px; border: 1px solid #6E7D80; border-radius: 999px; background: #161C1F; font: inherit; font-size: 14px; cursor: pointer">SUS</button>
+<button type="button" style="height: 44px; padding: 0 14px; border: 1px solid #6E7D80; border-radius: 999px; background: #161C1F; font: inherit; font-size: 14px; cursor: pointer">SEQ</button>
+</div>
+
+<div style="display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap">
+<a href="1-conditions.html" style="display: inline-flex; align-items: center; height: 48px; padding: 0 20px; border: 1px solid #6E7D80; border-radius: 8px; text-decoration: none; color: #E3E8E6">Back</a>
+<a href="3-inputs.html" style="display: inline-flex; align-items: center; height: 48px; padding: 0 24px; border-radius: 8px; background: #4FD1C5; color: #0E1214; text-decoration: none; font-weight: 500">Next: Inputs</a>
+</div>
+</main>
+
+<aside aria-label="Your plan so far" style="flex: 1 1 280px; background: #161C1F; border: 1px solid #2A3337; border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 16px">
+<div style="font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #9AA6A3">Your plan so far</div>
+<div style="display: flex; flex-direction: column; gap: 4px">
+<div style="font-size: 14px; color: #9AA6A3">Participants needed</div>
+<div style="font-size: 36px; font-weight: 600; font-family: 'IBM Plex Mono', ui-monospace, monospace">–</div>
+<div style="font-size: 13px; color: #9AA6A3">Needs inputs (step 3)</div>
+</div>
+<div style="border-top: 1px solid #2A3337; padding-top: 16px; display: flex; flex-direction: column; gap: 10px; font-size: 15px">
+<div style="display: flex; justify-content: space-between; gap: 12px"><span style="color: #9AA6A3">Design</span><span>Within subjects</span></div>
+<div style="display: flex; justify-content: space-between; gap: 12px"><span style="color: #9AA6A3">Conditions</span><span>3</span></div>
+<div style="display: flex; justify-content: space-between; gap: 12px"><span style="color: #9AA6A3">Comparisons</span><span>2 vs. baseline</span></div>
+<div style="display: flex; justify-content: space-between; gap: 12px"><span style="color: #9AA6A3">Measures</span><span>3 (primary: Task time)</span></div>
+</div>
+</aside>
+</div>
+</div>
+</body>
+</html>
