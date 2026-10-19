@@ -168,9 +168,9 @@ variability. Variability is given one of two ways:
     that a randomly chosen participant on the new condition outperforms
     a randomly chosen one on the current condition
   - Φ⁻¹ is the inverse of the standard normal distribution. Assumes
-    roughly bell-shaped differences. The result is labeled "your
-    estimate" wherever it appears; values from data are labeled
-    "measured".
+    roughly bell-shaped differences. Values derived from "k of 10"
+    answers are labeled "your estimate" wherever they appear; typed
+    values are labeled "entered".
 
 **In participants.** Input: k of 10 participants should do better.
 - Within: dz = Φ⁻¹(k/10)
