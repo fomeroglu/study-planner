@@ -58,7 +58,10 @@ inputs, honest uncertainty.
 ## Design
 
 - Visual direction: "Lab instrument." Dark theme by default, with a
-  light option (palette to be defined).
+  light theme toggle that swaps the same color roles.
+- Light palette: the "Light" column of the role table in
+  design/README.md (background #F3F5F4, accent #0F766E, and so on).
+  That table is the source for both themes' colors.
 - Dark palette: background #0E1214, surface #161C1F, decorative lines
   #2A3337, text #E3E8E6, secondary text #9AA6A3, accent #4FD1C5,
   selected background #173B38, warning #F2B84B, warning background

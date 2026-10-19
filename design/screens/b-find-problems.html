@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Find problems: problem discovery</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0;background:#0E1214}
+a{color:#4FD1C5}a:hover{color:#7FE3D9}
+input{background:#0E1214;color:#E3E8E6}input::placeholder{color:#9AA6A3}button{color:#E3E8E6}
+input[type=range]{accent-color:#4FD1C5}
+a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid #4FD1C5;outline-offset:2px}
+</style>
+</head>
+<body>
+<div style="font-family: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif; color: #E3E8E6; background: #0E1214; padding-bottom: 48px">
+<header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 32px; border-bottom: 1px solid #6E7D80; background: #161C1F">
+<a href="0-start.html" style="font-weight: 600; font-size: 18px; color: #E3E8E6; text-decoration: none">Study Planner</a>
+<div style="font-size: 14px; color: #9AA6A3">Find problems · formative</div>
+</header>
+<div style="max-width: 1200px; margin: 0 auto; padding: 40px 32px; display: flex; flex-wrap: wrap; gap: 32px; align-items: flex-start">
+<main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 24px">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<h1 style="margin: 0; font-size: 32px; font-weight: 600">How many participants to find problems?</h1>
+<p style="margin: 0; font-size: 16px; color: #9AA6A3">Pick the rarest problem you care about catching, and how sure you want to be of seeing it.</p>
+</div>
+
+<section style="background: #161C1F; border: 1px solid #2A3337; border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 20px">
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 16px; font-weight: 500">Smallest problem frequency you care about
+<span style="font-size: 14px; font-weight: 400; color: #9AA6A3">(share of users who would run into it)</span>
+<span style="display: flex; align-items: center; gap: 10px">
+<input type="text" inputmode="decimal" placeholder="10" style="width: 100px; height: 44px; padding: 0 12px; border: 1px solid #6E7D80; border-radius: 8px; font: inherit; font-size: 16px; font-family: 'IBM Plex Mono', ui-monospace, monospace">
+<span style="font-size: 16px; font-weight: 400">%</span>
+</span>
+</label>
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 16px; font-weight: 500">How sure do you want to be of seeing it at least once?
+<span style="display: flex; align-items: center; gap: 10px">
+<input type="text" inputmode="decimal" placeholder="80" style="width: 100px; height: 44px; padding: 0 12px; border: 1px solid #6E7D80; border-radius: 8px; font: inherit; font-size: 16px; font-family: 'IBM Plex Mono', ui-monospace, monospace">
+<span style="font-size: 16px; font-weight: 400">%</span>
+</span>
+</label>
+</section>
+
+<section style="background: #161C1F; border: 1px solid #2A3337; border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 14px">
+<h2 style="margin: 0; font-size: 20px; font-weight: 600">Chance of seeing a problem at least once</h2>
+<div style="overflow-x: auto">
+<table style="width: 100%; min-width: 440px; border-collapse: collapse; font-size: 15px">
+<thead>
+<tr style="text-align: left; color: #9AA6A3; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em">
+<th style="padding: 10px 12px; border-bottom: 1px solid #6E7D80; font-weight: 600">Participants</th>
+<th style="padding: 10px 12px; border-bottom: 1px solid #6E7D80; font-weight: 600">Affects 10% of users</th>
+<th style="padding: 10px 12px; border-bottom: 1px solid #6E7D80; font-weight: 600">Affects 31% of users</th>
+</tr>
+</thead>
+<tbody style="font-family: 'IBM Plex Mono', ui-monospace, monospace">
+<tr><td style="padding: 12px; border-bottom: 1px solid #2A3337">5</td><td style="padding: 12px; border-bottom: 1px solid #2A3337">41%</td><td style="padding: 12px; border-bottom: 1px solid #2A3337">84%</td></tr>
+<tr><td style="padding: 12px; border-bottom: 1px solid #2A3337">10</td><td style="padding: 12px; border-bottom: 1px solid #2A3337">65%</td><td style="padding: 12px; border-bottom: 1px solid #2A3337">98%</td></tr>
+<tr style="background: #173B38; font-weight: 600"><td style="padding: 12px">16 (your plan)</td><td style="padding: 12px">81%</td><td style="padding: 12px">over 99%</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section style="background: #161C1F; border: 1px solid #2A3337; border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 14px">
+<h2 style="margin: 0; font-size: 20px; font-weight: 600">Confidence report</h2>
+<label style="display: flex; flex-direction: column; gap: 8px; font-size: 15px; font-weight: 500">Participants you can recruit: <span style="font-family: 'IBM Plex Mono', ui-monospace, monospace">8</span>
+<input type="range" min="3" max="40" step="1" style="width: 100%; height: 44px">
+</label>
+<div style="border: 1px solid #2A3337; border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 10px">
+<div style="font-size: 15px; font-weight: 600">See it: chance of seeing a problem as you add participants</div>
+<svg viewBox="0 0 900 250" width="100%" role="img" aria-label="Two rising curves showing the chance of seeing a problem at least once as participants are added: one for problems affecting 31% of users, which rises quickly, and one for problems affecting 10% of users, which rises slowly and reaches 80% at 16 participants.">
+<line x1="60" y1="200" x2="860" y2="200" stroke="#6E7D80"></line>
+<line x1="60" y1="20" x2="60" y2="200" stroke="#6E7D80"></line>
+<line x1="60" y1="56" x2="860" y2="56" stroke="#6E7D80" stroke-dasharray="5 4"></line>
+<text x="866" y="60" style="font-size: 12px; fill: #9AA6A3">80%</text>
+<text x="52" y="24" text-anchor="end" style="font-size: 12px; fill: #9AA6A3">100%</text>
+<text x="52" y="204" text-anchor="end" style="font-size: 12px; fill: #9AA6A3">0%</text>
+<polyline points="60,200 87,144 113,106 140,79 167,61 193,48 220,39 247,33 273,29 300,26 327,24 353,23 380,22 407,21 433,21 460,21 487,20 513,20 540,20 567,20 593,20 620,20 647,20 673,20 700,20 727,20 753,20 780,20 807,20 833,20 860,20" fill="none" stroke="#6E7D80" stroke-width="2" stroke-dasharray="6 4"></polyline>
+<polyline points="60,200 87,182 113,166 140,151 167,138 193,126 220,116 247,106 273,97 300,90 327,83 353,76 380,71 407,66 433,61 460,57 487,53 513,50 540,47 567,44 593,42 620,40 647,38 673,36 700,34 727,33 753,32 780,30 807,29 833,28 860,28" fill="none" stroke="#4FD1C5" stroke-width="2.5"></polyline>
+<line x1="273" y1="20" x2="273" y2="200" stroke="#E3E8E6" stroke-width="2"></line>
+<circle cx="273" cy="97" r="6" fill="#4FD1C5"></circle>
+<text x="281" y="115" style="font-size: 13px; fill: #E3E8E6; font-weight: 600">8 participants: 57%</text>
+<circle cx="487" cy="53" r="6" fill="#161C1F" stroke="#4FD1C5" stroke-width="2"></circle>
+<text x="495" y="75" style="font-size: 13px; fill: #4FD1C5">16: your plan, 81%</text>
+<text x="170" y="40" style="font-size: 12px; fill: #9AA6A3">Affects 31% of users</text>
+<text x="620" y="110" style="font-size: 12px; fill: #4FD1C5">Affects 10% of users</text>
+<text x="60" y="222" text-anchor="middle" style="font-size: 12px; fill: #9AA6A3">0</text>
+<text x="327" y="222" text-anchor="middle" style="font-size: 12px; fill: #9AA6A3">10</text>
+<text x="593" y="222" text-anchor="middle" style="font-size: 12px; fill: #9AA6A3">20</text>
+<text x="860" y="222" text-anchor="middle" style="font-size: 12px; fill: #9AA6A3">30</text>
+<text x="460" y="244" text-anchor="middle" style="font-size: 13px; fill: #9AA6A3">Participants</text>
+</svg>
+<div style="font-size: 13px; color: #9AA6A3; line-height: 1.5">The black line follows the participants slider. Common problems are caught almost immediately; rarer ones need many more people. Live in the build.</div>
+</div>
+<div style="padding: 18px; background: #0E1214; border-radius: 10px; font-size: 17px; line-height: 1.55">With <b>8 participants</b>, you have an 80% chance of seeing problems that affect <b>about 18% of users or more</b>. Rarer problems may be missed.</div>
+<div style="font-size: 13px; color: #9AA6A3; line-height: 1.5">Assumes every participant is equally likely to hit a given problem. Real participants vary, so treat this as an upper estimate.</div>
+</section>
+
+<details style="background: #161C1F; border: 1px solid #2A3337; border-radius: 12px; padding: 20px 24px">
+<summary style="font-size: 18px; font-weight: 600; cursor: pointer; min-height: 32px">How this number was reached</summary>
+<ol style="margin: 12px 0 0; padding-left: 22px; display: flex; flex-direction: column; gap: 10px; font-size: 15px; line-height: 1.5">
+<li><b>Your inputs.</b> A problem that affects 10% of users; you want an 80% chance of seeing it at least once.</li>
+<li><b>One participant misses it</b> 90% of the time, so all n participants miss it with probability 0.90<sup>n</sup>.</li>
+<li><b>Seeing it at least once</b> = 1 − 0.90<sup>n</sup>. Set that to at least 0.80.</li>
+<li><b>Solve for n.</b> n = ln(0.20) ÷ ln(0.90) = 15.3, rounded up to 16.</li>
+</ol>
+<div style="padding-top: 12px; font-size: 14px; color: #9AA6A3">Formulas and sources: <a href="#">read how the tool calculates</a></div>
+</details>
+
+<div style="display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap">
+<a href="0-start.html" style="display: inline-flex; align-items: center; height: 48px; padding: 0 20px; border: 1px solid #6E7D80; border-radius: 8px; text-decoration: none; color: #E3E8E6">Back</a>
+
+</div>
+</main>
+
+<aside aria-label="Result" style="flex: 1 1 280px; background: #161C1F; color: #E3E8E6; border: 1px solid #4FD1C5; border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 8px">
+<div style="font-size: 14px; color: #9AA6A3">Recruit</div>
+<div style="font-size: 48px; font-weight: 600; font-family: 'IBM Plex Mono', ui-monospace, monospace">16</div>
+<div style="font-size: 15px; color: #9AA6A3; line-height: 1.5">participants for an 80% chance of seeing any problem that affects at least 10% of users.</div>
+</aside>
+</div>
+</div>
+</body>
+</html>

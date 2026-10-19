@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Step 3: Inputs</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0;background:#0E1214}
+a{color:#4FD1C5}a:hover{color:#7FE3D9}
+input{background:#0E1214;color:#E3E8E6}input::placeholder{color:#9AA6A3}button{color:#E3E8E6}
+input[type=range]{accent-color:#4FD1C5}
+a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid #4FD1C5;outline-offset:2px}
+</style>
+</head>
+<body>
+<div style="font-family: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif; color: #E3E8E6; background: #0E1214; padding-bottom: 48px">
+<header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 32px; border-bottom: 1px solid #6E7D80; background: #161C1F">
+<a href="0-start.html" style="font-weight: 600; font-size: 18px; color: #E3E8E6; text-decoration: none">Study Planner</a>
+<nav aria-label="Steps" style="display: flex; flex-wrap: wrap; gap: 8px; font-size: 14px">
+<a href="1-conditions.html" style="padding: 6px 14px; border-radius: 999px; border: 1px solid #E3E8E6; color: #E3E8E6; text-decoration: none">1 Conditions ✓</a>
+<a href="2-measures.html" style="padding: 6px 14px; border-radius: 999px; border: 1px solid #E3E8E6; color: #E3E8E6; text-decoration: none">2 Measures ✓</a>
+<span style="padding: 6px 14px; border-radius: 999px; background: #4FD1C5; color: #0E1214">3 Inputs</span>
+<span style="padding: 6px 14px; border-radius: 999px; border: 1px solid #6E7D80; color: #9AA6A3">4 Plan</span>
+</nav>
+</header>
+<div style="max-width: 1200px; margin: 0 auto; padding: 40px 32px; display: flex; flex-wrap: wrap; gap: 32px; align-items: flex-start">
+<main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 24px">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<h1 style="margin: 0; font-size: 32px; font-weight: 600">What difference matters?</h1>
+<p style="margin: 0; font-size: 16px; color: #9AA6A3">For each measure, describe the smallest improvement worth acting on. Decide it before the study.</p>
+</div>
+
+<div role="tablist" aria-label="Measures" style="display: flex; flex-wrap: wrap; gap: 4px; border-bottom: 1px solid #6E7D80">
+<button type="button" role="tab" aria-selected="true" style="height: 44px; padding: 0 16px; border: none; border-bottom: 3px solid #E3E8E6; background: transparent; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer">★ Task time</button>
+<button type="button" role="tab" aria-selected="false" style="height: 44px; padding: 0 16px; border: none; border-bottom: 3px solid transparent; background: transparent; font: inherit; font-size: 15px; color: #9AA6A3; cursor: pointer">Task success</button>
+<button type="button" role="tab" aria-selected="false" style="height: 44px; padding: 0 16px; border: none; border-bottom: 3px solid transparent; background: transparent; font: inherit; font-size: 15px; color: #9AA6A3; cursor: pointer">NASA-TLX</button>
+</div>
+
+<section style="background: #161C1F; border: 1px solid #2A3337; border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 16px">
+<div style="font-size: 18px; font-weight: 600">How do you want to describe the improvement?</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px">
+<button type="button" aria-pressed="true" style="text-align: left; padding: 16px; border: 2px solid #4FD1C5; border-radius: 10px; background: #173B38; font: inherit; cursor: pointer; display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 16px; font-weight: 600; color: #E3E8E6">In seconds</span>
+<span style="font-size: 14px; color: #9AA6A3; line-height: 1.4">You have a target in units: cost, a requirement, a benchmark.</span>
+</button>
+<button type="button" aria-pressed="false" style="text-align: left; padding: 16px; border: 1px solid #6E7D80; border-radius: 10px; background: #161C1F; font: inherit; cursor: pointer; display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 16px; font-weight: 600; color: #E3E8E6">In participants</span>
+<span style="font-size: 14px; color: #9AA6A3; line-height: 1.4">No past data. "8 of 10 people should be faster."</span>
+</button>
+</div>
+</section>
+
+<section style="background: #161C1F; border: 2px solid #E3E8E6; border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 20px">
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 16px; font-weight: 500">Smallest difference that would matter
+<span style="font-size: 14px; font-weight: 400; color: #9AA6A3">(minimum meaningful difference)</span>
+<span style="display: flex; align-items: center; gap: 10px">
+<input type="text" inputmode="decimal" placeholder="10" style="width: 120px; height: 44px; padding: 0 12px; border: 1px solid #6E7D80; border-radius: 8px; font: inherit; font-size: 16px; font-family: 'IBM Plex Mono', ui-monospace, monospace">
+<span style="font-size: 16px; font-weight: 400">seconds</span>
+</span>
+</label>
+
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div style="font-size: 16px; font-weight: 500">How much do people vary?</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<button type="button" aria-pressed="true" style="height: 44px; padding: 0 16px; border-radius: 8px; border: 2px solid #4FD1C5; background: #173B38; font: inherit; font-size: 15px; cursor: pointer">I don't know: let me estimate it</button>
+<button type="button" aria-pressed="false" style="height: 44px; padding: 0 16px; border-radius: 8px; border: 1px solid #6E7D80; background: #161C1F; font: inherit; font-size: 15px; cursor: pointer">I know the standard deviation</button>
+</div>
+<div style="padding: 16px; border-radius: 10px; background: #0E1214; display: flex; flex-direction: column; gap: 10px">
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 15px; font-weight: 500">At a 10-second difference, how many of 10 participants would be faster on the new design?
+<span style="display: flex; align-items: center; gap: 10px">
+<input type="text" inputmode="numeric" placeholder="8" style="width: 80px; height: 44px; padding: 0 12px; border: 1px solid #6E7D80; border-radius: 8px; font: inherit; font-size: 16px; font-family: 'IBM Plex Mono', ui-monospace, monospace; background: #161C1F">
+<span style="font-size: 16px; font-weight: 400">of 10</span>
+</span>
+</label>
+<div style="display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; padding-top: 10px; border-top: 1px solid #2A3337">
+<span style="font-size: 14px; color: #9AA6A3">Variability</span>
+<span style="font-size: 18px; font-weight: 600; font-family: 'IBM Plex Mono', ui-monospace, monospace">≈ 12 s</span>
+<span style="font-size: 13px; color: #9AA6A3">Your estimate, not measured. <a href="#">How this works</a></span>
+</div>
+</div>
+</div>
+
+<details style="border-top: 1px solid #2A3337; padding-top: 14px">
+<summary style="font-size: 15px; font-weight: 500; cursor: pointer; min-height: 32px">Advanced: power, alpha, test adjustment</summary>
+<div style="padding-top: 10px; font-size: 14px; color: #9AA6A3; line-height: 1.6">Power 0.80 · alpha 0.05, adjusted to 0.025 for 2 comparisons · +5% for rank-based test (conservative)</div>
+</details>
+</section>
+
+<div style="display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap">
+<a href="2-measures.html" style="display: inline-flex; align-items: center; height: 48px; padding: 0 20px; border: 1px solid #6E7D80; border-radius: 8px; text-decoration: none; color: #E3E8E6">Back</a>
+<a href="4-plan.html" style="display: inline-flex; align-items: center; height: 48px; padding: 0 24px; border-radius: 8px; background: #4FD1C5; color: #0E1214; text-decoration: none; font-weight: 500">See the plan</a>
+</div>
+</main>
+
+<aside aria-label="Your plan so far" style="flex: 1 1 280px; background: #161C1F; border: 1px solid #2A3337; border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 16px">
+<div style="font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #9AA6A3">Your plan so far</div>
+<div style="display: flex; flex-direction: column; gap: 4px">
+<div style="font-size: 14px; color: #9AA6A3">Participants needed</div>
+<div style="font-size: 36px; font-weight: 600; font-family: 'IBM Plex Mono', ui-monospace, monospace">18</div>
+<div style="font-size: 13px; color: #9AA6A3">Driven by Task time · updates live</div>
+</div>
+<div style="border-top: 1px solid #2A3337; padding-top: 16px; display: flex; flex-direction: column; gap: 10px; font-size: 15px">
+<div style="display: flex; justify-content: space-between; gap: 12px"><span>★ Task time</span><span style="font-family: 'IBM Plex Mono', ui-monospace, monospace">18</span></div>
+<div style="display: flex; justify-content: space-between; gap: 12px"><span>Task success</span><span style="color: #9AA6A3">needs input</span></div>
+<div style="display: flex; justify-content: space-between; gap: 12px"><span>NASA-TLX</span><span style="color: #9AA6A3">needs input</span></div>
+</div>
+</aside>
+</div>
+</div>
+</body>
+</html>

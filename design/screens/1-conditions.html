@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Step 1: Conditions</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0;background:#0E1214}
+a{color:#4FD1C5}a:hover{color:#7FE3D9}
+input{background:#0E1214;color:#E3E8E6}input::placeholder{color:#9AA6A3}button{color:#E3E8E6}
+input[type=range]{accent-color:#4FD1C5}
+a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid #4FD1C5;outline-offset:2px}
+</style>
+</head>
+<body>
+<div style="font-family: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif; color: #E3E8E6; background: #0E1214; padding-bottom: 48px">
+<header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 32px; border-bottom: 1px solid #6E7D80; background: #161C1F">
+<a href="0-start.html" style="font-weight: 600; font-size: 18px; color: #E3E8E6; text-decoration: none">Study Planner</a>
+<nav aria-label="Steps" style="display: flex; flex-wrap: wrap; gap: 8px; font-size: 14px">
+<span style="padding: 6px 14px; border-radius: 999px; background: #4FD1C5; color: #0E1214">1 Conditions</span>
+<span style="padding: 6px 14px; border-radius: 999px; border: 1px solid #6E7D80; color: #9AA6A3">2 Measures</span>
+<span style="padding: 6px 14px; border-radius: 999px; border: 1px solid #6E7D80; color: #9AA6A3">3 Inputs</span>
+<span style="padding: 6px 14px; border-radius: 999px; border: 1px solid #6E7D80; color: #9AA6A3">4 Plan</span>
+</nav>
+</header>
+<div style="max-width: 1200px; margin: 0 auto; padding: 40px 32px; display: flex; flex-wrap: wrap; gap: 32px; align-items: flex-start">
+<main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 24px">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<h1 style="margin: 0; font-size: 32px; font-weight: 600">What are you comparing?</h1>
+<p style="margin: 0; font-size: 16px; color: #9AA6A3">Add what you manipulate (independent variables) and their conditions.</p>
+</div>
+
+<section style="background: #161C1F; border: 1px solid #2A3337; border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 16px">
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 500">Independent variable 1
+<input type="text" placeholder="Keyboard design" style="height: 44px; padding: 0 12px; border: 1px solid #6E7D80; border-radius: 8px; font: inherit; font-size: 16px; font-weight: 400">
+</label>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="font-size: 14px; font-weight: 500">Conditions</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px">
+<input type="text" aria-label="Condition 1" placeholder="Current" style="height: 44px; padding: 0 12px; border: 1px solid #6E7D80; border-radius: 8px; font: inherit; font-size: 16px">
+<input type="text" aria-label="Condition 2" placeholder="Prototype A" style="height: 44px; padding: 0 12px; border: 1px solid #6E7D80; border-radius: 8px; font: inherit; font-size: 16px">
+<input type="text" aria-label="Condition 3" placeholder="Prototype B" style="height: 44px; padding: 0 12px; border: 1px solid #6E7D80; border-radius: 8px; font: inherit; font-size: 16px">
+<button type="button" style="height: 44px; border: 1.5px dashed #6E7D80; border-radius: 8px; background: transparent; font: inherit; font-size: 15px; color: #9AA6A3; cursor: pointer">+ Add condition</button>
+</div>
+</div>
+</section>
+
+<button type="button" style="height: 52px; border: 1.5px dashed #6E7D80; border-radius: 12px; background: transparent; font: inherit; font-size: 15px; color: #9AA6A3; cursor: pointer">+ Add independent variable</button>
+
+<section style="background: #161C1F; border: 1px solid #2A3337; border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 12px">
+<div style="font-size: 18px; font-weight: 600">Each participant experiences</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px">
+<button type="button" aria-pressed="false" style="text-align: left; padding: 16px; min-height: 44px; border: 1px solid #6E7D80; border-radius: 10px; background: #161C1F; font: inherit; cursor: pointer; display: flex; flex-direction: column; gap: 4px">
+<span style="font-size: 16px; font-weight: 600; color: #E3E8E6">One condition</span>
+<span style="font-size: 14px; color: #9AA6A3">Between subjects</span>
+</button>
+<button type="button" aria-pressed="true" style="text-align: left; padding: 16px; min-height: 44px; border: 2px solid #4FD1C5; border-radius: 10px; background: #173B38; font: inherit; cursor: pointer; display: flex; flex-direction: column; gap: 4px">
+<span style="font-size: 16px; font-weight: 600; color: #E3E8E6">All conditions</span>
+<span style="font-size: 14px; color: #9AA6A3">Within subjects</span>
+</button>
+</div>
+</section>
+
+<section style="background: #161C1F; border: 1px solid #2A3337; border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 12px">
+<div style="font-size: 18px; font-weight: 600">Which comparisons matter?</div>
+<p style="margin: 0; font-size: 14px; color: #9AA6A3">Each comparison is sized as its own test, with alpha adjusted across them.</p>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px">
+<button type="button" aria-pressed="false" style="text-align: left; padding: 16px; min-height: 44px; border: 1px solid #6E7D80; border-radius: 10px; background: #161C1F; font: inherit; cursor: pointer; display: flex; flex-direction: column; gap: 4px">
+<span style="font-size: 16px; font-weight: 600; color: #E3E8E6">Every pair</span>
+<span style="font-size: 14px; color: #9AA6A3">3 comparisons</span>
+</button>
+<button type="button" aria-pressed="true" style="text-align: left; padding: 16px; min-height: 44px; border: 2px solid #4FD1C5; border-radius: 10px; background: #173B38; font: inherit; cursor: pointer; display: flex; flex-direction: column; gap: 4px">
+<span style="font-size: 16px; font-weight: 600; color: #E3E8E6">Each design vs. a baseline</span>
+<span style="font-size: 14px; color: #9AA6A3">Baseline: Current · 2 comparisons</span>
+</button>
+</div>
+<div style="font-size: 14px; color: #9AA6A3; padding: 12px; border: 1px dashed #6E7D80; border-radius: 8px">With a second independent variable, you can also compare main effects: one level against another, averaged across the other variable. Interaction comparisons come in a later version.</div>
+</section>
+
+<section style="background: #161C1F; border: 1px solid #2A3337; border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 12px">
+<div style="font-size: 18px; font-weight: 600">How will you use these comparisons?</div>
+<p style="margin: 0; font-size: 14px; color: #9AA6A3">This decides whether the false-alarm risk is shared across comparisons.</p>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px">
+<button type="button" aria-pressed="true" style="text-align: left; padding: 16px; min-height: 44px; border: 2px solid #4FD1C5; border-radius: 10px; background: #173B38; font: inherit; cursor: pointer; display: flex; flex-direction: column; gap: 4px">
+<span style="font-size: 16px; font-weight: 600; color: #E3E8E6">Pick a winner</span>
+<span style="font-size: 14px; color: #9AA6A3">Adjusted: alpha 0.025 per comparison</span>
+</button>
+<button type="button" aria-pressed="false" style="text-align: left; padding: 16px; min-height: 44px; border: 1px solid #6E7D80; border-radius: 10px; background: #161C1F; font: inherit; cursor: pointer; display: flex; flex-direction: column; gap: 4px">
+<span style="font-size: 16px; font-weight: 600; color: #E3E8E6">Each comparison is its own question</span>
+<span style="font-size: 14px; color: #9AA6A3">No adjustment: alpha 0.05 each</span>
+</button>
+</div>
+</section>
+
+<div style="display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap">
+<a href="0-start.html" style="display: inline-flex; align-items: center; height: 48px; padding: 0 20px; border: 1px solid #6E7D80; border-radius: 8px; text-decoration: none; color: #E3E8E6">Back</a>
+<a href="2-measures.html" style="display: inline-flex; align-items: center; height: 48px; padding: 0 24px; border-radius: 8px; background: #4FD1C5; color: #0E1214; text-decoration: none; font-weight: 500">Next: Measures</a>
+</div>
+</main>
+
+<aside aria-label="Your plan so far" style="flex: 1 1 280px; background: #161C1F; border: 1px solid #2A3337; border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 16px">
+<div style="font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #9AA6A3">Your plan so far</div>
+<div style="display: flex; flex-direction: column; gap: 4px">
+<div style="font-size: 14px; color: #9AA6A3">Participants needed</div>
+<div style="font-size: 36px; font-weight: 600; font-family: 'IBM Plex Mono', ui-monospace, monospace">–</div>
+<div style="font-size: 13px; color: #9AA6A3">Updates as you fill in each step</div>
+</div>
+<div style="border-top: 1px solid #2A3337; padding-top: 16px; display: flex; flex-direction: column; gap: 10px; font-size: 15px">
+<div style="display: flex; justify-content: space-between; gap: 12px"><span style="color: #9AA6A3">Design</span><span>Within subjects</span></div>
+<div style="display: flex; justify-content: space-between; gap: 12px"><span style="color: #9AA6A3">Conditions</span><span>3</span></div>
+<div style="display: flex; justify-content: space-between; gap: 12px"><span style="color: #9AA6A3">Comparisons</span><span>2 vs. baseline</span></div>
+<div style="display: flex; justify-content: space-between; gap: 12px"><span style="color: #9AA6A3">Measures</span><span>Not set</span></div>
+</div>
+</aside>
+</div>
+</div>
+</body>
+</html>
