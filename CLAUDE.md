@@ -49,8 +49,8 @@ inputs, honest uncertainty.
 - Plain-language question first, technical term in parentheses beside
   it, e.g. "How much do times vary between participants? (standard
   deviation)".
-- Values from the user's own estimate are labeled "your estimate";
-  values from data are labeled "measured".
+- Values derived from "k of 10" answers are labeled "your estimate";
+  typed values are labeled "entered".
 - Report results in the measure's own units wherever possible.
 - Sentence case everywhere. No em dashes in any user-facing text.
 - Never use Cohen's small, medium, and large labels.
