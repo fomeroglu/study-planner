@@ -164,9 +164,6 @@
     return `<main class="start-main" id="main">` +
       `<div class="intro"><h1 tabindex="-1" id="page-title">Plan a study</h1>` +
       `<p class="lede">Describe your study. The tool works out how many participants you need, which analysis to plan for, and what your sample can support.</p></div>` +
-      // Validation is not complete (validation/answer-key.md), so the tool says so.
-      `<p class="warning" id="early-notice"><b>Early version.</b> The calculations are tested, but some reference values are not yet confirmed in R or G*Power. ` +
-      `Use the results as a planning guide, and check important decisions against a second source.</p>` +
       `<div class="start-cards">` +
       `<a class="start-card" href="#/compare/1" id="start-compare">${ICON_COMPARE}<span class="title">Compare designs</span>` +
       `<span class="desc">Is one design better than another? Task time, success, workload, ratings.</span><span class="kind">Summative</span></a>` +

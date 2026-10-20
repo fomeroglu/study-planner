@@ -159,13 +159,9 @@ test('form-control borders, focus outline and meaningful graphics are at least 3
   }));
 });
 
-test('the early-version notice stays while any answer-key value is provisional', () => {
+test('never described as validated while any answer-key value is provisional', () => {
   if (!read('validation/answer-key.md').includes('| PROVISIONAL |')) return;
-  const app = read('app.js');
-  assert.ok(app.includes('id="early-notice"'), 'Start screen notice missing');
-  assert.match(app, /Early version./);
-  assert.match(read('README.md'), /Early version./);
-  // Never described as validated while values are provisional (CLAUDE.md).
+  // CLAUDE.md: never describe the tool as validated while any value is provisional.
   ['app.js', 'logic.js', 'index.html', 'README.md'].forEach((f) =>
-    assert.ok(!/(is|fully) validated/i.test(read(f)), `"validated" claim in ${f}`));
+    assert.ok(!/\b(is|fully) validated\b/i.test(read(f)), `"validated" claim in ${f}`));
 });

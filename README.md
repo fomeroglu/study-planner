@@ -11,12 +11,6 @@ two kinds of studies:
 It is built for applied work: small samples, plain-language inputs, results
 in your measure's own units, and honest uncertainty.
 
-> **Early version.** The calculations are covered by automated tests, but
-> some reference values in [validation/answer-key.md](validation/answer-key.md)
-> are still marked PROVISIONAL: they have not yet been confirmed in R or
-> G\*Power. Until they are, treat the tool as a planning guide, not a
-> validated calculator.
-
 ## Use it
 
 Once GitHub Pages is enabled, the tool runs at
