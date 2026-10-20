@@ -569,6 +569,11 @@ svg text { font-family: var(--sans); }
 .orders li { padding: 10px; border: 1px solid var(--line); border-radius: 4px; font-family: var(--mono); font-size: 14px; }
 .orders .num { color: var(--text-2); margin-right: 8px; }
 
+.analysis-measure { display: flex; flex-direction: column; gap: 6px; padding-top: 12px; border-top: 1px solid var(--line); }
+.analysis-name { margin: 0; font-size: 16px; font-weight: 600; }
+.analysis-steps { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 6px; font-size: 15px; line-height: 1.5; }
+.analysis-one { margin: 0; font-size: 15px; line-height: 1.5; }
+
 .two-col { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; }
 .guidance p { margin: 0; font-size: 15px; line-height: 1.55; }
 

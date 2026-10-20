@@ -34,14 +34,21 @@ you saw.
 - [ ] Step 3, Task time: 10 seconds, estimate, 8 of 10. The question reads
       "At a 10-second difference, how many of 10 participants would be
       faster on the better condition?" Variability shows "≈ 12 s", "Your
-      estimate, not measured." Sidebar shows 24.
+      estimate, not measured." Sidebar shows 24 and "Set by Task time, your
+      primary measure. Updates as you type."
 - [ ] NASA-TLX: 10, "I know the standard deviation", 15, Medium. Task
-      success: 70 and 85. Sidebar: 24, 30, 168.
+      success: 70 and 85. Sidebar: 24, 30, 168. Before a measure is
+      filled in, its row reads "not filled in yet".
 - [ ] Plan: 24 participants, driven by Task time, "Within · 3 conditions",
       "0.80 · 0.0167". Table: 24 covered, 30 and 168 underpowered (amber, with
       the words "underpowered"). Two warnings: "NASA-TLX is underpowered at
       24: 75% chance of detecting your target. It would need 30. Report it as
       supporting evidence." and the same for Task success with 11% and 168.
+- [ ] "Your analysis plan" lists two steps for each measure: Task time,
+      Friedman test across all 3 conditions, then Wilcoxon signed-rank for
+      each of the 3 pairs at alpha 0.0167; NASA-TLX, repeated-measures
+      ANOVA then paired t-test; Task success, Cochran's Q test then
+      McNemar. With two conditions there is a single step.
 - [ ] Move the slider to 12: tiles show 13 s, ± 7.5 s, 53%. The shaded
       area is labeled "53% caught" and "47% missed". The precision bar shows
       2.5 s, 10 s, 17.5 s.
@@ -141,8 +148,9 @@ On step 3 (each message comes from the engine unless marked):
 - [ ] Discordance 5 with rates 70 and 85: "...must be at least the
       difference in success rates (0.15)."
 - [ ] Alpha 5 (Advanced): "Alpha must be between 0 and 1, not 5."
-- [ ] While any error shows, the sidebar reads "–" and "Check the
-      highlighted input", and step 4 cannot be opened.
+- [ ] While any error shows, the sidebar reads "–" and "Fix the
+      highlighted input to see it.", the measure's row reads "fix the
+      input", and step 4 cannot be opened.
 
 Find problems:
 

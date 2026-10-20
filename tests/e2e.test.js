@@ -130,9 +130,9 @@ test('running example: sidebar during step 3 with only task time filled in', () 
   form.measures[2].inputs.all.p2 = '';
   const s = L.sidebarSummary(form, 3);
   assert.equal(s.participants, '24');
-  assert.equal(s.note, 'Driven by Task time · updates live');
-  assert.deepEqual(s.measures.map((m) => m.value), ['24', 'needs input', 'needs input']);
-  assert.deepEqual(L.sidebarSummary(form, 1).rows.map((r) => r.value), ['Within subjects', '3', '3, every pair', '3 (primary: Task time)']);
+  assert.equal(s.note, 'Set by Task time, your primary measure. Updates as you type.');
+  assert.deepEqual(s.measures.map((m) => m.value), ['24', 'not filled in yet', 'not filled in yet']);
+  assert.deepEqual(L.sidebarSummary(form, 1).rows.map((r) => r.value), ['Within subjects', '3', '3 (every pair)', '3 (primary: Task time)']);
   // The full plan waits for every measure.
   assert.equal(L.runPlan(form).plan, null);
 });
@@ -168,4 +168,16 @@ test('find problems: the slider at 8 participants', () => {
   assert.equal(v.sentence.frequency, 'about 18% of users or more');
   assert.equal(v.curve.chosenLabel, '8 participants: 57%');
   assert.equal(v.curve.planLabel, '16: your plan, 81%');
+});
+
+test('running example: your analysis plan lists two steps for each measure', () => {
+  const form = runningExampleForm();
+  const a = L.planView(L.runPlan(form).plan, form).analysis;
+  const tail = " for each of the 3 pairs, at alpha 0.0167 each (Bonferroni). Holm's procedure can be used instead and is never less powerful.";
+  const across = ' across all 3 conditions, to see whether they differ at all.';
+  assert.deepEqual(a.map((m) => [m.name, ...m.steps]), [
+    ['Task time', `Friedman test${across}`, `Wilcoxon signed-rank${tail}`],
+    ['NASA-TLX', `Repeated-measures ANOVA${across}`, `Paired t-test${tail}`],
+    ['Task success', `Cochran's Q test${across}`, `McNemar${tail}`],
+  ]);
 });

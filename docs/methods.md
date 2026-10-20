@@ -56,12 +56,24 @@ planned for a later version (section 13).
 
 ### 1.4 Planned analysis
 
-- Two conditions: the pairwise test for the measure (section 2).
-- Three or more conditions: an omnibus test first (repeated-measures
-  ANOVA within subjects, one-way ANOVA between; Friedman or
-  Kruskal–Wallis for rank-based measures), followed by the adjusted
-  pairwise comparisons.
+- Two conditions: one step, the pairwise test for the measure
+  (section 2).
+- One independent variable with three or more conditions: two steps.
+  1. An omnibus test across all conditions.
+  2. The pairwise test for every pair, each at alpha / m (section 1.3).
+- Two or more independent variables: the selected comparisons
+  (section 1.5), each with the pairwise test at alpha / m. A factorial
+  omnibus analysis is not planned in this version.
 - The sample size is based on the pairwise comparisons.
+
+| Result type | Step 1, within subjects | Step 1, between subjects | Step 2, within subjects | Step 2, between subjects |
+|---|---|---|---|---|
+| Time, Count | Friedman test | Kruskal–Wallis test | Wilcoxon signed-rank | Mann–Whitney |
+| Rating scale, Other numeric | Repeated-measures ANOVA | One-way ANOVA | Paired t-test | Independent t-test |
+| Success / failure | Cochran's Q test | Chi-square test of independence | McNemar | Two-proportion test |
+
+A measure whose values can't be linked to a participant uses the
+between-subjects columns (section 2).
 
 ### 1.5 Comparisons with two or more independent variables
 

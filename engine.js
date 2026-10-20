@@ -935,6 +935,18 @@
     return Math.round(x * f) / f;
   }
 
+  /**
+   * Omnibus test (step 1 of the analysis with three or more conditions) for a
+   * result type, paired or not. methods.md §1.4 table.
+   */
+  function omnibusTest(typeKey, paired) {
+    const t = MEASURE_TYPES[typeKey];
+    if (!t) fail(`Unknown result type "${typeKey}".`, 'type');
+    if (t.binary) return paired ? "Cochran's Q test" : 'Chi-square test of independence';
+    if (t.rank) return paired ? 'Friedman test' : 'Kruskal–Wallis test';
+    return paired ? 'Repeated-measures ANOVA' : 'One-way ANOVA';
+  }
+
   // Method for a measure. methods.md §2 table.
   function chooseMethod(typeKey, paired) {
     const t = MEASURE_TYPES[typeKey];
@@ -1275,6 +1287,14 @@
         primary: !!measure.primary,
         method,
         reason: methodReason(measure.type, paired, design === 'within'),
+        // Planned analysis (methods.md §1.4): an omnibus test only for one
+        // variable with three or more conditions, then the adjusted pairwise test.
+        analysis: {
+          omnibus: study.factors.length === 1 && k >= 3 ? omnibusTest(measure.type, paired) : null,
+          pairwise: method,
+          comparisons: m,
+          alphaPerComparison: alphaEach,
+        },
         paired,
         rank: type.rank,
         comparisons: perComparison,
@@ -1635,6 +1655,7 @@
     chanceOfSeeing,
     smallestFrequencySeen,
     // Whole plan
+    omnibusTest,
     plan,
   };
 });

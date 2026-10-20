@@ -931,3 +931,50 @@ test('power curve: in participants mode, ticks are labeled as k of 10', () => {
   const b = E.powerCurve(E.confidenceReport(between, 60));
   b.axis.ticks.forEach((t) => near(10 * E.normalCdf(t.x / Math.SQRT2), t.value, 1e-9));
 });
+
+// ---------------------------------------------------------------------------
+// Planned analysis (methods.md §1.4)
+// ---------------------------------------------------------------------------
+
+test('omnibus test by result type and design (methods.md §1.4 table)', () => {
+  assert.equal(E.omnibusTest('time', true), 'Friedman test');
+  assert.equal(E.omnibusTest('count', false), 'Kruskal–Wallis test');
+  assert.equal(E.omnibusTest('rating', true), 'Repeated-measures ANOVA');
+  assert.equal(E.omnibusTest('numeric', false), 'One-way ANOVA');
+  assert.equal(E.omnibusTest('binary', true), "Cochran's Q test");
+  assert.equal(E.omnibusTest('binary', false), 'Chi-square test of independence');
+  throwsWhere(() => E.omnibusTest('shape', true), { field: 'type' });
+});
+
+test('plan: analysis steps, omnibus only with one variable and three or more conditions', () => {
+  const r = runningExample();
+  assert.deepEqual(r.measures.map((m) => [m.analysis.omnibus, m.analysis.pairwise]), [
+    ['Friedman test', 'Wilcoxon signed-rank'],
+    ['Repeated-measures ANOVA', 'Paired t-test'],
+    ["Cochran's Q test", 'McNemar'],
+  ]);
+  r.measures.forEach((m) => {
+    assert.equal(m.analysis.comparisons, 3);
+    near(m.analysis.alphaPerComparison, 0.05 / 3, 1e-15);
+  });
+  // Two conditions: one step.
+  const two = E.plan(studyWith(timeWith({ mode: 'participants', k: 8 })));
+  assert.equal(two.measures[0].analysis.omnibus, null);
+  assert.equal(two.measures[0].analysis.pairwise, 'Wilcoxon signed-rank');
+  // Values not linked to a participant: the between-subjects tests.
+  const unlinked = E.plan({
+    design: 'within',
+    factors: [{ name: 'Design', levels: ['A', 'B', 'C'] }],
+    comparisons: { scheme: 'all-pairs' },
+    measures: [{ name: 'Rating', type: 'rating', primary: true, linked: false, effect: { mode: 'participants', k: 8 } }],
+  });
+  assert.equal(unlinked.measures[0].analysis.omnibus, 'One-way ANOVA');
+  // Two variables: no omnibus in this version.
+  const factorial = E.plan({
+    design: 'within',
+    factors: [oneFactor, { name: 'Posture', levels: ['Seated', 'Standing'] }],
+    comparisons: { list: [{ id: 'd', type: 'main', factor: 'Design', a: 'A', b: 'Current' }] },
+    measures: timeWith({ mode: 'participants', k: 8 }),
+  });
+  assert.equal(factorial.measures[0].analysis.omnibus, null);
+});

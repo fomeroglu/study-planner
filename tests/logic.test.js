@@ -292,7 +292,7 @@ test('liveStatus: one plan() call; errors in other measures show before the prim
   // A complete measure blocked by another's error shows a dash, not "needs input".
   form.measures[0].inputs.all.delta = '10';
   form.measures[0].inputs.all.k = '8';
-  assert.deepEqual(L.sidebarSummary(form, 3).measures.map((m) => m.value), ['–', 'check input']);
+  assert.deepEqual(L.sidebarSummary(form, 3).measures.map((m) => m.value), ['–', 'fix the input']);
   form.measures[0].inputs.all.delta = '';
   form.measures[0].inputs.all.k = '';
   form.measures[1].inputs.all.k = '8';
@@ -300,8 +300,8 @@ test('liveStatus: one plan() call; errors in other measures show before the prim
   assert.equal(ok.error, null);
   const side = L.sidebarSummary(form, 3, ok);
   assert.equal(side.participants, '–');
-  assert.equal(side.note, 'Needs inputs for the primary measure');
-  assert.deepEqual(side.measures.map((m) => m.value), ['needs input', String(ok.partial.measures[0].total)]);
+  assert.equal(side.note, 'Fill in Score (primary) in step 3 to see it.');
+  assert.deepEqual(side.measures.map((m) => m.value), ['not filled in yet', String(ok.partial.measures[0].total)]);
   // Complete: the whole study, the same single call.
   Object.assign(form.measures[0].inputs.all, { delta: '10', k: '8' });
   const full = L.liveStatus(form);
@@ -378,15 +378,15 @@ test('sidebar: notes and rows before inputs are complete', () => {
   const form = L.newForm();
   const s1 = L.sidebarSummary(form, 1);
   assert.equal(s1.participants, '–');
-  assert.equal(s1.note, 'Updates as you fill in each step');
+  assert.equal(s1.note, 'Calculated in step 3, once you describe the difference that matters.');
   assert.deepEqual(s1.rows.map((r) => r.value), ['Not set', '2', '1', 'Not set']);
   const s2 = L.sidebarSummary(simpleForm('time', { delta: '', k: '' }), 2);
-  assert.equal(s2.note, 'Needs inputs (step 3)');
+  assert.equal(s2.note, 'Calculated in step 3, once you describe the difference that matters.');
   assert.deepEqual(s2.rows.map((r) => r.value), ['Within subjects', '2', '1', '1 (primary: Score)']);
   const bad = L.sidebarSummary(simpleForm('time', { delta: '10', k: '5' }), 3);
   assert.equal(bad.participants, '–');
-  assert.equal(bad.note, 'Check the highlighted input');
-  assert.equal(bad.measures[0].value, 'check input');
+  assert.equal(bad.note, 'Fix the highlighted input to see it.');
+  assert.equal(bad.measures[0].value, 'fix the input');
 });
 
 test('step 3 wording follows the design and the comparison', () => {
@@ -493,4 +493,26 @@ test('find problems: one column when the frequency is 31%, and the axis grows wi
   assert.equal(rare.n, 80);
   assert.equal(rare.curve.axisMax, 80);
   assert.equal(rare.slider.max, 80);
+});
+
+test('analysis plan: one step for two conditions, two for three or more, selected comparisons for two variables', () => {
+  const two = simpleForm('time', { delta: '10', k: '8' });
+  const a2 = L.planView(L.runPlan(two).plan, two).analysis[0];
+  assert.deepEqual(a2.steps, ['Wilcoxon signed-rank comparing Current and New, at alpha 0.05.']);
+
+  const three = simpleForm('binary', { p1: '70', p2: '85' });
+  three.factors[0].levels.push(L.newLevel('Other'));
+  const a3 = L.planView(L.runPlan(three).plan, three).analysis[0];
+  assert.deepEqual(a3.steps, [
+    "Cochran's Q test across all 3 conditions, to see whether they differ at all.",
+    "McNemar for each of the 3 pairs, at alpha 0.0167 each (Bonferroni). Holm's procedure can be used instead and is never less powerful.",
+  ]);
+
+  const factorial = twoFactorForm();
+  const c = L.candidateComparisons(factorial);
+  factorial.comparisons.selected = [c.main[0].key, c.cell[0].key];
+  c.main.slice(0, 1).concat(c.cell.slice(0, 1)).forEach((x) => Object.assign(L.inputsFor(factorial.measures[0], x.key), { mode: 'participants', k: '8' }));
+  const af = L.planView(L.runPlan(factorial).plan, factorial).analysis[0];
+  assert.equal(af.steps.length, 1);
+  assert.match(af.steps[0], /^Wilcoxon signed-rank for each of the 2 selected comparisons, at alpha 0\.025 each \(Bonferroni\)\./);
 });

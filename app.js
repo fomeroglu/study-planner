@@ -585,6 +585,13 @@
       `</tr></thead><tbody>${rows}</tbody></table></div>` +
       v.warnings.map((w) => `<p class="warning">${esc(w)}</p>`).join('') +
       (v.coverAll ? `<p class="hint">${esc(v.coverAll)}</p>` : '') + '</section>' +
+      `<section class="card square" aria-labelledby="analysis-title"><h2 class="section-title" id="analysis-title">Your analysis plan</h2>` +
+      `<p class="hint">Run these after the study. The sample size above is based on the last step.</p>` +
+      v.analysis.map((a) => `<div class="analysis-measure"><h3 class="analysis-name">${a.primary ? '★ ' : ''}${esc(a.name)}</h3>` +
+        (a.steps.length > 1
+          ? `<ol class="analysis-steps">${a.steps.map((st) => `<li>${esc(st)}</li>`).join('')}</ol>`
+          : `<p class="analysis-one">${esc(a.steps[0])}</p>`) + '</div>').join('') +
+      '</section>' +
       confidenceSection(plan) +
       `<section class="card square" id="how" aria-labelledby="how-title"><h2 class="section-title" id="how-title" tabindex="-1">How these numbers were reached</h2>${trails}</section>` +
       `<div class="two-col"><section class="card square" aria-labelledby="orders-title"><h2 class="section-title" id="orders-title">Order plan</h2><p class="hint" style="font-size:15px">${esc(op.text)}</p>${orders}</section>` +

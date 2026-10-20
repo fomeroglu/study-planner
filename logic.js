@@ -736,7 +736,7 @@
         label: 'Comparisons',
         value: m === null ? 'Not set'
           : form.factors.length >= 2 ? `${m} selected`
-            : m === 1 ? '1' : `${m}, every pair`,
+            : m === 1 ? '1' : `${m} (every pair)`,
       },
       {
         label: 'Measures',
@@ -755,18 +755,18 @@
         name: trimmed(fm.name) || 'Unnamed measure',
         primary: fm.primary,
         value: r ? String(r.total)
-          : errored || (failed && !status.error.measureId) ? 'check input'
-            : failed && status.complete && status.complete[fm.id] ? '–' : 'needs input',
+          : errored || (failed && !status.error.measureId) ? 'fix the input'
+            : failed && status.complete && status.complete[fm.id] ? '–' : 'not filled in yet',
         ready: !!r,
       };
     });
     const ready = plan && !status.standIn;
     let note;
-    if (ready) note = `Driven by ${plan.primary} · updates live`;
-    else if (failed) note = 'Check the highlighted input';
-    else if (step <= 1) note = 'Updates as you fill in each step';
-    else if (plan && status.standIn) note = 'Needs inputs for the primary measure';
-    else note = 'Needs inputs (step 3)';
+    const primaryName = primary && trimmed(primary.name) ? primary.name.trim() : 'your primary measure';
+    if (ready) note = `Set by ${plan.primary}, your primary measure. Updates as you type.`;
+    else if (failed) note = 'Fix the highlighted input to see it.';
+    else if (plan && status.standIn) note = `Fill in ${primaryName} (primary) in step 3 to see it.`;
+    else note = 'Calculated in step 3, once you describe the difference that matters.';
     return {
       participants: ready ? String(plan.recommendedN) : '–',
       recommendedN: ready ? plan.recommendedN : null,
@@ -1010,6 +1010,29 @@
     };
   }
 
+  // "Your analysis plan": the steps of the planned analysis for each measure,
+  // from plan().measures[].analysis (methods.md §1.4).
+  function analysisPlan(plan) {
+    const alpha = (a) => `alpha ${fmtAlpha(a)}`;
+    return plan.measures.map((m) => {
+      const a = m.analysis;
+      const steps = [];
+      if (a.omnibus) {
+        steps.push(`${a.omnibus} across all ${plan.k} conditions, to see whether they differ at all.`);
+      }
+      if (a.comparisons === 1) {
+        steps.push(`${a.pairwise} comparing ${plan.conditions[0]} and ${plan.conditions[1]}, at ${alpha(a.alphaPerComparison)}.`);
+      } else {
+        const what = plan.comparisons.every((c) => c.type === 'cell') && a.omnibus
+          ? `each of the ${a.comparisons} pairs`
+          : `each of the ${a.comparisons} selected comparisons`;
+        steps.push(`${a.pairwise} for ${what}, at ${alpha(a.alphaPerComparison)} each (Bonferroni). ` +
+          "Holm's procedure can be used instead and is never less powerful.");
+      }
+      return { name: m.name, primary: m.primary, steps };
+    });
+  }
+
   // Reporting guidance (methods.md §10) for the measures and conditions present.
   function reportingGuidance(plan) {
     const out = [];
@@ -1062,6 +1085,7 @@
         .sort((a, b) => (b.primary ? 1 : 0) - (a.primary ? 1 : 0))
         .map((m) => trailFor(m, plan)),
       orderPlan: orderPlan(plan),
+      analysis: analysisPlan(plan),
       guidance: reportingGuidance(plan),
       announce: `Participants needed: ${plan.recommendedN}`,
     };
