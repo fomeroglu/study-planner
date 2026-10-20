@@ -116,15 +116,16 @@ test('buildStudy: one variable needs no comparison choices; alpha follows the nu
   assert.equal(L.runPlan(form).plan.alphaPerComparison, 0.05 / 6); // Bonferroni
 });
 
-test('buildStudy: between subjects, unlinked measures, presets and participants mode', () => {
+test('buildStudy: between subjects, always-paired within, presets and participants mode', () => {
   const between = simpleForm('time', { delta: '10', k: '8' }, (f) => { f.design = 'between'; });
   assert.equal(L.runPlan(between).plan.measures[0].method, 'Mann–Whitney');
 
-  const unlinked = simpleForm('rating', { variability: 'sd', delta: '5', sd: '10' }, (f, m) => { m.linked = false; });
-  const u = L.buildStudy(unlinked);
-  assert.equal(u.study.measures[0].linked, false);
-  assert.equal(u.study.measures[0].effect.consistency, undefined); // not paired: no consistency
-  assert.equal(L.runPlan(unlinked).plan.measures[0].method, 'Independent t-test');
+  // Within subjects is always paired: the linking question is a later-version item.
+  const within = simpleForm('rating', { variability: 'sd', delta: '5', sd: '10' }, (f, m) => { m.linked = false; });
+  const u = L.buildStudy(within);
+  assert.equal(u.study.measures[0].linked, true);
+  assert.equal(u.study.measures[0].effect.consistency, 'low');
+  assert.equal(L.runPlan(within).plan.measures[0].method, 'Paired t-test');
 
   const preset = L.presetMeasure('seq');
   assert.deepEqual([preset.name, preset.type, preset.unit, preset.scaleMin, preset.scaleMax], ['SEQ', 'rating', 'points', '1', '7']);
@@ -267,10 +268,39 @@ test('one flow: the answers pick the mode (methods.md §3.1)', () => {
 test('step 2: a preset fills the measure being edited', () => {
   const m = L.newMeasure(true);
   m.name = 'Workload';
-  m.linked = false;
+  L.setType(m, 'time');
   L.applyPreset(m, 'nasa-tlx');
-  assert.deepEqual([m.name, m.unit, m.type, m.preset, m.scaleMin, m.scaleMax, m.primary, m.linked],
-    ['NASA-TLX', 'points', 'rating', 'nasa-tlx', '0', '100', true, false]);
+  // The preset sets its result type and scale range too.
+  assert.deepEqual([m.name, m.unit, m.type, m.preset, m.scaleMin, m.scaleMax, m.primary],
+    ['NASA-TLX', 'points', 'rating', 'nasa-tlx', '0', '100', true]);
+});
+
+test('step 2: changing the type of a preset measure clears the preset', () => {
+  const m = L.presetMeasure('sus');
+  L.setType(m, 'rating'); // same type: nothing changes
+  assert.equal(m.preset, 'sus');
+  L.setType(m, 'time');
+  assert.deepEqual([m.name, m.unit, m.type, m.preset, m.scaleMin, m.scaleMax], ['', 'seconds', 'time', null, '', '']);
+});
+
+test('step 2: default units follow the result type unless the user typed one', () => {
+  const m = L.newMeasure(true);
+  const units = ['time', 'count', 'rating', 'binary', 'numeric'].map((t) => {
+    L.setType(m, t);
+    return m.unit;
+  });
+  assert.deepEqual(units, ['seconds', 'count', 'points', '', '']);
+  L.setType(m, 'time');
+  L.setUnit(m, 'minutes');
+  L.setType(m, 'count');
+  assert.equal(m.unit, 'minutes'); // typed by the user: kept
+  L.setUnit(m, '');
+  L.setType(m, 'rating');
+  assert.equal(m.unit, 'points'); // emptied: back to the default
+  // A unit from a preset follows the new type (the preset is cleared).
+  const p = L.presetMeasure('seq');
+  L.setType(p, 'count');
+  assert.equal(p.unit, 'count');
 });
 
 test('runPlan: study-level errors land on alpha, power and the conditions', () => {
@@ -452,8 +482,14 @@ test('step 3 wording follows the design and the comparison', () => {
   form.measures[0].inputs.all.variability = 'sd';
   assert.equal(L.inputText(form, form.measures[0], 'all').deltaHint, 'Needed to use your past data, in seconds.');
   form.design = 'between';
-  assert.equal(L.inputText(form, form.measures[0], 'all').kQuestion,
-    'Pick one participant from each condition at random. Out of 10 such pairs, how often should the one on the better condition do better?');
+  const between = L.inputText(form, form.measures[0], 'all');
+  assert.equal(between.kQuestion, 'How clear should the difference be?');
+  assert.deepEqual(between.kSentence, {
+    before: 'If you compared one random person from each condition, the person on the better condition should do better',
+    after: 'out of 10 times.',
+  });
+  assert.equal(between.kTip.alpha, 'Why 6 to 9?');
+  assert.equal(t.kSentence, null); // within subjects: a plain question
   assert.equal(L.inputText(form, form.measures[0], 'all').consistencyNote, null);
   // Success / failure: two conditions are named; three or more are described.
   const rates = simpleForm('binary', { p1: '', p2: '' });

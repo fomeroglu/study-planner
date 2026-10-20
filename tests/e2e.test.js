@@ -203,3 +203,11 @@ test('running example: NASA-TLX from past data states the consistency assumption
   assert.match(group('Sample size'), /n = 26\.7083, rounded up: 27\./);
   assert.match(group('Order plan'), /27 rounded up to a multiple of 6 orders \(balanced Latin square\): 30\./);
 });
+
+test('running example: the analysis plan asks to average repeated values (within subjects)', () => {
+  const form = runningExampleForm();
+  assert.equal(L.planView(L.runPlan(form).plan, form).analysisNote,
+    'If participants give several values per condition, average them first; the sample size counts people, not trials.');
+  form.design = 'between';
+  assert.equal(L.planView(L.runPlan(form).plan, form).analysisNote, null);
+});

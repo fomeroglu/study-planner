@@ -92,7 +92,7 @@
 
   function newMeasure(primary) {
     return {
-      id: uid('m'), name: '', unit: '', type: null, primary: !!primary, linked: true,
+      id: uid('m'), name: '', unit: '', unitSource: null, type: null, primary: !!primary,
       preset: null, scaleMin: '', scaleMax: '', inputs: {},
     };
   }
@@ -104,10 +104,43 @@
     const d = PRESET_DISPLAY[key];
     measure.name = d.name;
     measure.unit = d.unit;
+    measure.unitSource = 'preset';
     measure.type = p.type;
     measure.preset = key;
     measure.scaleMin = String(p.min);
     measure.scaleMax = String(p.max);
+    return measure;
+  }
+
+  // Default unit for each result type (used when the unit is empty, a default,
+  // or came from a preset).
+  const DEFAULT_UNITS = { time: 'seconds', count: 'count', rating: 'points', binary: '', numeric: '' };
+
+  // Change a measure's result type. A preset's name, unit, scale range and badge
+  // are cleared when the type changes; the unit then follows the type's default
+  // unless the user typed one.
+  function setType(measure, type) {
+    if (measure.type === type) return measure;
+    if (measure.preset) {
+      measure.name = '';
+      measure.unit = '';
+      measure.unitSource = null;
+      measure.scaleMin = '';
+      measure.scaleMax = '';
+      measure.preset = null;
+    }
+    measure.type = type;
+    if (!trimmed(measure.unit) || measure.unitSource !== 'user') {
+      measure.unit = DEFAULT_UNITS[type] || '';
+      measure.unitSource = 'default';
+    }
+    return measure;
+  }
+
+  // A unit typed by the user; empty hands it back to the type's default.
+  function setUnit(measure, value) {
+    measure.unit = value;
+    measure.unitSource = trimmed(value) ? 'user' : null;
     return measure;
   }
 
@@ -401,7 +434,7 @@
     if (measure.type === 'binary') {
       const p1 = numberField(issues, inp.p1, t('p1'), o(true, { percent: true, missing: 'Enter the expected success rate.' }));
       const p2 = numberField(issues, inp.p2, t('p2'), o(true, { percent: true, missing: 'Enter the expected success rate.' }));
-      const psi = form.design === 'within' && measure.linked
+      const psi = form.design === 'within'
         ? numberField(issues, inp.psi, t('psi'), o(false, { percent: true }))
         : undefined;
       const out = { p1, p2 };
@@ -412,7 +445,7 @@
     // and the SD, consistency Low. Otherwise: k of 10, in units when the
     // difference is given (variability from the estimate), in participants
     // when it is left empty.
-    const paired = form.design === 'within' && measure.linked;
+    const paired = form.design === 'within';
     if (inp.variability === 'sd') {
       const out = { mode: 'units' };
       out.delta = numberField(issues, inp.delta, t('delta'), o(true, { missing: 'Enter the smallest difference that would matter to use your past data.' }));
@@ -466,7 +499,7 @@
           type: measure.type,
           unit: trimmed(measure.unit),
           primary: measure.primary,
-          linked: measure.linked,
+          linked: true, // within subjects: always paired (methods.md §13)
         };
         const scale = scaleOf(measure);
         if (scale) e.scale = scale;
@@ -868,7 +901,7 @@
     const inp = inputsFor(measure, key);
     const comp = comparisonFor(form, key);
     const unit = trimmed(measure.unit);
-    const paired = form.design === 'within' && measure.linked;
+    const paired = form.design === 'within';
     const newName = newConditionName(form, comp);
     const d = parseNumber(inp.delta).value;
     const deltaShown = d !== undefined && d !== 0 ? Math.abs(d) : null;
@@ -894,7 +927,12 @@
     // participants, one from each condition.
     const kQuestion = paired
       ? `Out of 10 participants, how many should do better on ${newName}?`
-      : `Pick one participant from each condition at random. Out of 10 such pairs, how often should the one on ${newName} do better?`;
+      : 'How clear should the difference be?';
+    // Between subjects: a sentence with the answer inside it.
+    const kSentence = paired ? null : {
+      before: `If you compared one random person from each condition, the person on ${newName} should do better`,
+      after: 'out of 10 times.',
+    };
     let kContext = null;
     if (deltaShown !== null) {
       const adj = timeAdjective(deltaShown, unit);
@@ -922,6 +960,7 @@
         : `Optional. Leave empty if you don't have a target in ${unitWords}.`,
       deltaRequired: pastData,
       kQuestion,
+      kSentence,
       kRange: '(6 to 9)',
       kTip: { alpha: 'Why 6 to 9?', tip: K_TIP },
       kContext,
@@ -951,7 +990,7 @@
   function variabilityReadout(form, measure, key) {
     const inp = inputsFor(measure, key);
     if (measure.type === 'binary') return null;
-    const paired = form.design === 'within' && measure.linked;
+    const paired = form.design === 'within';
     const d = parseNumber(inp.delta).value;
     try {
       if (inp.variability !== 'sd') {
@@ -1190,6 +1229,9 @@
         .map((m) => trailFor(m, plan)),
       orderPlan: orderPlan(plan),
       analysis: analysisPlan(plan),
+      analysisNote: plan.design === 'within'
+        ? 'If participants give several values per condition, average them first; the sample size counts people, not trials.'
+        : null,
       guidance: reportingGuidance(plan),
       announce: `Participants needed: ${plan.recommendedN}`,
     };
@@ -1441,6 +1483,9 @@
     newMeasure,
     presetMeasure,
     applyPreset,
+    setType,
+    setUnit,
+    DEFAULT_UNITS,
     inputsFor,
     inputKeys,
     parseNumber,

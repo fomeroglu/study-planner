@@ -49,6 +49,13 @@ choice.
 - Every step from inputs to result is shown, with values from your own
   estimates labeled as such.
 
+## Limitations
+
+- Within-subjects plans assume you can match each participant's values
+  across conditions.
+- Mixed designs, interaction comparisons and dropout adjustment are not
+  part of this version.
+
 ## How it calculates
 
 [docs/methods.md](docs/methods.md) defines every calculation, with sources.

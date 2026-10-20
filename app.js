@@ -293,8 +293,7 @@
     const form = state.form;
     const preset = m.preset ? L.PRESET_DISPLAY[m.preset] : null;
     const type = m.type ? (preset ? preset.note : L.TYPE_LABELS[m.type]) : 'No result type yet';
-    const per = form.design === 'between' ? 'one value per participant'
-      : m.linked ? 'one value per participant per condition' : 'values not linked to a participant';
+    const per = form.design === 'between' ? 'one value per participant' : 'one value per participant per condition';
     return `${type} · ${per}`;
   }
 
@@ -323,20 +322,19 @@
         `<label class="field-row" for="measure-${m.id}-scalemax"><span class="after">to</span></label>${textInput({ id: `measure-${m.id}-scalemax`, bind: 'scale-max', data: { measure: m.id }, value: m.scaleMax, cls: 'number w-80', inputmode: 'decimal' })}</div>` +
         `<p class="small-hint" id="${ids.measureScale(m.id)}-hint">Optional. The lowest and highest possible values.</p>${errorEl(ids.measureScale(m.id), visibleIssue(ids.measureScale(m.id)))}</div>`
       : '';
-    const linked = form.design === 'between' ? ''
-      : `<div role="group" class="field" aria-labelledby="linked-${m.id}-label"><div id="linked-${m.id}-label">Does each participant give one value per condition?</div><div class="chip-row">` +
-        optButton({ id: `linked-${m.id}-yes`, action: 'linked', data: { measure: m.id, value: 'yes' }, cls: 'chip', pressed: m.linked, title: 'Yes' }) +
-        optButton({ id: `linked-${m.id}-no`, action: 'linked', data: { measure: m.id, value: 'no' }, cls: 'chip', pressed: !m.linked, title: 'No, values aren\'t linked to a participant' }) +
-        `</div><p class="small-hint">Several trials per participant? Average them into one value per condition, then choose Yes.</p></div>`;
+    // Presets fill this measure: name, result type, unit and scale range.
+    const presets = `<div class="preset-row"><span class="hint" id="presets-${m.id}">Fill from preset:</span>` +
+      ['nasa-tlx', 'sus', 'seq'].map((k) => `<button type="button" class="link-btn preset-btn" id="preset-${m.id}-${k}" data-action="preset" data-measure="${m.id}" data-value="${k}" aria-describedby="presets-${m.id}">${esc(L.PRESET_DISPLAY[k].name)}</button>`)
+        .join('<span class="secondary" aria-hidden="true">·</span>') + '</div>';
     return `<section class="card focus-card" aria-labelledby="mhead-${m.id}" style="gap:18px">` +
       `<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><h2 class="mono secondary" style="margin:0;font-size:14px;font-weight:400" id="mhead-${m.id}">Measure ${i + 1}</h2>` +
       `<button type="button" class="primary-toggle" id="primary-${m.id}" data-action="primary" data-measure="${m.id}" aria-pressed="${m.primary}">${m.primary ? '★ Primary' : '☆ Primary'}</button></div>` +
       `<div class="grid-2"><div class="field"><label for="${ids.measureName(m.id)}">Name</label>${textInput({ id: ids.measureName(m.id), bind: 'measure-name', data: { measure: m.id }, value: m.name, placeholder: 'e.g., Task time' })}${errorEl(ids.measureName(m.id), visibleIssue(ids.measureName(m.id)))}</div>` +
       (m.type === 'binary' ? '' : `<div class="field"><label for="measure-${m.id}-unit">Unit</label>${textInput({ id: `measure-${m.id}-unit`, bind: 'measure-unit', data: { measure: m.id }, value: m.unit, placeholder: m.type === 'time' || !m.type ? 'e.g., seconds' : 'e.g., points' })}</div>`) +
-      `</div>` +
+      `</div>` + presets +
       group(ids.measureType(m.id), '<div id="%ID%" style="font-size:14px;font-weight:500">Result type</div>',
         `<div class="chip-row">${types}</div>${m.type ? `<p class="small-hint">${esc(L.TYPE_HELP[m.type])}</p>` : ''}`, 'field') +
-      scale + linked +
+      scale +
       (form.measures.length > 1 ? `<div><button type="button" class="small-btn" id="remove-measure-${m.id}" data-action="remove-measure" data-measure="${m.id}" aria-label="Remove ${esc(name)}">Remove</button></div>` : '') +
       `</section>`;
   }
@@ -347,8 +345,6 @@
       `<div class="intro"><h1 tabindex="-1" id="page-title">What are you measuring?</h1><p>Add each dependent variable. Mark the one your decision rests on as primary.</p></div>` +
       `<div id="${ids.measures()}" style="display:flex;flex-direction:column;gap:24px" tabindex="-1">${form.measures.map(measureCard).join('')}${errorEl(ids.measures(), visibleIssue(ids.measures()))}</div>` +
       `<div class="chip-row" style="align-items:center"><button type="button" class="dashed-btn" style="height:48px" id="add-measure" data-action="add-measure">+ Add measure</button>` +
-      `<span class="hint" style="margin-left:8px" id="presets-label">Fill the measure you're editing with a preset:</span>` +
-      ['nasa-tlx', 'sus', 'seq'].map((k) => `<button type="button" class="chip round" id="preset-${k}" data-action="preset" data-value="${k}" aria-describedby="presets-label">${esc(L.PRESET_DISPLAY[k].name)}</button>`).join('') +
       `</div>` + generalError() +
       `<div class="nav-row"><a class="btn" href="#/compare/1" id="back">Back</a><div class="chip-row">` +
       `<button type="button" class="btn" id="start-over" data-action="new-plan">Start over</button>` +
@@ -397,11 +393,15 @@
     // Question 2, or the past-data section that replaces it.
     const kId = id('k');
     const kIssue = visibleIssue(kId);
-    const question2 = t.pastData ? '' :
-      `<div class="field large"><label for="${esc(kId)}">2. ${esc(t.kQuestion)}</label>` +
-      `<span class="field-hint" id="${esc(kId)}-hint">${esc(t.kRange)} ${rich(t.kTip)}${t.kContext ? ` ${esc(t.kContext)}` : ''}</span>` +
-      `<span class="field-row">${textInput({ id: kId, bind: 'input', data: d('k'), value: inp.k, placeholder: '8', cls: 'number w-80', inputmode: 'numeric', hintId: `${kId}-hint` })}<span class="after">of 10</span></span>` +
-      `${errorEl(kId, kIssue)}</div>`;
+    const kHint = `<span class="field-hint" id="${esc(kId)}-hint">${esc(t.kRange)} ${rich(t.kTip)}${t.kContext ? ` ${esc(t.kContext)}` : ''}</span>`;
+    const kInput = (describedIds) => textInput({ id: kId, bind: 'input', data: d('k'), value: inp.k, placeholder: '8', cls: 'number w-80', inputmode: 'numeric', hintId: describedIds });
+    const question2 = t.pastData ? '' : t.kSentence
+      // Between subjects: the answer sits inside a sentence.
+      ? `<div class="field large"><label for="${esc(kId)}">2. ${esc(t.kQuestion)}</label>${kHint}` +
+        `<span class="field-row sentence-row" id="${esc(kId)}-sentence"><span class="after">${esc(t.kSentence.before)}</span>` +
+        `${kInput(`${kId}-sentence ${kId}-hint`)}<span class="after">${esc(t.kSentence.after)}</span></span>${errorEl(kId, kIssue)}</div>`
+      : `<div class="field large"><label for="${esc(kId)}">2. ${esc(t.kQuestion)}</label>${kHint}` +
+        `<span class="field-row">${kInput(`${kId}-hint`)}<span class="after">of 10</span></span>${errorEl(kId, kIssue)}</div>`;
     const pastId = `past-${m.id}-${key}`;
     const pastData = `<div class="past-data"><button type="button" class="disclosure" id="${esc(pastId)}" data-action="past-data" data-measure="${m.id}" data-key="${esc(key)}" aria-expanded="${t.pastData}" aria-controls="${esc(pastId)}-body">` +
       `<span aria-hidden="true">${t.pastData ? '▾' : '▸'}</span> ${esc(t.pastDataToggle)}</button>` +
@@ -593,6 +593,7 @@
       (v.coverAll ? `<p class="hint">${esc(v.coverAll)}</p>` : '') + '</section>' +
       `<section class="card square" aria-labelledby="analysis-title"><h2 class="section-title" id="analysis-title">Your analysis plan</h2>` +
       `<p class="hint">Run these after the study. The sample size above is based on the last step.</p>` +
+      (v.analysisNote ? `<p class="hint">${esc(v.analysisNote)}</p>` : '') +
       v.analysis.map((a) => `<div class="analysis-measure"><h3 class="analysis-name">${a.primary ? '★ ' : ''}${esc(a.name)}</h3>` +
         (a.steps.length > 1
           ? `<ul class="analysis-steps">${a.steps.map((st) => `<li>${rich(st)}</li>`).join('')}</ul>`
@@ -923,12 +924,7 @@
     primary(el) {
       state.form.measures.forEach((m) => { m.primary = m.id === el.dataset.measure; });
     },
-    type(el) {
-      const m = findMeasure(el.dataset.measure);
-      m.type = el.dataset.value;
-      if (m.preset && m.type !== 'rating') m.preset = null;
-    },
-    linked(el) { findMeasure(el.dataset.measure).linked = el.dataset.value === 'yes'; },
+    type(el) { L.setType(findMeasure(el.dataset.measure), el.dataset.value); },
     'edit-measure'(el) {
       state.ui.openMeasure = el.dataset.measure;
       return () => focusTarget(ids.measureName(el.dataset.measure));
@@ -949,8 +945,8 @@
       return () => focusTarget(ids.measureName(m.id));
     },
     preset(el) {
-      // Fills the measure being edited; "+ Add measure" is the only way to add one.
-      const m = state.form.measures.find((x) => x.id === state.ui.openMeasure) || state.form.measures[0];
+      // Fills this measure; "+ Add measure" is the only way to add one.
+      const m = findMeasure(el.dataset.measure);
       L.applyPreset(m, el.dataset.value);
       state.ui.openMeasure = m.id;
       return () => focusTarget(ids.measureName(m.id));
@@ -1002,7 +998,7 @@
     level(el) { findFactor(el.dataset.factor).levels.find((l) => l.id === el.dataset.level).name = el.value; },
     'factor-name'(el) { findFactor(el.dataset.factor).name = el.value; },
     'measure-name'(el) { findMeasure(el.dataset.measure).name = el.value; },
-    'measure-unit'(el) { findMeasure(el.dataset.measure).unit = el.value; },
+    'measure-unit'(el) { L.setUnit(findMeasure(el.dataset.measure), el.value); },
     'scale-min'(el) { findMeasure(el.dataset.measure).scaleMin = el.value; },
     'scale-max'(el) { findMeasure(el.dataset.measure).scaleMax = el.value; },
     input(el) { L.inputsFor(findMeasure(el.dataset.measure), el.dataset.key)[el.dataset.field] = el.value; },

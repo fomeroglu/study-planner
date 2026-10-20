@@ -42,11 +42,23 @@ you saw.
       Current, Prototype A and Prototype B (or keep A, B, C). Choose "All
       conditions". Sidebar: Within subjects, 3, "3 (every pair)".
 - [ ] Step 2: the measure name is empty with the hint "e.g., Task time".
-      Name measure 1 "Task time", unit "seconds", type Time.
-- [ ] "+ Add measure", then the NASA-TLX preset: the preset fills the new
-      measure you are editing (name, type, unit, scale) and does not add
-      another one. "+ Add measure" again: name it "Task success", type
-      Success / failure. Sidebar: "3 (primary: Task time)".
+      There is no "Does each participant give one value per condition?"
+      question. Name measure 1 "Task time" and choose Time: the unit fills
+      in as "seconds".
+- [ ] Default units: switching the type to Count gives "count", Rating
+      scale gives "points", Other numeric leaves it empty, and Success /
+      failure hides the unit field. A unit you type yourself stays when you
+      switch types. Set it back to Time with "seconds".
+- [ ] Each open card has "Fill from preset: NASA-TLX · SUS · SEQ" next to
+      the Name field, and there are no presets below the cards.
+- [ ] "+ Add measure", then "NASA-TLX" in that card: it fills this measure
+      (name, Rating scale, unit "points", scale 0 to 100, Preset badge when
+      collapsed) and does not add another one.
+- [ ] On that measure, choose a different result type (for example Time):
+      the name, unit, scale range and Preset badge clear, and the unit
+      becomes the new type's default. Apply NASA-TLX again to restore it.
+- [ ] "+ Add measure" again: name it "Task success", type Success /
+      failure. Sidebar: "3 (primary: Task time)".
 - [ ] Every measure card, open or collapsed, has a "Remove" button; with a
       single measure left, it disappears. "Start over" asks for
       confirmation, then clears the plan and returns to Start.
@@ -94,6 +106,9 @@ you saw.
       protected LSD)."; NASA-TLX, repeated-measures ANOVA then paired
       t-test; Task success, Cochran's Q test then McNemar. The 0.05 in each
       step 2 has the tooltip. With two conditions there is a single step.
+      Above the steps (within subjects only): "If participants give several
+      values per condition, average them first; the sample size counts
+      people, not trials."
 - [ ] Move the slider to 12: tiles show 11 s, ± 7.5 s, 73%. The shaded
       area is labeled "73% caught" and "27% missed". The precision bar shows
       2.5 s, 10 s, 17.5 s.
@@ -110,6 +125,12 @@ you saw.
       each."
 - [ ] Order plan: 6 orders (A B C, B C A, C A B, C B A, A C B, B A C), key
       A = Current, B = Prototype A, C = Prototype B.
+- [ ] Between subjects: go back to step 1, choose "One condition", then
+      step 3, Task time. Question 2 is titled "How clear should the
+      difference be?" with the sentence "If you compared one random person
+      from each condition, the person on the better condition should do
+      better [8] out of 10 times." The "Why 6 to 9?" tooltip is still
+      there. The Plan screen's analysis plan has no averaging note.
 - [ ] With a fourth condition, the Plan screen's alpha is 0.00833 with the
       four-condition tooltip, and the analysis plan reads "Step 2: ... with
       the Holm adjustment (6 comparisons)".

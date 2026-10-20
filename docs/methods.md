@@ -452,6 +452,10 @@ recorded in validation/answer-key.md.
 - Later: unadjusted comparisons, where each comparison answers its own
   question and uses the full alpha. This is a defensible position when
   each comparison stands as a separate claim (Rothman, 1990).
+- Later (interface): marking a within-subjects measure whose values
+  can't be linked to a participant, which is analysed as independent
+  groups (section 2). The engine supports it; the version 1 interface
+  treats every within-subjects measure as paired.
 - 1.1 (interface): choosing how consistent participants are across
   conditions (Low, Medium, High) and entering the SD of the differences
   (σ_diff) directly. The engine supports both (section 3.1).
@@ -473,6 +477,8 @@ recorded in validation/answer-key.md.
 ## 14. Limitations
 
 - Interaction comparisons are planned for a later version (section 13).
+- Within-subjects plans assume you can match each participant's values
+  across conditions.
 - For success / failure measures, only comparisons between specific
   conditions are supported; main effects are not.
 - In the interface, these options are shown as disabled with a short

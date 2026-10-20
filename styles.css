@@ -512,6 +512,9 @@ button.btn:hover { background: var(--selected); }
 }
 .tab:hover { border-color: var(--accent); }
 .tab[aria-selected="true"] { border: 2px solid var(--accent); background: var(--selected); padding: 0 17px; font-weight: 600; }
+.preset-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.preset-btn { align-self: center; min-height: 44px; }
+.sentence-row .after { line-height: 1.5; }
 .measure-heading { margin: 0; font-size: 22px; font-weight: 600; }
 .past-data { display: flex; flex-direction: column; gap: 12px; }
 .disclosure {

@@ -165,3 +165,9 @@ test('never described as validated while any answer-key value is provisional', (
   ['app.js', 'logic.js', 'index.html', 'README.md'].forEach((f) =>
     assert.ok(!/\b(is|fully) validated\b/i.test(read(f)), `"validated" claim in ${f}`));
 });
+
+test('limitations: within-subjects plans assume matched values (methods.md §14, README)', () => {
+  const sentence = /Within-subjects plans assume you can match each\s+participant's values\s+across conditions\./;
+  assert.match(read('docs/methods.md'), sentence);
+  assert.match(read('README.md'), sentence);
+});
