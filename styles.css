@@ -625,6 +625,22 @@ svg text { font-family: var(--sans); }
 .analysis-steps { margin: 0; padding-left: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; font-size: 15px; line-height: 1.5; }
 .analysis-one { margin: 0; font-size: 15px; line-height: 1.5; }
 
+.sub-title { margin: 8px 0 0; font-size: 16px; font-weight: 600; }
+
+/* "Your measures": power bars at the recommended n */
+.measure-bars { min-width: 560px; }
+.measure-bars td { vertical-align: middle; }
+.measure-bars td.needs { font-weight: 600; }
+.measure-bars .bar-col { width: 50%; text-transform: none; letter-spacing: normal; font-size: 13px; }
+.power-bar { position: relative; height: 14px; border-radius: 7px; background: var(--line); }
+.power-fill { height: 100%; border-radius: 7px; }
+.power-fill.reaches { background: var(--accent); }
+.power-fill.below { background: var(--warn); }
+.power-marker { position: absolute; top: -4px; bottom: -4px; width: 2px; margin-left: -1px; background: var(--text); }
+.power-text { font-weight: 600; text-align: right; white-space: nowrap; }
+.power-text.reaches { color: var(--accent); }
+.power-text.below { color: var(--warn); }
+
 .two-col { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; }
 .guidance p { margin: 0; font-size: 15px; line-height: 1.55; }
 

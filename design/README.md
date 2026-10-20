@@ -6,9 +6,14 @@ index.html, matching them. When a mockup and docs/methods.md disagree on
 behavior or numbers, methods.md wins.
 
 Open any file in screens/ in a browser to see it. The numbers shown are
-the running example: three keyboard designs (Current, Prototype A,
-Prototype B), within subjects, each vs. Current, adjusted, with task
-time as the primary measure.
+the running example as first drawn: three keyboard designs (Current,
+Prototype A, Prototype B), within subjects, each vs. Current, adjusted,
+with task time as the primary measure. The tool has since changed the
+comparison rule (every pair; Fisher's protected LSD with three
+conditions, methods.md §1.3), so the running example now recommends 18
+participants; tests/e2e.test.js holds the current values. Where a
+mockup and the built interface differ in layout, the notes below
+describe the built interface.
 
 ## Screens
 
@@ -65,19 +70,31 @@ screen uses the same role mapping.
 
 ## Plan screen details
 
-- Readout grid: participants, driven by, design, power and alpha.
-- Per-measure table: needed n (accent if covered, warning color if
-  underpowered), planned method, one-line reason. Underpowered
-  warnings below it.
-- Confidence report: a participants slider (n you can recruit), three
-  stat tiles (detectable difference, ± precision, chance of detecting
-  the target), the two-curve power visual, and the precision bar. All
-  update live as the slider moves. The displayed numbers always come
-  from engine.js, never from the drawing.
-- "How these numbers were reached": the step-by-step trail from plan(),
-  one expandable section per measure, primary open by default.
-- Order plan: the Latin square orders, with the condition letter key.
-- Reporting guidance.
+Sections, in order (the built interface differs from 4-plan.html here):
+
+1. Recommendation readout: participants, driven by, design, power and
+   alpha. The per-comparison alpha has a tooltip.
+2. Your measures: one row per measure with its name (★ for the
+   primary), the n it needs (monospace), a horizontal bar of its chance
+   of detecting its target at the recommended n with a thin marker at
+   the target power (80% by default), and the percentage as text. Bar
+   and text use the accent color at or above the target and the warning
+   color below it, so the meaning never rests on color alone. Below the
+   list: "To cover every measure: [n] participants. Report measures
+   below the line as supporting evidence." This replaces the mockup's
+   per-measure table and warning boxes; the method and reason are in
+   the trail and the analysis plan.
+3. How these numbers were reached: the step-by-step trail from plan(),
+   one expandable section per measure, primary open by default.
+4. Confidence report: a participants slider (n you can recruit), three
+   stat tiles (detectable difference, ± precision, chance of detecting
+   the target), a note when the plan's rounding lets it detect slightly
+   less than the target, the two-curve power visual, and the precision
+   bar. All update live as the slider moves. The displayed numbers
+   always come from engine.js, never from the drawing.
+5. Running the study: the order plan (Latin square orders, with the
+   condition letter key), or equal groups between subjects.
+6. Analyzing the results: the analysis plan, then reporting guidance.
 
 ## Behavior not drawn in the mockups
 

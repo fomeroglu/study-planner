@@ -386,7 +386,7 @@
 
     const readout = L.variabilityReadout(form, m, key);
     const readoutHtml = readout
-      ? `<div class="readout-line"><span class="hint">${esc(readout.label)}</span><span class="value">${esc(readout.value)}</span><span class="small-hint">${esc(readout.note)}</span></div>`
+      ? `<div class="readout-line"><span class="hint">${esc(readout.label)}</span><span class="value">${rich(readout.value)}</span><span class="small-hint">${esc(readout.note)}</span></div>`
       : '';
     const deltaField = numberField({ id: id('delta'), data: d('delta'), label: `1. ${t.deltaLabel}`, hint: t.deltaHint, value: inp.delta, placeholder: t.deltaRequired ? '' : 'Optional', after: t.unit, large: true });
 
@@ -541,7 +541,9 @@
     let body;
     if (c.report) {
       const cv = L.confidenceView(c.report, c.curve);
+      const note = L.roundingNote(plan, c.report);
       body = `<div class="tiles">${cv.tiles.map((t) => `<div class="tile"><div class="value">${esc(t.value)}</div><div class="label">${esc(t.label)}</div></div>`).join('')}</div>` +
+        (note ? `<p class="small-hint" id="rounding-note" style="margin:0;line-height:1.5">${esc(note)}</p>` : '') +
         powerCurveSvg(c.curve, cv) +
         (cv.precision ? `<div style="display:flex;flex-direction:column;gap:6px"><div class="label-caps">Precision: the ± range around your result</div>${precisionSvg(c.curve, cv, c.report.mode)}</div>` : '') +
         (cv.note ? `<div class="small-hint">${esc(cv.note)}</div>` : '');
@@ -563,9 +565,15 @@
         `<p class="hint">Some inputs changed or are missing.</p><div class="nav-row"><a class="btn square-btn" href="#/compare/3" id="back">Back to inputs</a></div></main>`;
     }
     const v = L.planView(plan, state.form);
-    const rows = v.rows.map((r) => `<tr><td class="name">${r.primary ? '★ ' : ''}${esc(r.name)}</td>` +
-      `<td class="needed ${r.covered ? 'covered' : 'under'}">${r.needed}<span class="status-word">${r.covered ? 'covered' : 'underpowered'}</span></td>` +
-      `<td>${esc(r.method)}</td><td class="why">${esc(r.why)}</td></tr>`).join('');
+    // "Your measures": a power bar per measure at the recommended n (target line at the chosen power).
+    const marker = (v.targetPower * 100).toFixed(1);
+    const bars = v.measures.map((b) => {
+      const cls = b.reaches ? 'reaches' : 'below';
+      return `<tr><td class="name">${b.primary ? '★ ' : ''}${esc(b.name)}</td><td class="needs mono">${b.needs}</td>` +
+        `<td><div class="power-bar" role="img" aria-label="${esc(b.ariaLabel)}"><div class="power-fill ${cls}" style="width:${Math.min(100, b.power * 100).toFixed(1)}%"></div>` +
+        `<div class="power-marker" style="left:${marker}%"></div></div></td>` +
+        `<td class="power-text ${cls} mono">${esc(b.percent)}</td></tr>`;
+    }).join('');
     const trails = v.trails.map((t) => {
       const key = `trail-${t.name}`;
       const open = state.ui.open[key] === undefined ? t.open : state.ui.open[key];
@@ -577,7 +585,12 @@
       ? `<ol class="orders">${op.orders.map((o) => `<li><span class="num">${o.number}</span>${esc(o.sequence)}</li>`).join('')}</ol>` +
         `<div class="small-hint">${op.key.map(esc).join(' · ')}</div>`
       : `<div class="small-hint">Conditions: ${op.key.map(esc).join(' · ')}</div>`;
+    const analysis = v.analysis.map((a) => `<div class="analysis-measure"><h4 class="analysis-name">${a.primary ? '★ ' : ''}${esc(a.name)}</h4>` +
+      (a.steps.length > 1
+        ? `<ul class="analysis-steps">${a.steps.map((st) => `<li>${rich(st)}</li>`).join('')}</ul>`
+        : `<p class="analysis-one">${rich(a.steps[0])}</p>`) + '</div>').join('');
     return `<main class="plan-main" id="main"><h1 class="sr-only" tabindex="-1" id="page-title">Your study plan</h1>` +
+      // 1. Recommendation readout
       `<section class="card square" style="gap:20px" aria-labelledby="readout-title"><h2 class="label-caps" style="margin:0" id="readout-title">Recommended sample</h2>` +
       `<div class="readout-grid">` +
       `<div><div class="label-caps">Participants</div><div class="hero">${v.participants}</div></div>` +
@@ -585,25 +598,27 @@
       `<div><div class="label-caps">Design</div><div class="value">${esc(v.design)}</div></div>` +
       `<div><div class="label-caps">Power · alpha</div><div class="value mono">${rich(v.powerAlpha, { end: true })}</div></div></div>` +
       `<button type="button" class="link-btn" id="to-how" data-action="scroll-how">How we got this number →</button></section>` +
-      `<section class="card square" aria-labelledby="per-measure-title"><h2 class="section-title" id="per-measure-title">Per measure</h2>` +
-      `<div class="table-wrap" tabindex="0" role="region" aria-label="Per measure table"><table class="plan-table"><thead><tr>` +
-      ['Measure', 'Needed', 'Planned method', 'Why'].map((h) => `<th scope="col" class="label-caps">${h}</th>`).join('') +
-      `</tr></thead><tbody>${rows}</tbody></table></div>` +
-      v.warnings.map((w) => `<p class="warning">${esc(w)}</p>`).join('') +
-      (v.coverAll ? `<p class="hint">${esc(v.coverAll)}</p>` : '') + '</section>' +
-      `<section class="card square" aria-labelledby="analysis-title"><h2 class="section-title" id="analysis-title">Your analysis plan</h2>` +
-      `<p class="hint">Run these after the study. The sample size above is based on the last step.</p>` +
-      (v.analysisNote ? `<p class="hint">${esc(v.analysisNote)}</p>` : '') +
-      v.analysis.map((a) => `<div class="analysis-measure"><h3 class="analysis-name">${a.primary ? '★ ' : ''}${esc(a.name)}</h3>` +
-        (a.steps.length > 1
-          ? `<ul class="analysis-steps">${a.steps.map((st) => `<li>${rich(st)}</li>`).join('')}</ul>`
-          : `<p class="analysis-one">${rich(a.steps[0])}</p>`) + '</div>').join('') +
-      '</section>' +
-      confidenceSection(plan) +
+      // 2. Your measures
+      `<section class="card square" aria-labelledby="measures-title"><h2 class="section-title" id="measures-title">Your measures</h2>` +
+      `<div class="table-wrap" tabindex="0" role="region" aria-label="Your measures"><table class="measure-bars"><thead><tr>` +
+      `<th scope="col" class="label-caps">Measure</th><th scope="col" class="label-caps">Needs</th>` +
+      `<th scope="col" class="label-caps bar-col">${esc(v.barsHeader)}</th><th scope="col"><span class="sr-only">Chance</span></th>` +
+      `</tr></thead><tbody>${bars}</tbody></table></div>` +
+      `<p class="hint">${esc(v.coverAll)}</p></section>` +
+      // 3. How these numbers were reached
       `<section class="card square" id="how" aria-labelledby="how-title"><h2 class="section-title" id="how-title" tabindex="-1">How these numbers were reached</h2>${trails}</section>` +
-      `<div class="two-col"><section class="card square" aria-labelledby="orders-title"><h2 class="section-title" id="orders-title">Order plan</h2><p class="hint" style="font-size:15px">${esc(op.text)}</p>${orders}</section>` +
-      `<section class="card square guidance" aria-labelledby="guidance-title"><h2 class="section-title" id="guidance-title">Reporting guidance</h2>` +
-      v.guidance.map((g) => `<p><b>${esc(g.lead)}:</b> ${esc(g.text)}</p>`).join('') + '</section></div>' +
+      // 4. Confidence report
+      confidenceSection(plan) +
+      // 5. Running the study
+      `<section class="card square" aria-labelledby="running-title"><h2 class="section-title" id="running-title">Running the study</h2>` +
+      `<h3 class="sub-title">Order plan</h3><p class="hint" style="font-size:15px">${esc(op.text)}</p>${orders}</section>` +
+      // 6. Analyzing the results
+      `<section class="card square guidance" aria-labelledby="analyzing-title"><h2 class="section-title" id="analyzing-title">Analyzing the results</h2>` +
+      `<h3 class="sub-title">Your analysis plan</h3>` +
+      `<p class="hint">Run these after the study. The sample size above is based on the last step.</p>` +
+      (v.analysisNote ? `<p class="hint">${esc(v.analysisNote)}</p>` : '') + analysis +
+      `<h3 class="sub-title">Reporting guidance</h3>` +
+      v.guidance.map((g) => `<p><b>${esc(g.lead)}:</b> ${esc(g.text)}</p>`).join('') + '</section>' +
       `<div class="nav-row"><a class="btn square-btn" href="#/compare/3" id="back">Back</a><button type="button" class="btn square-btn" id="new-plan" data-action="new-plan">Start a new plan</button></div>` +
       `</main>`;
   }

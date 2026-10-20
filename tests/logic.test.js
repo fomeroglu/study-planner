@@ -509,7 +509,14 @@ test('step 3 readouts: variability from the engine, labeled your estimate or cal
   const form = simpleForm('time', { delta: '10', k: '8' });
   form.measures[0].unit = 'seconds';
   const est = L.variabilityReadout(form, form.measures[0], 'all');
-  assert.equal(est.value, '≈ 12 s');
+  assert.equal(L.plainText(est.value), '≈ 12 s');
+  assert.equal(est.value[0].tip, 'From your two answers: if the average difference is 10 seconds and 8 of 10 participants do better, ' +
+    'the other 2 must do worse, which happens when individual differences vary by about 12 seconds (standard deviation). ' +
+    'This is an estimate based on your answers, not a measurement.');
+  form.design = 'between';
+  assert.match(L.variabilityReadout(form, form.measures[0], 'all').value[0].tip,
+    /^From your two answers: if the average difference is 10 seconds and the better condition wins 8 of 10 random pairs of participants, it loses the other 2, which happens when values vary by about 8\.4 seconds between participants/);
+  form.design = 'within';
   assert.equal(est.note, 'Your estimate, not measured.');
   // Past data: σ_diff from the SD at Low consistency, 15 × √1.4 ≈ 18.
   const sd = simpleForm('rating', { variability: 'sd', delta: '10', sd: '15' });
@@ -624,4 +631,20 @@ test('analysis plan: one step for two conditions, protected LSD at three, Holm a
   const af = L.planView(L.runPlan(factorial).plan, factorial).analysis[0];
   assert.equal(af.steps.length, 1);
   assert.equal(L.plainText(af.steps[0]), "Wilcoxon signed-rank for each selected comparison, with the Holm adjustment (2 comparisons). The sample size is planned with the stricter Bonferroni level, alpha 0.025, so it's covered either way.");
+});
+
+test('your measures: every measure at the target says so; a higher target moves the line', () => {
+  const form = simpleForm('time', { delta: '10', k: '8' });
+  const view = L.planView(L.runPlan(form).plan, form);
+  assert.equal(view.coverAll, 'Every measure reaches 80% at ' + view.participants + ' participants.');
+  form.power = '0.9';
+  const high = L.planView(L.runPlan(form).plan, form);
+  assert.equal(high.targetPower, 0.9);
+  assert.match(high.barsHeader, /\(line = 90%\)$/);
+});
+
+test('rounding note: none between subjects without a rank-based test', () => {
+  const form = simpleForm('rating', { variability: 'sd', delta: '5', sd: '10' }, (f) => { f.design = 'between'; });
+  const plan = L.runPlan(form).plan;
+  assert.equal(L.roundingNote(plan, L.confidence(plan, plan.recommendedN, form).report), null);
 });

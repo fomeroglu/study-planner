@@ -989,7 +989,17 @@
         const k = parseNumber(inp.k).value;
         if (d === undefined || k === undefined) return null;
         const sd = paired ? E.sdDiffFromK(d, k) : E.sdFromK(d, k);
-        return { value: `≈ ${fmtUnits(sd, measure.unit)}`, label: 'Variability', note: 'Your estimate, not measured.' };
+        const u = trimmed(measure.unit);
+        const withUnit = (x, sig) => `${fmtSig(x, sig)}${u ? ` ${u}` : ''}`;
+        const others = 10 - k; // the rest of the 10, for the sentence
+        const tip = paired
+          ? `From your two answers: if the average difference is ${withUnit(Math.abs(d), 3)} and ${k} of 10 participants do better, ` +
+            `the other ${others} must do worse, which happens when individual differences vary by about ${withUnit(sd, 2)} (standard deviation). ` +
+            'This is an estimate based on your answers, not a measurement.'
+          : `From your two answers: if the average difference is ${withUnit(Math.abs(d), 3)} and the better condition wins ${k} of 10 random pairs ` +
+            `of participants, it loses the other ${others}, which happens when values vary by about ${withUnit(sd, 2)} between participants ` +
+            '(standard deviation). This is an estimate based on your answers, not a measurement.';
+        return { value: [{ alpha: `≈ ${fmtUnits(sd, measure.unit)}`, tip }], label: 'Variability', note: 'Your estimate, not measured.' };
       }
       if (inp.variability === 'sd' && paired) {
         const sd = parseNumber(inp.sd).value;
@@ -1035,26 +1045,6 @@
   // ---------------------------------------------------------------------------
   // Plan screen (methods.md §5, §6, §8, §10)
   // ---------------------------------------------------------------------------
-
-  // Short "Why" line for the per-measure table, in the mockup's wording.
-  function whyLine(m, fm, plan) {
-    const unlinkedWithin = plan.design === 'within' && !m.paired;
-    if (m.type === 'time') return `Times usually skew right; +5% applied (conservative)${unlinkedWithin ? '; values not linked to a participant' : ''}`;
-    if (m.type === 'count') return `Counts usually skew right; +5% applied (conservative)${unlinkedWithin ? '; values not linked to a participant' : ''}`;
-    if (m.type === 'binary') {
-      if (m.paired) return 'Same participants, yes/no outcome';
-      return unlinkedWithin ? 'Values not linked to a participant, yes/no outcome' : 'Separate groups, yes/no outcome';
-    }
-    let line;
-    if (m.type === 'rating') {
-      line = fm && (fm.preset === 'nasa-tlx' || fm.preset === 'sus')
-        ? 'Composite rating, usually near-normal'
-        : 'Rating, analysed as roughly normal';
-    } else {
-      line = 'Numeric values, analysed as roughly normal';
-    }
-    return unlinkedWithin ? `${line}; values not linked to a participant` : line;
-  }
 
   const TRAIL_GROUPS = [
     { title: 'Your inputs', steps: ['inputs'] },
@@ -1191,30 +1181,40 @@
     return out;
   }
 
+  // "Your measures": each measure's chance of detecting its target at the
+  // recommended n, from the engine's confidence report (methods.md §5, §7).
+  function measureBars(plan) {
+    const n = plan.recommendedN;
+    const target = fmtPercent(plan.power);
+    return plan.measures.map((m) => {
+      const power = E.confidenceReport(plan, n, m.name).power;
+      const percent = fmtPercent(power);
+      return {
+        name: m.name,
+        primary: m.primary,
+        needs: m.total,
+        power,
+        percent,
+        reaches: power >= plan.power,
+        ariaLabel: `${m.name}: ${percent} chance at ${n} participants; target ${target}.`,
+      };
+    });
+  }
+
   function planView(plan, form) {
-    const formMeasure = (name) => form.measures.find((x) => trimmed(x.name) === name);
-    const rows = plan.measures.map((m) => ({
-      name: m.name,
-      primary: m.primary,
-      needed: m.total,
-      covered: m.total <= plan.recommendedN,
-      status: m.total <= plan.recommendedN ? 'covered' : 'underpowered',
-      method: m.method,
-      why: whyLine(m, formMeasure(m.name), plan),
-    }));
-    const warnings = plan.underpowered.map((u) =>
-      `${u.name} is underpowered at ${plan.recommendedN}: ${fmtPercent(u.powerAtRecommended)} chance of detecting your target. ` +
-      `It would need ${u.needs}. Report it as supporting evidence.`);
+    const bars = measureBars(plan);
+    const below = bars.some((b) => !b.reaches);
     return {
       participants: plan.recommendedN,
       drivenBy: plan.primary,
       design: `${plan.design === 'within' ? 'Within' : 'Between'} · ${plan.k} conditions`,
       powerAlpha: [`${fmtPower(plan.power)} · `, planAlphaToken(plan)],
-      rows,
-      warnings,
-      coverAll: plan.underpowered.length
-        ? `To cover every measure: ${plan.nCoverAll} participants (${plan.driving}).`
-        : null,
+      measures: bars,
+      barsHeader: `Chance of detecting your target at ${plan.recommendedN} (line = ${fmtPercent(plan.power)})`,
+      targetPower: plan.power,
+      coverAll: below
+        ? `To cover every measure: ${plan.nCoverAll} participants. Report measures below the line as supporting evidence.`
+        : `Every measure reaches ${fmtPercent(plan.power)} at ${plan.recommendedN} participants.`,
       trails: plan.measures
         .slice()
         .sort((a, b) => (b.primary ? 1 : 0) - (a.primary ? 1 : 0))
@@ -1249,6 +1249,34 @@
       if (!(err instanceof E.EngineError)) throw err;
       return { report: null, curve: null, error: placeError(err, form, {}) };
     }
+  }
+
+  /**
+   * Why the plan can detect slightly less than the target: the primary's
+   * sample size is rounded up for the rank-based adjustment and for
+   * counterbalancing. Shown when the slider is above the minimum the test
+   * itself needs and no higher than the recommended n; null otherwise.
+   */
+  function roundingNote(plan, report) {
+    const m = plan.measures.find((x) => x.primary);
+    const top = m.comparisons.reduce((a, b) => (b.n > a.n ? b : a));
+    if (plan.design === 'between' && top.cellsPerLevel) return null;
+    const valuesOf = (step) => m.steps.filter((st) => st.step === step).map((st) => st.value);
+    const tested = Math.max(...valuesOf('sample size'));
+    const ranked = m.rank ? Math.max(...valuesOf('rank adjustment')) : tested;
+    // The minimum in total participants: per condition × conditions between subjects.
+    const minimum = plan.design === 'between' ? tested * plan.k : tested;
+    const n = report.participants;
+    if (!(n > minimum && n <= plan.recommendedN)) return null;
+    const reasons = [];
+    if (m.rank) reasons.push('the rank-based adjustment');
+    if (plan.design === 'within' && m.total > ranked) reasons.push('counterbalancing');
+    if (!reasons.length) return null;
+    let target;
+    if (report.mode === 'units') target = targetPhrase(report.target.units, report.unit);
+    else if (report.mode === 'participants') target = `your target of ${fmtSig(report.target.kOf10, 2)} of 10 doing better`;
+    else target = `your ${fmtSig(report.target.percentagePoints, 3)}-point difference`;
+    return `Your plan rounds up to ${plan.recommendedN} for ${reasons.join(' and ')}, so it can detect differences slightly smaller than ${target}.`;
   }
 
   function tickLabel(kind, value, unit) {
@@ -1507,6 +1535,7 @@
     sliderRange,
     confidence,
     confidenceView,
+    roundingNote,
     findView,
   };
 });

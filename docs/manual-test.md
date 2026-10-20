@@ -72,7 +72,11 @@ you saw.
       better on the better condition?", shows "(6 to 9)", "Why 6 to 9?"
       (tooltip on hover and focus: "5 of 10 means no improvement…") and
       "Answer for a 10-second difference." Enter 8. Variability shows
-      "≈ 12 s", "Your estimate, not measured." and "Results will be in
+      "≈ 12 s" (dotted underline; its tooltip on hover and focus reads
+      "From your two answers: if the average difference is 10 seconds and
+      8 of 10 participants do better, the other 2 must do worse, which
+      happens when individual differences vary by about 12 seconds
+      (standard deviation)…"), "Your estimate, not measured." and "Results will be in
       seconds." Sidebar shows 18 and "Set by Task time, your primary
       measure. Updates as you type."
 - [ ] Clear question 1: the line changes to "Results will be in
@@ -91,17 +95,48 @@ you saw.
       question 2 back. Leave it open.
 - [ ] Task success: 70 and 85. Sidebar: 18, 30, 126. Before a measure is
       filled in, its row reads "not filled in yet".
-- [ ] Plan: 18 participants, driven by Task time, "Within · 3 conditions",
-      Power · alpha "0.80 · 0.05" (the 0.05 has the three-condition
-      tooltip). Table: 18 covered, 30 and 126 underpowered (amber, with the
-      words "underpowered"). Two warnings: "NASA-TLX is underpowered at 18:
-      62% chance of detecting your target. It would need 30. Report it as
-      supporting evidence." and the same for Task success with 18% and 126.
-- [ ] "How these numbers were reached", NASA-TLX: "Assumption" includes
-      "Assumed: participants aren't especially consistent across conditions
-      (consistency Low, ρ = 0.3), the cautious choice…"; sample size "n =
-      26.7083, rounded up: 27", order plan "…: 30".
-- [ ] "Your analysis plan" lists two steps for each measure:
+- [ ] Plan screen sections, in order: Recommended sample; Your measures;
+      How these numbers were reached; Confidence report; Running the study;
+      Analyzing the results.
+- [ ] Recommended sample: 18 participants, driven by Task time, "Within ·
+      3 conditions", Power · alpha "0.80 · 0.05" (the 0.05 has the
+      three-condition tooltip).
+- [ ] Your measures: columns Measure, Needs, "Chance of detecting your
+      target at 18 (line = 80%)" and the percentage. Rows: ★ Task time,
+      needs 18, teal bar past the line, "91%"; NASA-TLX, needs 30, amber
+      bar short of the line, "62%"; Task success, needs 126, amber bar,
+      "18%". Each percentage matches its bar's color. Below: "To cover
+      every measure: 126 participants. Report measures below the line as
+      supporting evidence." No method or reason columns, no warning boxes.
+- [ ] With a screen reader, each bar reads like "NASA-TLX: 62% chance at
+      18 participants; target 80%."
+- [ ] "How these numbers were reached" comes right after Your measures:
+      Task time open, others closed. Alpha reads "Alpha per comparison =
+      0.05, after a significant overall test (Fisher's protected LSD, three
+      conditions): 0.05" (tooltip on the last 0.05). An "Assumption" line
+      reads "Planned assuming the overall test is significant; the true
+      chance of finding a winner is slightly lower. A simulation check is
+      planned for version 1.1." Sample size reads "n = 13.1301, rounded up:
+      14" and "14 ÷ 0.955 (3/π) = 14.66, rounded up: 15", and the order
+      plan "18 fits 6 orders: 3 participants each."
+- [ ] NASA-TLX's trail: "Assumption" includes "Assumed: participants
+      aren't especially consistent across conditions (consistency Low,
+      ρ = 0.3), the cautious choice…"; sample size "n = 26.7083, rounded up:
+      27", order plan "…: 30".
+- [ ] Confidence report at 18 (the default): under the tiles, "Your plan
+      rounds up to 18 for the rank-based adjustment and counterbalancing,
+      so it can detect differences slightly smaller than your 10-second
+      target." The note stays at 15 to 18 and disappears at 14 (the
+      minimum) and below, and above 18.
+- [ ] Move the slider to 12: tiles show 11 s, ± 7.5 s, 73%. The shaded
+      area is labeled "73% caught" and "27% missed". The precision bar shows
+      2.5 s, 10 s, 17.5 s.
+- [ ] Drag the slider: tiles, curves and precision bar all update while
+      dragging.
+- [ ] Running the study: the order plan, 6 orders (A B C, B C A, C A B, C B
+      A, A C B, B A C), key A = Current, B = Prototype A, C = Prototype B.
+- [ ] Analyzing the results: "Your analysis plan" first, then "Reporting
+      guidance". The analysis plan lists two steps for each measure:
       Task time, "Step 1: Friedman test at 0.05." then "Step 2: if it's
       significant, Wilcoxon signed-rank for each pair at 0.05 (Fisher's
       protected LSD)."; NASA-TLX, repeated-measures ANOVA then paired
@@ -110,22 +145,6 @@ you saw.
       Above the steps (within subjects only): "If participants give several
       values per condition, average them first; the sample size counts
       people, not trials."
-- [ ] Move the slider to 12: tiles show 11 s, ± 7.5 s, 73%. The shaded
-      area is labeled "73% caught" and "27% missed". The precision bar shows
-      2.5 s, 10 s, 17.5 s.
-- [ ] Drag the slider: tiles, curves and precision bar all update while
-      dragging.
-- [ ] "How these numbers were reached": Task time open, others closed.
-      Alpha reads "Alpha per comparison = 0.05, after a significant overall
-      test (Fisher's protected LSD, three conditions): 0.05" (tooltip on the
-      last 0.05). An "Assumption" line reads "Planned assuming the overall
-      test is significant; the true chance of finding a winner is slightly
-      lower. A simulation check is planned for version 1.1." Sample size
-      reads "n = 13.1301, rounded up: 14" and "14 ÷ 0.955 (3/π) = 14.66,
-      rounded up: 15", and the order plan "18 fits 6 orders: 3 participants
-      each."
-- [ ] Order plan: 6 orders (A B C, B C A, C A B, C B A, A C B, B A C), key
-      A = Current, B = Prototype A, C = Prototype B.
 - [ ] Between subjects: go back to step 1, choose "One condition", then
       step 3, Task time. Question 2 is titled "How clear should the
       difference be?" with the sentence "If you compared one random person

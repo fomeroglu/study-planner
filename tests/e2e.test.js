@@ -63,21 +63,43 @@ test('running example: protected LSD, recommends 18, driven by task time', () =>
   assert.equal(tokenOf(note).tip, LSD_TIP);
 });
 
-test('running example: per-measure table and underpowered warnings', () => {
+test('running example: your measures as power bars at the recommended n', () => {
   const form = runningExampleForm();
   const view = L.planView(L.runPlan(form).plan, form);
-  const row = (name) => view.rows.find((x) => x.name === name);
-  assert.deepEqual([row('Task time').needed, row('Task time').status, row('Task time').method], [18, 'covered', 'Wilcoxon signed-rank']);
-  assert.deepEqual([row('NASA-TLX').needed, row('NASA-TLX').status, row('NASA-TLX').method], [30, 'underpowered', 'Paired t-test']);
-  assert.deepEqual([row('Task success').needed, row('Task success').status, row('Task success').method], [126, 'underpowered', 'McNemar']);
-  assert.equal(row('Task time').why, 'Times usually skew right; +5% applied (conservative)');
-  assert.equal(row('NASA-TLX').why, 'Composite rating, usually near-normal');
-  assert.equal(row('Task success').why, 'Same participants, yes/no outcome');
-  assert.deepEqual(view.warnings, [
-    'NASA-TLX is underpowered at 18: 62% chance of detecting your target. It would need 30. Report it as supporting evidence.',
-    'Task success is underpowered at 18: 18% chance of detecting your target. It would need 126. Report it as supporting evidence.',
+  assert.equal(view.barsHeader, 'Chance of detecting your target at 18 (line = 80%)');
+  assert.equal(view.targetPower, 0.8);
+  assert.deepEqual(view.measures.map((b) => [b.name, b.primary, b.needs, b.percent, b.reaches]), [
+    ['Task time', true, 18, '91%', true],
+    ['NASA-TLX', false, 30, '62%', false],
+    ['Task success', false, 126, '18%', false],
   ]);
-  assert.equal(view.coverAll, 'To cover every measure: 126 participants (Task success).');
+  assert.deepEqual(view.measures.map((b) => b.ariaLabel), [
+    'Task time: 91% chance at 18 participants; target 80%.',
+    'NASA-TLX: 62% chance at 18 participants; target 80%.',
+    'Task success: 18% chance at 18 participants; target 80%.',
+  ]);
+  // The bars match the engine's power for underpowered measures.
+  const plan = L.runPlan(form).plan;
+  plan.underpowered.forEach((u) => {
+    const bar = view.measures.find((b) => b.name === u.name);
+    assert.ok(Math.abs(bar.power - u.powerAtRecommended) < 1e-12, u.name);
+  });
+  assert.equal(view.coverAll, 'To cover every measure: 126 participants. Report measures below the line as supporting evidence.');
+  // The old table and warning boxes are gone.
+  assert.equal(view.rows, undefined);
+  assert.equal(view.warnings, undefined);
+});
+
+test('running example: the rounding note in the confidence report', () => {
+  const form = runningExampleForm();
+  const plan = L.runPlan(form).plan;
+  const note = (n) => L.roundingNote(plan, L.confidence(plan, n, form).report);
+  // Task time: paired t-test n = 14, then 15 (rank-based), then 18 (6 orders).
+  assert.equal(note(18), 'Your plan rounds up to 18 for the rank-based adjustment and counterbalancing, so it can detect differences slightly smaller than your 10-second target.');
+  assert.equal(note(15), note(18));
+  assert.equal(note(14), null); // the exact minimum
+  assert.equal(note(12), null);
+  assert.equal(note(24), null); // above the plan: not a rounding effect
 });
 
 test('running example: trail for task time, with the protected LSD assumption', () => {
