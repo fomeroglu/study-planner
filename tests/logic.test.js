@@ -164,13 +164,30 @@ test('buildStudy: two variables give one input set per selected comparison', () 
   assert.equal(plan.m, 2);
 });
 
+test('defaults are generic: unnamed variable and measure, conditions A, B, C ...', () => {
+  const form = L.newForm();
+  assert.equal(form.factors[0].name, '');
+  assert.deepEqual(form.factors[0].levels.map((l) => l.name), ['Condition A', 'Condition B']);
+  form.factors[0].levels.push(L.nextLevel(form.factors[0]));
+  assert.equal(form.factors[0].levels[2].name, 'Condition C');
+  assert.equal(form.measures[0].name, '');
+  assert.equal(L.conditionName(25), 'Condition Z');
+  assert.equal(L.conditionName(26), 'Condition 27');
+  assert.equal(L.newFactor().levels[1].name, 'Condition B');
+  assert.equal(L.step1View(form).comparisonLine.startsWith('With 3 conditions'), true);
+  // Presets still fill their own names.
+  assert.equal(L.presetMeasure('nasa-tlx').name, 'NASA-TLX');
+});
+
 test('buildStudy: missing names, types and inputs are reported, not guessed', () => {
   const form = L.newForm();
+  form.factors[0].levels[0].name = '';
   const b = L.buildStudy(form);
   assert.equal(b.study, null);
   const targets = b.issues.map((i) => i.target);
   assert.ok(targets.includes('design'));
   assert.ok(targets.includes(L.ids.level(form.factors[0].levels[0].id)));
+  assert.ok(!targets.includes(L.ids.level(form.factors[0].levels[1].id)));
   assert.ok(targets.includes(L.ids.measureName(form.measures[0].id)));
   assert.ok(targets.includes(L.ids.measureType(form.measures[0].id)));
   assert.ok(b.issues.every((i) => i.kind === 'missing'));

@@ -196,23 +196,20 @@
   // Step 1: conditions
   // ---------------------------------------------------------------------------
 
-  const LEVEL_PLACEHOLDERS = [['Current', 'Prototype A', 'Prototype B'], ['Seated', 'Standing']];
-
   function factorCard(f, i) {
     const many = state.form.factors.length > 1;
     const levelIssue = visibleIssue(ids.factorLevels(f.id));
     const levels = f.levels.map((l, j) => {
       const issue = visibleIssue(ids.level(l.id));
-      const ph = (LEVEL_PLACEHOLDERS[i] || [])[j] || '';
       return `<div class="level-cell"><div class="level-wrap">${textInput({
-        id: ids.level(l.id), bind: 'level', data: { factor: f.id, level: l.id }, value: l.name, placeholder: ph,
+        id: ids.level(l.id), bind: 'level', data: { factor: f.id, level: l.id }, value: l.name, placeholder: L.conditionName(j),
         label: `Condition ${j + 1}${many && trimmed(f.name) ? ` of ${trimmed(f.name)}` : ''}`,
       })}${f.levels.length > 2 ? `<button type="button" class="icon-btn" id="remove-level-${l.id}" data-action="remove-level" data-factor="${f.id}" data-level="${l.id}" aria-label="Remove condition ${j + 1}${trimmed(l.name) ? `, ${esc(trimmed(l.name))}` : ''}">×</button>` : ''}</div>` +
         `${errorEl(ids.level(l.id), issue)}</div>`;
     }).join('');
     return `<section class="card" aria-labelledby="factor-${f.id}-title"><h2 class="sr-only" id="factor-${f.id}-title">Independent variable ${i + 1}</h2>` +
       `<div class="field"><label for="${ids.factorName(f.id)}">Independent variable ${i + 1}</label>${textInput({
-        id: ids.factorName(f.id), bind: 'factor-name', data: { factor: f.id }, value: f.name, placeholder: i === 0 ? 'Keyboard design' : 'Posture',
+        id: ids.factorName(f.id), bind: 'factor-name', data: { factor: f.id }, value: f.name, placeholder: i === 0 ? 'e.g., Interface design' : 'e.g., Posture',
       })}${errorEl(ids.factorName(f.id), visibleIssue(ids.factorName(f.id)))}</div>` +
       `<div role="group" id="${ids.factorLevels(f.id)}" aria-labelledby="${ids.factorLevels(f.id)}-label" class="field"${describedBy([levelIssue && `${ids.factorLevels(f.id)}-error`])}>` +
       `<div id="${ids.factorLevels(f.id)}-label">Conditions</div><div class="level-grid">${levels}` +
@@ -310,8 +307,8 @@
     return `<section class="card focus-card" aria-labelledby="mhead-${m.id}" style="gap:18px">` +
       `<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><h2 class="mono secondary" style="margin:0;font-size:14px;font-weight:400" id="mhead-${m.id}">Measure ${i + 1}</h2>` +
       `<button type="button" class="primary-toggle" id="primary-${m.id}" data-action="primary" data-measure="${m.id}" aria-pressed="${m.primary}">${m.primary ? '★ Primary' : '☆ Primary'}</button></div>` +
-      `<div class="grid-2"><div class="field"><label for="${ids.measureName(m.id)}">Name</label>${textInput({ id: ids.measureName(m.id), bind: 'measure-name', data: { measure: m.id }, value: m.name, placeholder: i === 0 ? 'Task time' : 'Task success' })}${errorEl(ids.measureName(m.id), visibleIssue(ids.measureName(m.id)))}</div>` +
-      (m.type === 'binary' ? '' : `<div class="field"><label for="measure-${m.id}-unit">Unit</label>${textInput({ id: `measure-${m.id}-unit`, bind: 'measure-unit', data: { measure: m.id }, value: m.unit, placeholder: m.type === 'time' || !m.type ? 'seconds' : 'points' })}</div>`) +
+      `<div class="grid-2"><div class="field"><label for="${ids.measureName(m.id)}">Name</label>${textInput({ id: ids.measureName(m.id), bind: 'measure-name', data: { measure: m.id }, value: m.name, placeholder: 'e.g., Task time' })}${errorEl(ids.measureName(m.id), visibleIssue(ids.measureName(m.id)))}</div>` +
+      (m.type === 'binary' ? '' : `<div class="field"><label for="measure-${m.id}-unit">Unit</label>${textInput({ id: `measure-${m.id}-unit`, bind: 'measure-unit', data: { measure: m.id }, value: m.unit, placeholder: m.type === 'time' || !m.type ? 'e.g., seconds' : 'e.g., points' })}</div>`) +
       `</div>` +
       group(ids.measureType(m.id), '<div id="%ID%" style="font-size:14px;font-weight:500">Result type</div>',
         `<div class="chip-row">${types}</div>${m.type ? `<p class="small-hint">${esc(L.TYPE_HELP[m.type])}</p>` : ''}`, 'field') +
@@ -872,7 +869,7 @@
     design(el) { state.form.design = el.dataset.value; },
     'add-level'(el) {
       const f = findFactor(el.dataset.factor);
-      const l = L.newLevel('');
+      const l = L.nextLevel(f);
       f.levels.push(l);
       pruneComparisons();
       return () => focusTarget(ids.level(l.id));

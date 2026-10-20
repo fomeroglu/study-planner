@@ -52,6 +52,11 @@ test('no em dashes in any user-facing text', () => {
   assert.ok(!generatedText().includes('—'), 'em dash in generated display text');
 });
 
+test('no wording that assumes a particular study (keyboards, prototypes, a "Current" condition)', () => {
+  ['index.html', 'app.js', 'logic.js'].forEach((f) =>
+    assert.ok(!/\b(Current|Keyboard|keyboard|Prototype|prototype)\b/.test(read(f)), `study-specific wording in ${f}`));
+});
+
 test('no Cohen\'s small, medium or large labels', () => {
   const pattern = /\b(small|medium|large)\s+(effect|effects|effect size)\b/i;
   UI_FILES.concat(['engine.js']).forEach((f) => assert.ok(!pattern.test(read(f)), `Cohen's size label in ${f}`));

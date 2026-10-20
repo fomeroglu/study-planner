@@ -12,16 +12,20 @@ you saw.
 
 - [ ] Start: two cards, "Compare designs" and "Find problems". The header
       says "Runs in your browser. Nothing is uploaded."
-- [ ] Step 1: name the variable "Keyboard design"; conditions Current,
-      Prototype A, then "+ Add condition" and Prototype B. Choose "All
-      conditions". There are no comparison questions; one line reads "With 3
+- [ ] Step 1 starts generic: the variable name is empty with the hint
+      "e.g., Interface design"; the conditions read "Condition A" and
+      "Condition B"; "+ Add condition" adds "Condition C". No wording
+      mentions keyboards, prototypes or a "Current" condition.
+- [ ] Name the variable "Keyboard design" and rename the conditions to
+      Current, Prototype A and Prototype B. Choose "All conditions". There are no comparison questions; one line reads "With 3
       conditions, every pair is compared (3 comparisons), using a stricter
       test for each so the overall chance of a false result stays at 5%."
       Sidebar: Within subjects, 3, "3, every pair".
 - [ ] With only two conditions, the line reads "One comparison: [first]
       vs. [second]".
-- [ ] Step 2: measure 1 "Task time", unit "seconds", type Time. Add the
-      NASA-TLX preset. Add a measure "Task success", type Success / failure.
+- [ ] Step 2: the measure name is empty with the hint "e.g., Task time".
+      Name measure 1 "Task time", unit "seconds", type Time. Add the
+      NASA-TLX preset (it fills its own name). Add a measure "Task success", type Success / failure.
       Sidebar: "3 (primary: Task time)".
 - [ ] Step 3, Task time: 10 seconds, estimate, 8 of 10. The question reads
       "At a 10-second difference, how many of 10 participants would be
@@ -84,8 +88,8 @@ you saw.
 
 ## 5. Disabled options (visible, not selectable)
 
-Add a second independent variable (Posture: Seated, Standing) and choose
-"All conditions".
+Add a second independent variable (rename it Posture, with conditions
+Seated and Standing) and choose "All conditions".
 
 - [ ] Interactions: "Interaction comparisons (a difference of
       differences)" is shown dashed, cannot be selected, and reads
@@ -99,15 +103,15 @@ Add a second independent variable (Posture: Seated, Standing) and choose
 
 ## 6. Error messages (each appears under its field)
 
-On step 1, click "Next" with everything empty:
+On step 1, clear "Condition A" and click "Next" without choosing a design:
 
-- [ ] "Name this condition." under each empty condition and "Choose what
-      each participant experiences." Focus goes to the first empty
-      condition.
+- [ ] "Name this condition." under the cleared condition and "Choose what
+      each participant experiences." Focus goes to the cleared condition.
 - [ ] With two variables and no comparison selected: "Choose at least one
       comparison."
-- [ ] Two conditions both named "Current": "Condition names must be unique
-      within Keyboard design."
+- [ ] Two conditions with the same name (rename "Condition B" to
+      "Condition A"), variable named "Interface design": "Condition names
+      must be unique within Interface design."
 - [ ] With two variables, an unnamed variable: "Name this independent
       variable."
 

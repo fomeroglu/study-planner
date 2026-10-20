@@ -74,8 +74,20 @@
     return { id: uid('l'), name: name || '' };
   }
 
+  // Default name for the condition at a position: "Condition A", "Condition B", ...
+  // Past Z it falls back to numbers ("Condition 27").
+  function conditionName(index) {
+    return `Condition ${index < 26 ? String.fromCharCode(65 + index) : index + 1}`;
+  }
+
+  // A new independent variable: unnamed, with two conditions the user can rename.
   function newFactor() {
-    return { id: uid('f'), name: '', levels: [newLevel(), newLevel()] };
+    return { id: uid('f'), name: '', levels: [newLevel(conditionName(0)), newLevel(conditionName(1))] };
+  }
+
+  // The next condition for a variable, continuing the letters.
+  function nextLevel(factor) {
+    return newLevel(conditionName(factor.levels.length));
   }
 
   function newMeasure(primary) {
@@ -1297,6 +1309,8 @@
     newFindForm,
     newFactor,
     newLevel,
+    nextLevel,
+    conditionName,
     newMeasure,
     presetMeasure,
     inputsFor,
