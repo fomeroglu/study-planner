@@ -153,7 +153,7 @@
     }
     if (r.screen === 'find') {
       return `<header class="header"><a class="brand" href="#/start" id="brand">Study Planner</a><div class="header-end">` +
-        `<div class="header-note">Find problems · formative</div>${themeToggle()}</div></header>`;
+        `<div class="header-note">Find problems</div>${themeToggle()}</div></header>`;
     }
     const pills = STEP_NAMES.map((name, i) => {
       const s = i + 1;
