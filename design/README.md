@@ -54,6 +54,22 @@ screen uses the same role mapping.
 
 ## Recurring patterns
 
+- **Header**: "Study Planner" on the left; on the right, the step
+  navigation (Compare designs) or "Find problems", then the theme
+  toggle. The mockups' "Runs in your browser. Nothing is uploaded." line
+  is not shown; the privacy statement is in the README.
+- **Theme toggle**: a 40px round icon button in the header's right
+  corner, with no visible text: a moon in the dark theme, a sun in the
+  light theme. Transparent background, decorative-line border, icon in
+  the secondary text color. Its label, "Switch to light mode" or "Switch
+  to dark mode", is the accessible name and the hover tooltip.
+- **Footer** on every screen, below a thin decorative line, in small
+  secondary text; two columns that stack on narrow screens. Left:
+  "Study Planner" (bold, primary text) and "Version 1.0 · How it
+  calculates · Source on GitHub". Right, right-aligned: "Designed and
+  built by Fatih Omeroglu" (name in primary text) and "fbomeroglu.com ·
+  GitHub · LinkedIn". External links open in a new tab (rel="noopener",
+  with a screen-reader note); the dots are hidden from screen readers.
 - **Step navigation** in the header: completed steps are links with a
   check mark; the current step is filled.
 - **Option buttons** (design, result type, comparisons): real buttons

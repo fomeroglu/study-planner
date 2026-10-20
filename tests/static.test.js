@@ -68,9 +68,16 @@ test('no network requests at runtime except the IBM Plex fonts', () => {
     const src = read(f);
     [/\bfetch\s*\(/, /XMLHttpRequest/, /WebSocket/, /sendBeacon/, /EventSource/, /\bimport\s*\(/, /new\s+Image\s*\(/, /\.src\s*=/]
       .forEach((p) => assert.ok(!p.test(src), `${p} in ${f}`));
-    // Only a link to the methods page (opened by the user, never requested by the page).
+    // Only links the user opens (methods page, footer), never requested by the page.
+    const allowed = [
+      'https://github.com/fomeroglu/study-planner/blob/main/docs/methods.md',
+      'https://github.com/fomeroglu/study-planner',
+      'https://fbomeroglu.com',
+      'https://github.com/fomeroglu',
+      'https://linkedin.com/in/fomeroglu/',
+    ];
     (src.match(/https?:\/\/[^\s'"`)]+/g) || []).forEach((url) =>
-      assert.ok(url.startsWith('https://github.com/fomeroglu/study-planner/'), `unexpected URL ${url} in ${f}`));
+      assert.ok(allowed.includes(url), `unexpected URL ${url} in ${f}`));
   });
   const html = read('index.html');
   (html.match(/https?:\/\/[^\s'"`)]+/g) || []).forEach((url) =>
@@ -181,4 +188,24 @@ test('design/README.md describes the current running example', () => {
   assert.ok(!/each vs\. Current, adjusted/.test(readme));
   assert.match(readme, /Fisher's protected LSD/);
   assert.match(readme, /recommends 18\s+participants/);
+});
+
+test('header: no privacy line; the theme toggle is an icon button with a label and tooltip', () => {
+  const app = read('app.js');
+  assert.ok(!app.includes('Runs in your browser'), 'the privacy statement belongs in the README only');
+  assert.match(read('README.md'), /## Privacy/);
+  assert.ok(app.includes('class="theme-toggle" data-action="theme" aria-label="${label}" title="${label}">${light ? ICON_SUN : ICON_MOON}</button>'));
+  assert.ok(app.includes("'Switch to dark mode' : 'Switch to light mode'"));
+  const css = read('styles.css');
+  assert.match(css, /\.theme-toggle \{[^}]*width: 40px;[^}]*height: 40px;[^}]*border-radius: 50%;[^}]*color: var\(--text-2\);/);
+});
+
+test('footer: links open in a new tab with rel="noopener" and a screen-reader note; dots are hidden', () => {
+  const app = read('app.js');
+  assert.ok(app.includes('target="_blank" rel="noopener"'));
+  assert.ok(app.includes('<span class="sr-only"> (opens in a new tab)</span>'));
+  assert.ok(app.includes('class="footer-dot" aria-hidden="true">·</span>'));
+  ['How it calculates', 'Source on GitHub', 'fbomeroglu.com', "'GitHub'", "'LinkedIn'", 'Designed and built by',
+    'Fatih Omeroglu', 'Version ${VERSION}'].forEach((text) => assert.ok(app.includes(text), text));
+  assert.ok(app.includes('t.innerHTML = header() + screenHtml() + footer();'));
 });
