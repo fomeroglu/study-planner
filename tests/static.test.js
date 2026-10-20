@@ -21,8 +21,6 @@ function generatedText() {
   f.levels[0].name = 'Current';
   f.levels[1].name = 'Prototype A';
   f.levels.push(L.newLevel('Prototype B'));
-  form.comparisons.scheme = 'baseline';
-  form.adjust = true;
   const time = form.measures[0];
   Object.assign(time, { name: 'Task time', unit: 'seconds', type: 'time' });
   Object.assign(L.inputsFor(time, 'all'), { delta: '10', k: '8' });

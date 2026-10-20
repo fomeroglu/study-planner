@@ -30,25 +30,29 @@ re-validated (see validation/).
 ### 1.2 Comparisons
 
 The study is sized for the comparisons the decision rests on, not for
-an omnibus test. The user chooses:
+an omnibus test. The goal is to pick a winner.
 
-- Each condition vs. a baseline: m = k − 1 comparisons
-- Every pair: m = k(k − 1)/2 comparisons
-- With two or more independent variables: comparisons between specific
-  combinations of levels, and main-effect comparisons (levels of one
-  variable, averaged across the others). See section 1.5. Interaction
-  comparisons are planned for a later version (section 13).
+- One independent variable: every pair of conditions is compared,
+  m = k(k − 1)/2 comparisons. With two conditions, that is one
+  comparison. The user does not choose the comparisons.
+- With two or more independent variables: the user chooses comparisons
+  between specific combinations of levels, and main-effect comparisons
+  (levels of one variable, averaged across the others). See section
+  1.5. Interaction comparisons are planned for a later version
+  (section 13).
+
+Comparing each condition with a baseline only is planned for a later
+version (section 13).
 
 ### 1.3 Adjusting for multiple comparisons
 
-The user chooses how the comparisons will be used:
+Comparisons are always adjusted, since the goal is to pick a winner:
+each comparison uses alpha / m (Bonferroni), keeping the overall
+false-alarm risk at alpha. With one comparison, alpha / m = alpha.
+Holm's procedure can be used at analysis and is never less powerful.
 
-- Pick a winner among the conditions: each comparison uses alpha / m
-  (Bonferroni), keeping the overall false-alarm risk at alpha. Holm's
-  procedure can be used at analysis and is never less powerful.
-- Each comparison answers its own question: no adjustment; each uses
-  alpha. This is a defensible position when each comparison stands as a
-  separate claim (Rothman, 1990).
+Treating each comparison as its own question, without adjustment, is
+planned for a later version (section 13).
 
 ### 1.4 Planned analysis
 
@@ -376,6 +380,11 @@ recorded in validation/answer-key.md.
 - 1.1: log-scale planning for time (O'Keeffe, Ambler & Barber, 2017);
   a simulation check of the plan against skewed data.
 - Later: check mode (upload data, confirm the method), mixed designs.
+- Later: comparing each condition with a baseline only (m = k − 1
+  comparisons), for one independent variable.
+- Later: unadjusted comparisons, where each comparison answers its own
+  question and uses the full alpha. This is a defensible position when
+  each comparison stands as a separate claim (Rothman, 1990).
 - Later: interaction comparisons (a difference of differences). These
   are usually smaller than main effects and need many more
   participants; between subjects they need a different calculation.

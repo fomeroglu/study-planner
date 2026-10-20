@@ -41,10 +41,20 @@ Tolerance (methods.md §12): exact match on the rounded-up n, except McNemar
 - Rows 3 to 5: dz is the exact Φ⁻¹(0.8) = 0.841621..., not 0.842. Row 4
   sits 0.037 above the boundary at 16. With dz = 0.842 it would still
   round to 17.
-- Rows 7d and 7e: the running example's confidence report. Task time is
-  rank-based, so power and detectable difference use the effective n
-  12 × 3/π ≈ 11.46 (methods.md section 7). Precision (7c) uses the actual
-  n, so it is unchanged.
+- The running example (three keyboard designs) compares every pair, always
+  adjusted (methods.md §1.2, §1.3): m = 3, alpha 0.05/3 per comparison.
+  Its task-time recommendation follows rows 5b and 8: n = 17.7366 → 18,
+  18 ÷ 0.955 = 18.85 → 19, rounded up to 24 for 6 orders. The interface's
+  end-to-end test (tests/e2e.test.js) expects 24.
+- Rows 7a to 7e use alpha 0.025, from an earlier version of the running
+  example (each design vs. Current, 2 comparisons). They remain valid
+  reference cases for the confidence report but no longer match the
+  running example, whose report at 12 participants uses alpha 0.05/3
+  (power 0.53, detectable 13.2 s; precision ± 7.5 s is unchanged because
+  intervals are not adjusted).
+- Rows 7d and 7e: Task time is rank-based, so power and detectable
+  difference use the effective n 12 × 3/π ≈ 11.46 (methods.md section 7).
+  Precision (7c) uses the actual n, so it is unchanged.
 - Row 10: the value comes from Connor's (1987) normal approximation.
   G*Power's McNemar routine uses a different method, so the ±2 tolerance
   applies.

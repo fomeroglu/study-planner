@@ -103,8 +103,7 @@
     return {
       design: null,
       factors: [newFactor()],
-      comparisons: { scheme: null, baseline: null, selected: [] },
-      adjust: null,
+      comparisons: { selected: [] },
       alpha: '0.05',
       power: '0.80',
       measures: [newMeasure(true)],
@@ -143,7 +142,6 @@
     factorLevels: (f) => `factor-${f}-levels`,
     level: (l) => `level-${l}`,
     comparisons: () => 'comparisons',
-    adjust: () => 'adjust',
     measures: () => 'measures',
     measureName: (m) => `measure-${m}-name`,
     measureType: (m) => `measure-${m}-type`,
@@ -237,12 +235,12 @@
       .filter(Boolean);
   }
 
-  // Number of comparisons, from the engine for one variable (methods.md §1.2).
+  // Number of comparisons (methods.md §1.2): every pair for one variable,
+  // the selected ones for two or more.
   function comparisonCount(form) {
     if (form.factors.length >= 2) return form.comparisons.selected.length || null;
-    if (!form.comparisons.scheme) return null;
     try {
-      return E.countComparisons(form.factors[0].levels.length, form.comparisons.scheme);
+      return E.countComparisons(form.factors[0].levels.length, 'all-pairs');
     } catch (err) {
       return null;
     }
@@ -312,15 +310,8 @@
     let comparisons = null;
     const byId = {};
     if (form.factors.length < 2) {
-      if (!form.comparisons.scheme) {
-        issues.push(issue(1, ids.comparisons(), 'Choose which comparisons matter.', 'missing'));
-      } else {
-        const f = form.factors[0];
-        const base = f.levels.find((l) => l.id === form.comparisons.baseline) || f.levels[0];
-        comparisons = form.comparisons.scheme === 'baseline'
-          ? { scheme: 'baseline', baseline: [trimmed(base.name)] }
-          : { scheme: 'all-pairs' };
-      }
+      // One variable: every pair is compared (methods.md §1.2).
+      comparisons = { scheme: 'all-pairs' };
     } else {
       const chosen = selectedComparisons(form);
       if (chosen.length === 0) {
@@ -338,10 +329,6 @@
         });
         comparisons = { list };
       }
-    }
-    const m = comparisonCount(form);
-    if (m !== null && m > 1 && form.adjust === null) {
-      issues.push(issue(1, ids.adjust(), 'Choose how you will use these comparisons.', 'missing'));
     }
     return { issues, comparisons, comparisonKeyById: byId };
   }
@@ -507,7 +494,7 @@
         design: form.design,
         factors: engineFactors(form),
         comparisons: structure.comparisons,
-        adjust: !!form.adjust,
+        adjust: true, // always adjusted: the goal is to pick a winner (methods.md §1.3)
         alpha: alpha.value,
         power: power.value,
         measures,
@@ -691,35 +678,29 @@
   // Step 1 view: option text
   // ---------------------------------------------------------------------------
 
+  // Which comparisons are made, in one line (methods.md §1.2, §1.3).
   function step1View(form) {
     const k = conditionCount(form);
-    const nLevels = form.factors[0].levels.length;
-    const baseline = form.factors[0].levels.find((l) => l.id === form.comparisons.baseline) || form.factors[0].levels[0];
-    const count = (scheme) => {
-      try {
-        return E.countComparisons(nLevels, scheme);
-      } catch (err) {
-        return null;
-      }
-    };
-    const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
-    const allPairs = count('all-pairs');
-    const vsBase = count('baseline');
     const m = comparisonCount(form);
-    let alpha = parseNumber(form.alpha).value;
-    if (!(alpha > 0 && alpha < 1)) alpha = null;
-    let adjustedText = 'Adjusted: alpha shared across comparisons';
-    if (alpha !== null && m) {
-      adjustedText = `Adjusted: alpha ${fmtAlpha(E.alphaPerComparison(alpha, m, true))} per comparison`;
+    const alpha = parseNumber(form.alpha).value;
+    const overall = alpha > 0 && alpha < 1 ? fmtPercent(alpha) : 'the alpha you set';
+    const stricter = `using a stricter test for each so the overall chance of a false result stays at ${overall}`;
+    let comparisonLine;
+    if (form.factors.length < 2) {
+      const names = form.factors[0].levels.map((l, i) => trimmed(l.name) || `Condition ${i + 1}`);
+      comparisonLine = m === 1
+        ? `One comparison: ${names[0]} vs. ${names[1]}`
+        : `With ${k} conditions, every pair is compared (${m} comparisons), ${stricter}.`;
+    } else if (!m) {
+      comparisonLine = 'No comparisons selected yet.';
+    } else {
+      comparisonLine = m === 1 ? '1 comparison selected.' : `${m} comparisons selected, ${stricter}.`;
     }
     const candidates = candidateComparisons(form);
     return {
       conditions: k,
       single: form.factors.length < 2,
-      everyPair: allPairs === null ? '' : plural(allPairs, 'comparison'),
-      vsBaseline: vsBase === null ? '' : `Baseline: ${trimmed(baseline.name) || 'first condition'} · ${plural(vsBase, 'comparison')}`,
-      adjusted: adjustedText,
-      unadjusted: alpha === null ? 'No adjustment' : `No adjustment: alpha ${fmtAlpha(alpha)} each`,
+      comparisonLine,
       candidates,
       mainDisabled: mainEffectsDisabled(form),
       interactionDisabled: TEXT.interactionDisabled,
@@ -744,7 +725,7 @@
         label: 'Comparisons',
         value: m === null ? 'Not set'
           : form.factors.length >= 2 ? `${m} selected`
-            : form.comparisons.scheme === 'baseline' ? `${m} vs. baseline` : `${m}, every pair`,
+            : m === 1 ? '1' : `${m}, every pair`,
       },
       {
         label: 'Measures',
@@ -795,11 +776,11 @@
     return c.main.concat(c.cell).find((x) => x.key === key) || null;
   }
 
-  // Name of "the new condition" in questions.
+  // The condition that should do better, as questions name it. With one
+  // variable every pair is compared, so it is "the better condition".
   function newConditionName(form, comp) {
     if (comp) return comp.type === 'main' ? comp.a : comp.a.join(' × ');
-    const f = trimmed(form.factors[0].name).toLowerCase();
-    return f.includes('design') ? 'the new design' : 'the new condition';
+    return 'the better condition';
   }
 
   function inputText(form, measure, key) {
@@ -840,20 +821,19 @@
       ? `${diffPhrase}, how many of 10 participants would ${better} on ${newName}?`
       : `${diffPhrase}, pick one participant from each condition at random. Out of 10 such pairs, how often would the one on ${newName} ${better}?`;
     const participantsQuestion = paired
-      ? (comp ? `How many of 10 participants should do better on ${newName}?` : 'How many of 10 participants should do better on the new condition?')
-      : `Pick one participant from each condition at random. Out of 10 such pairs, how often should the one on ${comp ? newName : 'the new condition'} do better?`;
+      ? `How many of 10 participants should do better on ${newName}?`
+      : `Pick one participant from each condition at random. Out of 10 such pairs, how often should the one on ${newName} do better?`;
 
-    let p1Label = 'Expected success rate on the current condition';
-    let p2Label = 'Expected success rate on the new condition';
+    let p1Label = 'Expected success rate on the condition you expect to do worse';
+    let p2Label = 'Expected success rate on the condition you expect to do better';
     if (comp) {
       const b = comp.type === 'main' ? comp.b : comp.b.join(' × ');
       p1Label = `Expected success rate on ${b}`;
       p2Label = `Expected success rate on ${newName}`;
-    } else if (form.comparisons.scheme === 'baseline') {
-      const f = form.factors[0];
-      const base = f.levels.find((l) => l.id === form.comparisons.baseline) || f.levels[0];
-      p1Label = `Expected success rate on ${trimmed(base.name) || 'the baseline'} (baseline)`;
-      p2Label = 'Expected success rate on the other conditions';
+    } else if (form.factors[0].levels.length === 2) {
+      const names = form.factors[0].levels.map((l, i) => trimmed(l.name) || `Condition ${i + 1}`);
+      p1Label = `Expected success rate on ${names[0]}`;
+      p2Label = `Expected success rate on ${names[1]}`;
     }
     const scale = scaleOf(measure);
     return {
@@ -928,8 +908,8 @@
     const parts = [];
     if (p > 0 && p < 1) parts.push(`Power ${fmtPower(p)}`);
     if (a > 0 && a < 1) {
-      if (form.adjust && m > 1) parts.push(`alpha ${fmtAlpha(a)}, adjusted to ${fmtAlpha(E.alphaPerComparison(a, m, true))} for ${m} comparisons`);
-      else parts.push(`alpha ${fmtAlpha(a)}${m > 1 ? ', not adjusted' : ''}`);
+      if (m > 1) parts.push(`alpha ${fmtAlpha(a)}, adjusted to ${fmtAlpha(E.alphaPerComparison(a, m, true))} for ${m} comparisons`);
+      else parts.push(`alpha ${fmtAlpha(a)}`);
     }
     if (form.measures.some((x) => x.type === 'time' || x.type === 'count')) parts.push('+5% for rank-based test (conservative)');
     return parts.join(' · ');

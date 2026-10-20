@@ -236,42 +236,26 @@
     const designBtns = `<div class="opt-grid">${optButton({ id: 'design-between', action: 'design', data: { value: 'between' }, pressed: form.design === 'between', title: 'One condition', sub: 'Between subjects' })}` +
       `${optButton({ id: 'design-within', action: 'design', data: { value: 'within' }, pressed: form.design === 'within', title: 'All conditions', sub: 'Within subjects' })}</div>`;
 
-    let comparisons;
-    if (v.single) {
-      const f = form.factors[0];
-      const baseSelect = form.comparisons.scheme === 'baseline'
-        ? `<div class="field"><label for="baseline-select">Baseline condition</label><select id="baseline-select" class="text-input" data-bind="baseline">` +
-          f.levels.map((l, j) => `<option value="${l.id}"${(form.comparisons.baseline || f.levels[0].id) === l.id ? ' selected' : ''}>${esc(trimmed(l.name) || `Condition ${j + 1}`)}</option>`).join('') +
-          `</select></div>`
-        : '';
-      comparisons = `<div class="opt-grid">${optButton({ id: 'scheme-all-pairs', action: 'scheme', data: { value: 'all-pairs' }, pressed: form.comparisons.scheme === 'all-pairs', title: 'Every pair', sub: v.everyPair })}` +
-        `${optButton({ id: 'scheme-baseline', action: 'scheme', data: { value: 'baseline' }, pressed: form.comparisons.scheme === 'baseline', title: 'Each condition vs. a baseline', sub: v.vsBaseline })}</div>` +
-        baseSelect +
-        `<div class="note-box">With a second independent variable, you can also compare main effects: one level against another, averaged across the other variable. Interaction comparisons come in a later version.</div>`;
-    } else {
-      comparisons = `<div class="field"><div class="card-title" style="font-size:16px">Main effects</div><p class="hint">One level against another, averaged across the other variable.</p>` +
+    // One variable: every pair, always adjusted, shown as one line (methods.md §1.2, §1.3).
+    // Two or more: the comparison checklist.
+    const comparisons = v.single
+      ? `<section class="card" aria-label="Comparisons"><p class="hint" style="font-size:16px;color:var(--text)" id="${ids.comparisons()}">${esc(v.comparisonLine)}</p>${errorEl(ids.comparisons(), visibleIssue(ids.comparisons()))}</section>`
+      : `<section class="card" aria-labelledby="${ids.comparisons()}-label">${group(ids.comparisons(), '<h2 class="card-title" id="%ID%">Which comparisons matter?</h2>',
+        `<p class="hint">${esc(v.comparisonLine)}</p>` +
+        `<div class="field"><div class="card-title" style="font-size:16px">Main effects</div><p class="hint">One level against another, averaged across the other variable.</p>` +
         `${comparisonChips(v.candidates.main, v.mainDisabled, 'main')}</div>` +
         `<div class="field"><div class="card-title" style="font-size:16px">Specific combinations</div><p class="hint">One combination of levels against another.</p>${comparisonChips(v.candidates.cell, null, 'cell')}</div>` +
         `<div class="field"><div class="card-title" style="font-size:16px">Interactions</div>${optButton({
           id: 'cmp-interaction', action: 'none', cls: 'chip tall', pressed: false,
           title: 'Interaction comparisons (a difference of differences)', disabled: v.interactionDisabled,
-        })}</div>`;
-    }
-
-    const m = v.comparisonCount;
-    const adjust = `<div class="opt-grid">${optButton({ id: 'adjust-yes', action: 'adjust', data: { value: 'yes' }, pressed: form.adjust === true, title: 'Pick a winner', sub: v.adjusted })}` +
-      `${optButton({ id: 'adjust-no', action: 'adjust', data: { value: 'no' }, pressed: form.adjust === false, title: 'Each comparison is its own question', sub: v.unadjusted })}</div>` +
-      (m === 1 ? '<p class="hint">With one comparison, both choices give the same plan.</p>' : '');
+        })}</div>`, 'field')}</section>`;
 
     return `<div class="page"><main class="main" id="main">` +
       `<div class="intro"><h1 tabindex="-1" id="page-title">What are you comparing?</h1><p>Add what you manipulate (independent variables) and their conditions.</p></div>` +
       form.factors.map(factorCard).join('') +
       `<button type="button" class="dashed-btn block" id="add-factor" data-action="add-factor">+ Add independent variable</button>` +
       `<section class="card" aria-labelledby="${ids.design()}-label">${group(ids.design(), '<h2 class="card-title" id="%ID%">Each participant experiences</h2>', designBtns)}</section>` +
-      `<section class="card" aria-labelledby="${ids.comparisons()}-label">${group(ids.comparisons(), '<h2 class="card-title" id="%ID%">Which comparisons matter?</h2>',
-        `<p class="hint">Each comparison is sized as its own test, with alpha adjusted across them.</p>${comparisons}`, 'field')}</section>` +
-      `<section class="card" aria-labelledby="${ids.adjust()}-label">${group(ids.adjust(), '<h2 class="card-title" id="%ID%">How will you use these comparisons?</h2>',
-        `<p class="hint">This decides whether the false-alarm risk is shared across comparisons.</p>${adjust}`, 'field')}</section>` +
+      comparisons +
       generalError() +
       navRow('#/start', '<button type="button" class="btn primary" id="next-1" data-action="next" data-step="1">Next: Measures</button>') +
       `</main>${sidebar(1)}</div>`;
@@ -875,10 +859,6 @@
     const c = L.candidateComparisons(state.form);
     const keys = new Set(c.main.concat(c.cell).map((x) => x.key));
     state.form.comparisons.selected = state.form.comparisons.selected.filter((k) => keys.has(k));
-    const f = state.form.factors[0];
-    if (state.form.comparisons.baseline && !f.levels.some((l) => l.id === state.form.comparisons.baseline)) {
-      state.form.comparisons.baseline = null;
-    }
   }
 
   const actions = {
@@ -907,19 +887,13 @@
     'add-factor'() {
       const f = L.newFactor();
       state.form.factors.push(f);
-      state.form.comparisons = { scheme: null, baseline: null, selected: [] };
+      state.form.comparisons = { selected: [] };
       return () => focusTarget(ids.factorName(f.id));
     },
     'remove-factor'(el) {
       state.form.factors = state.form.factors.filter((f) => f.id !== el.dataset.factor);
-      state.form.comparisons = { scheme: null, baseline: null, selected: [] };
+      state.form.comparisons = { selected: [] };
       return () => focusTarget('add-factor');
-    },
-    scheme(el) {
-      state.form.comparisons.scheme = el.dataset.value;
-      if (el.dataset.value === 'baseline' && !state.form.comparisons.baseline) {
-        state.form.comparisons.baseline = state.form.factors[0].levels[0].id;
-      }
     },
     'toggle-comparison'(el) {
       const sel = state.form.comparisons.selected;
@@ -928,7 +902,6 @@
       if (i >= 0) sel.splice(i, 1);
       else sel.push(key);
     },
-    adjust(el) { state.form.adjust = el.dataset.value === 'yes'; },
     next(el) { next(Number(el.dataset.step)); return 'skip'; },
     primary(el) {
       state.form.measures.forEach((m) => { m.primary = m.id === el.dataset.measure; });
@@ -1008,7 +981,6 @@
   const binders = {
     level(el) { findFactor(el.dataset.factor).levels.find((l) => l.id === el.dataset.level).name = el.value; },
     'factor-name'(el) { findFactor(el.dataset.factor).name = el.value; },
-    baseline(el) { state.form.comparisons.baseline = el.value; },
     'measure-name'(el) { findMeasure(el.dataset.measure).name = el.value; },
     'measure-unit'(el) { findMeasure(el.dataset.measure).unit = el.value; },
     'scale-min'(el) { findMeasure(el.dataset.measure).scaleMin = el.value; },

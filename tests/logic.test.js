@@ -16,7 +16,6 @@ function simpleForm(type, inputs, extra) {
   f.name = 'Design';
   f.levels[0].name = 'Current';
   f.levels[1].name = 'New';
-  form.comparisons.scheme = 'baseline';
   const m = form.measures[0];
   m.name = 'Score';
   m.unit = 'points';
@@ -38,7 +37,6 @@ function twoFactorForm() {
   posture.levels[0].name = 'Seated';
   posture.levels[1].name = 'Standing';
   form.factors.push(posture);
-  form.adjust = true;
   const m = form.measures[0];
   m.name = 'Time';
   m.unit = 's';
@@ -91,29 +89,27 @@ test('formatting: significant figures, percentages, units and phrases', () => {
 // Form → study
 // ---------------------------------------------------------------------------
 
-test('buildStudy: one variable, every pair, and the inputs it passes on', () => {
+test('buildStudy: one variable, every pair, always adjusted, and the inputs it passes on', () => {
   const form = simpleForm('rating', { mode: 'units', variability: 'sd', delta: '5', sd: '10', consistency: 'high' });
   form.factors[0].levels.push(L.newLevel('Other'));
-  form.comparisons.scheme = 'all-pairs';
-  form.adjust = false;
   const b = L.buildStudy(form);
   assert.deepEqual(b.issues, []);
   assert.deepEqual(b.study.comparisons, { scheme: 'all-pairs' });
-  assert.equal(b.study.adjust, false);
+  assert.equal(b.study.adjust, true);
   assert.deepEqual(b.study.factors, [{ name: 'Design', levels: ['Current', 'New', 'Other'] }]);
   assert.deepEqual(b.study.measures[0].effect, { mode: 'units', delta: 5, sd: 10, consistency: 'high' });
   assert.equal(b.study.alpha, 0.05);
   assert.equal(b.study.power, 0.8);
 });
 
-test('buildStudy: the baseline is passed by name, and adjustment is only asked for with 2+ comparisons', () => {
+test('buildStudy: one variable needs no comparison choices; alpha is split across every pair', () => {
   const form = simpleForm('time', { delta: '10', k: '8' });
-  form.comparisons.baseline = form.factors[0].levels[1].id;
-  const b = L.buildStudy(form);
-  assert.deepEqual(b.study.comparisons, { scheme: 'baseline', baseline: ['New'] });
-  assert.equal(issueAt(b.issues, 'adjust'), undefined);
+  assert.equal(issueAt(L.buildStudy(form).issues, 'comparisons'), undefined);
+  assert.equal(L.runPlan(form).plan.alphaPerComparison, 0.05);
   form.factors[0].levels.push(L.newLevel('Third'));
-  assert.equal(issueAt(L.buildStudy(form).issues, 'adjust').kind, 'missing');
+  const plan = L.runPlan(form).plan;
+  assert.equal(plan.m, 3);
+  assert.equal(plan.alphaPerComparison, 0.05 / 3);
 });
 
 test('buildStudy: between subjects, unlinked measures, presets and participants mode', () => {
@@ -175,7 +171,6 @@ test('buildStudy: missing names, types and inputs are reported, not guessed', ()
   const targets = b.issues.map((i) => i.target);
   assert.ok(targets.includes('design'));
   assert.ok(targets.includes(L.ids.level(form.factors[0].levels[0].id)));
-  assert.ok(targets.includes('comparisons'));
   assert.ok(targets.includes(L.ids.measureName(form.measures[0].id)));
   assert.ok(targets.includes(L.ids.measureType(form.measures[0].id)));
   assert.ok(b.issues.every((i) => i.kind === 'missing'));
@@ -338,15 +333,27 @@ test('disabled options use the exact explanation text', () => {
 // Step text and sidebar
 // ---------------------------------------------------------------------------
 
-test('step 1 option text comes from the engine counts and alpha', () => {
+test('step 1 comparison line: one comparison, every pair, or the selected ones', () => {
   const form = simpleForm('time', { delta: '10', k: '8' });
+  assert.equal(L.step1View(form).comparisonLine, 'One comparison: Current vs. New');
   form.factors[0].levels.push(L.newLevel('Other'));
   const v = L.step1View(form);
   assert.equal(v.conditions, 3);
-  assert.equal(v.everyPair, '3 comparisons');
-  assert.equal(v.vsBaseline, 'Baseline: Current · 2 comparisons');
-  assert.equal(v.adjusted, 'Adjusted: alpha 0.025 per comparison');
-  assert.equal(v.unadjusted, 'No adjustment: alpha 0.05 each');
+  assert.equal(v.comparisonLine,
+    'With 3 conditions, every pair is compared (3 comparisons), using a stricter test for each so the overall chance of a false result stays at 5%.');
+  form.alpha = '0.1';
+  assert.match(L.step1View(form).comparisonLine, /stays at 10%\.$/);
+
+  const two = twoFactorForm();
+  assert.equal(L.step1View(two).comparisonLine, 'No comparisons selected yet.');
+  const c = L.candidateComparisons(two);
+  two.comparisons.selected = [c.main[0].key];
+  assert.equal(L.step1View(two).comparisonLine, '1 comparison selected.');
+  two.comparisons.selected = [c.main[0].key, c.cell[0].key];
+  assert.equal(L.step1View(two).comparisonLine,
+    '2 comparisons selected, using a stricter test for each so the overall chance of a false result stays at 5%.');
+  // Always adjusted: there is no adjustment question to answer.
+  assert.equal(L.buildStudy(two).issues.some((i) => i.target === 'adjust'), false);
 });
 
 test('sidebar: notes and rows before inputs are complete', () => {
@@ -354,10 +361,10 @@ test('sidebar: notes and rows before inputs are complete', () => {
   const s1 = L.sidebarSummary(form, 1);
   assert.equal(s1.participants, '–');
   assert.equal(s1.note, 'Updates as you fill in each step');
-  assert.deepEqual(s1.rows.map((r) => r.value), ['Not set', '2', 'Not set', 'Not set']);
+  assert.deepEqual(s1.rows.map((r) => r.value), ['Not set', '2', '1', 'Not set']);
   const s2 = L.sidebarSummary(simpleForm('time', { delta: '', k: '' }), 2);
   assert.equal(s2.note, 'Needs inputs (step 3)');
-  assert.deepEqual(s2.rows.map((r) => r.value), ['Within subjects', '2', '1 vs. baseline', '1 (primary: Score)']);
+  assert.deepEqual(s2.rows.map((r) => r.value), ['Within subjects', '2', '1', '1 (primary: Score)']);
   const bad = L.sidebarSummary(simpleForm('time', { delta: '10', k: '5' }), 3);
   assert.equal(bad.participants, '–');
   assert.equal(bad.note, 'Check the highlighted input');
@@ -369,13 +376,19 @@ test('step 3 wording follows the design and the comparison', () => {
   form.factors[0].name = 'Keyboard design';
   form.measures[0].unit = 'seconds';
   const t = L.inputText(form, form.measures[0], 'all');
-  assert.equal(t.kQuestion, 'At a 10-second difference, how many of 10 participants would be faster on the new design?');
+  assert.equal(t.kQuestion, 'At a 10-second difference, how many of 10 participants would be faster on the better condition?');
   assert.equal(t.modeUnits, 'In seconds');
-  assert.equal(t.participantsQuestion, 'How many of 10 participants should do better on the new condition?');
+  assert.equal(t.participantsQuestion, 'How many of 10 participants should do better on the better condition?');
   assert.equal(t.sdLabel, 'How much do values vary between participants? (standard deviation)');
   form.design = 'between';
   assert.equal(L.inputText(form, form.measures[0], 'all').kQuestion,
-    'At a 10-second difference, pick one participant from each condition at random. Out of 10 such pairs, how often would the one on the new design be faster?');
+    'At a 10-second difference, pick one participant from each condition at random. Out of 10 such pairs, how often would the one on the better condition be faster?');
+  // Success / failure: two conditions are named; three or more are described.
+  const rates = simpleForm('binary', { p1: '', p2: '' });
+  assert.equal(L.inputText(rates, rates.measures[0], 'all').p1Label, 'Expected success rate on Current');
+  assert.equal(L.inputText(rates, rates.measures[0], 'all').p2Label, 'Expected success rate on New');
+  rates.factors[0].levels.push(L.newLevel('Other'));
+  assert.equal(L.inputText(rates, rates.measures[0], 'all').p2Label, 'Expected success rate on the condition you expect to do better');
 
   const two = twoFactorForm();
   const c = L.candidateComparisons(two);
@@ -397,9 +410,9 @@ test('step 3 readouts: variability from the engine, labeled your estimate or cal
   const badK = simpleForm('time', { delta: '10', k: '5' });
   assert.equal(L.variabilityReadout(badK, badK.measures[0], 'all'), null);
   const adv = simpleForm('time', { delta: '10', k: '8' });
+  assert.equal(L.advancedSummary(adv), 'Power 0.80 · alpha 0.05 · +5% for rank-based test (conservative)');
   adv.factors[0].levels.push(L.newLevel('Other'));
-  adv.adjust = true;
-  assert.equal(L.advancedSummary(adv), 'Power 0.80 · alpha 0.05, adjusted to 0.025 for 2 comparisons · +5% for rank-based test (conservative)');
+  assert.equal(L.advancedSummary(adv), 'Power 0.80 · alpha 0.05, adjusted to 0.0167 for 3 comparisons · +5% for rank-based test (conservative)');
 });
 
 // ---------------------------------------------------------------------------
