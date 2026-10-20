@@ -113,9 +113,10 @@
   // Header
   // ---------------------------------------------------------------------------
 
+  // The label names the action, so it needs no pressed state.
   function themeToggle() {
-    const light = currentTheme() === 'light';
-    return `<button type="button" id="theme-toggle" class="theme-toggle" data-action="theme" aria-pressed="${light}">Light theme</button>`;
+    const label = currentTheme() === 'light' ? 'Switch to dark mode' : 'Switch to light mode';
+    return `<button type="button" id="theme-toggle" class="theme-toggle" data-action="theme">${label}</button>`;
   }
 
   function stepComplete(s) {

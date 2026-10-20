@@ -53,10 +53,12 @@ you saw.
 
 ## 3. Light theme
 
-- [ ] "Light theme" in the header switches every screen to the light
-      palette (Plan screen should match design/screens/4-plan-light.html).
+- [ ] In the dark theme the header button reads "Switch to light mode".
+      Clicking it switches every screen to the light palette (Plan screen
+      should match design/screens/4-plan-light.html), and the button then
+      reads "Switch to dark mode".
 - [ ] Reload the page: the light theme stays. Switch back: dark stays after
-      reload.
+      reload, and the button label matches.
 - [ ] In both themes, check the warning blocks, the amber "underpowered"
       numbers, error messages and the curves are clearly readable.
 
