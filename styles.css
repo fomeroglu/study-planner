@@ -496,7 +496,6 @@ button.btn:hover { background: var(--selected); }
 .start-card .icon { width: 48px; height: 48px; color: var(--accent); }
 .start-card .title { font-size: 24px; font-weight: 600; }
 .start-card .desc { font-size: 16px; color: var(--text-2); line-height: 1.5; }
-.start-card .kind { margin-top: auto; font-size: 14px; font-family: var(--mono); color: var(--text-2); }
 
 /* Tabs */
 

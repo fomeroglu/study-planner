@@ -182,9 +182,9 @@
       `<p class="lede">Describe your study. The tool works out how many participants you need, which analysis to plan for, and what your sample can support.</p></div>` +
       `<div class="start-cards">` +
       `<a class="start-card" href="#/compare/1" id="start-compare">${ICON_COMPARE}<span class="title">Compare designs</span>` +
-      `<span class="desc">Is one design better than another? Task time, success, workload, ratings.</span><span class="kind">Summative</span></a>` +
+      `<span class="desc">Is one design better than another? Task time, success, workload, ratings.</span></a>` +
       `<a class="start-card" href="#/find" id="start-find">${ICON_FIND}<span class="title">Find problems</span>` +
-      `<span class="desc">How many participants do you need to uncover usability problems in an early design?</span><span class="kind">Formative</span></a>` +
+      `<span class="desc">How many participants do you need to uncover usability problems in an early design?</span></a>` +
       `</div>` +
       `<p class="hint">Methods and validation: <a href="${METHODS_URL}" id="methods-link">read how the tool calculates</a></p>` +
       `</main>`;
