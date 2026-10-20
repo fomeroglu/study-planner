@@ -12,6 +12,8 @@ you saw.
 
 - [ ] Start: two cards, "Compare designs" and "Find problems". The header
       says "Runs in your browser. Nothing is uploaded."
+- [ ] Start shows the amber "Early version." notice above the cards, in
+      both themes.
 - [ ] Step 1 starts generic: the variable name is empty with the hint
       "e.g., Interface design"; the conditions read "Condition A" and
       "Condition B"; "+ Add condition" adds "Condition C". No wording
