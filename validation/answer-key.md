@@ -23,6 +23,8 @@ Tolerance (methods.md §12): exact match on the rounded-up n, except McNemar
 | 7a | Confidence report: n = 12, σ_diff = 11.88, Δ = 10, alpha 0.025: power | pwr.t.test | 0.63 | 0.6323 | PROVISIONAL |
 | 7b | Same: detectable difference at power 0.80 | pwr.t.test | 12.0 s | 11.9776 | PROVISIONAL |
 | 7c | Same: 95% precision half-width | qt() by hand | ± 7.5 s | 7.5482 | PROVISIONAL |
+| 7d | Same, rank-based (Task time): power at effective n = 12 × 3/π | pwr.t.test | 0.60 | 0.6036 | PROVISIONAL |
+| 7e | Same, rank-based: detectable difference at power 0.80 | pwr.t.test | 12.3 s | 12.3455 | PROVISIONAL |
 | 8 | Rank adjustment and Latin square: 18 ÷ (3/π), 3 conditions | Hand calculation | 19, rounded to 24 | 18.8496 | PROVISIONAL |
 | 9 | Two proportions, 0.60 vs. 0.80, alpha 0.05, power 0.80 | pwr.2p.test | 81 per condition | 80.2993 | PROVISIONAL |
 | 10 | McNemar, 0.60 vs. 0.80, default ψ = 0.44 | G*Power | 84 (±2) | 83.9405 | PROVISIONAL |
@@ -39,6 +41,10 @@ Tolerance (methods.md §12): exact match on the rounded-up n, except McNemar
 - Rows 3 to 5: dz is the exact Φ⁻¹(0.8) = 0.841621..., not 0.842. Row 4
   sits 0.037 above the boundary at 16. With dz = 0.842 it would still
   round to 17.
+- Rows 7d and 7e: the running example's confidence report. Task time is
+  rank-based, so power and detectable difference use the effective n
+  12 × 3/π ≈ 11.46 (methods.md section 7). Precision (7c) uses the actual
+  n, so it is unchanged.
 - Row 10: the value comes from Connor's (1987) normal approximation.
   G*Power's McNemar routine uses a different method, so the ±2 tolerance
   applies.

@@ -279,13 +279,35 @@ Power and detectable difference use the per-comparison alpha (section
 
 ### 7.1 Visuals
 
-- **Power curves:** two curves of the possible study results, one
-  centered on zero (no real difference), one centered on the target
-  difference, each with width SE; the significance bar at the critical
-  value; the share of the second curve past the bar shaded and labeled
-  as the chance of detecting it. Redrawn as n changes. The displayed
-  power number always comes from the exact calculation above.
-- **Precision bar:** the expected result with its ± range.
+**Power curves.** Two curves of the possible study results: one if there
+is no real difference, one if the target difference is real. Both come
+from the same distributions as the power number above, so the shaded
+share of the second curve equals the reported power. Redrawn as n
+changes.
+
+- *t-based measures:* the test statistic under no difference (central
+  t) and under the target (noncentral t, ncp as in section 4), each
+  multiplied by SE to put it in the measure's units. SE = σ_diff / √n
+  (paired test) or σ·√(2/n) (independent test, n per condition).
+  Rank-based measures use the effective n (n × 3/π) for df, ncp and SE,
+  as for power. Densities are numerical derivatives of the section 4
+  CDFs. The significance bar is at t_c·SE. The shaded share is the
+  target curve's area beyond ±t_c·SE (both rejection regions; the
+  region below −t_c·SE is normally too small to see).
+- *McNemar:* normal curves centered on 0 with SD √(ψ/n) and on |δ| with
+  SD √((ψ − δ²)/n). The bar is at z₁₋α/₂·√(ψ/n). Axis in percentage
+  points.
+- *Two proportions:* normal curves on the Cohen's h scale, centered on 0
+  and |h|, each with SD √(2/n). Bars at ±z₁₋α/₂·√(2/n). Tick labels are
+  converted to percentage points with p₁ held fixed:
+  p₂ = sin²(arcsin√p₁ ± h/2).
+- *"In participants" mode:* drawn as for t-based measures with σ = 1.
+  Axis title: "Result your study finds: how many of 10 participants do
+  better". A tick at standardized difference x is labeled 10·Φ(x)
+  within subjects, 10·Φ(x/√2) between subjects (section 7).
+
+**Precision bar:** the target difference, with low and high ends at ±
+the half-width above.
 
 ## 8. How these numbers were reached
 
@@ -342,6 +364,7 @@ recorded in validation/answer-key.md.
 | Same, alpha 0.0167 | pwr.t.test | 18 (confirm) |
 | Variability from your estimate: Δ = 10, k = 8 | Hand calculation | σ_diff = 11.88 s |
 | Confidence report: n = 12, σ_diff = 11.88, alpha 0.025 | Hand / R | power 0.63; detectable 12.0 s; ± 7.5 s |
+| Same, rank-based (effective n = 12 × 3/π) | Hand / R | power 0.60; detectable 12.3 s; ± 7.5 s |
 | Rank adjustment and Latin square: 18 ÷ 0.955, 3 conditions | Hand calculation | 19, rounded to 24 |
 | Two proportions, 0.60 vs. 0.80 | pwr.2p.test | 81 per condition |
 | McNemar, 0.60 vs. 0.80, default ψ | G*Power | 84 |

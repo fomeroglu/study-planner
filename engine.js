@@ -20,36 +20,66 @@
   // Errors and small helpers
   // ---------------------------------------------------------------------------
 
-  /** Raised for any input the methods do not allow. Messages are plain language. */
+  /**
+   * Raised for any input the methods do not allow. Messages are plain language.
+   * field names the input that caused it (e.g. 'delta', 'k', 'sd', 'psi');
+   * measure, comparison and factor say where, when they apply. Any of them may
+   * be null.
+   */
   class EngineError extends Error {
-    constructor(message) {
+    constructor(message, info) {
       super(message);
       this.name = 'EngineError';
+      const i = info || {};
+      this.field = i.field === undefined ? null : i.field;
+      this.measure = i.measure === undefined ? null : i.measure;
+      this.comparison = i.comparison === undefined ? null : i.comparison;
+      this.factor = i.factor === undefined ? null : i.factor;
     }
   }
 
   // Raise an input error. Used by every section of methods.md.
-  function fail(message) {
-    throw new EngineError(message);
+  function fail(message, info) {
+    throw new EngineError(message, infoOf(info));
+  }
+
+  // Run fn; if it raises an EngineError, fill in where it happened (measure,
+  // comparison) without overwriting anything already set. Used by plan().
+  function withWhere(where, fn) {
+    try {
+      return fn();
+    } catch (err) {
+      if (err instanceof EngineError) {
+        Object.keys(where).forEach((key) => {
+          if (err[key] === null) err[key] = where[key];
+        });
+      }
+      throw err;
+    }
+  }
+
+  // Normalize the info argument: a field name or an info object.
+  function infoOf(info) {
+    return typeof info === 'string' ? { field: info } : info;
   }
 
   // Input checks shared by every section of methods.md.
-  function requireNumber(value, name) {
+  function requireNumber(value, name, info) {
     if (typeof value !== 'number' || !Number.isFinite(value)) {
-      fail(`${name} must be a number.`);
+      fail(`${name} must be a number.`, infoOf(info));
     }
   }
 
   // Rates, alpha, power, p and P lie strictly between 0 and 1 (methods.md §3.2, §4, §9).
-  function requireOpenUnit(value, name) {
-    requireNumber(value, name);
-    if (value <= 0 || value >= 1) fail(`${name} must be between 0 and 1, not ${value}.`);
+  function requireOpenUnit(value, name, info) {
+    requireNumber(value, name, info);
+    if (value <= 0 || value >= 1) fail(`${name} must be between 0 and 1, not ${value}.`, infoOf(info));
   }
 
   // SDs, n and df must be positive (methods.md §3.1, §4).
-  function requirePositive(value, name) {
-    requireNumber(value, name);
-    if (value <= 0) fail(`${name} must be greater than 0.`);
+  function requirePositive(value, name, info) {
+    requireNumber(value, name, info);
+    if (value <= 0) fail(`${name} must be greater than 0.`, infoOf(info));
   }
 
   // methods.md Conventions: sample sizes are always rounded up. The small
@@ -393,8 +423,8 @@
 
   // Alpha and power are probabilities (methods.md Conventions, §4).
   function requireAlphaPower(alpha, power) {
-    requireOpenUnit(alpha, 'Alpha');
-    if (power !== undefined) requireOpenUnit(power, 'Power');
+    requireOpenUnit(alpha, 'Alpha', 'alpha');
+    if (power !== undefined) requireOpenUnit(power, 'Power', 'power');
   }
 
   // methods.md §4 "Power, t-tests": two-sided power counts both rejection
@@ -407,9 +437,9 @@
 
   /** Power of the paired t-test: df = n − 1, ncp = dz·√n. methods.md §4. */
   function powerPairedT(n, dz, alpha) {
-    requireNumber(dz, 'Effect size (dz)');
+    requireNumber(dz, 'Effect size (dz)', 'delta');
     requireAlphaPower(alpha);
-    if (!(n > 1)) fail('The paired t-test needs at least 2 participants.');
+    if (!(n > 1)) fail('The paired t-test needs at least 2 participants.', 'participants');
     return twoSidedTPower(n - 1, dz * Math.sqrt(n), alpha);
   }
 
@@ -418,23 +448,23 @@
    * ncp = d·√(n/2). methods.md §4.
    */
   function powerIndependentT(n, d, alpha) {
-    requireNumber(d, 'Effect size (d)');
+    requireNumber(d, 'Effect size (d)', 'delta');
     requireAlphaPower(alpha);
-    if (!(n > 1)) fail('The independent t-test needs at least 2 participants per condition.');
+    if (!(n > 1)) fail('The independent t-test needs at least 2 participants per condition.', 'participants');
     return twoSidedTPower(2 * (n - 1), d * Math.sqrt(n / 2), alpha);
   }
 
   // Solve continuous n where power reaches the target, then round up (methods.md §4).
   function solveN(powerFn, effect, alpha, power, label) {
     requireAlphaPower(alpha, power);
-    requireNumber(effect, label);
-    if (effect === 0) fail('The difference that matters must not be zero.');
+    requireNumber(effect, label, 'delta');
+    if (effect === 0) fail('The difference that matters must not be zero.', 'delta');
     const f = (n) => powerFn(n, effect, alpha);
     if (f(2) >= power) return { exact: 2, n: 2 };
     let hi = 4;
     while (f(hi) < power) {
       hi *= 2;
-      if (hi > 1e7) fail('The difference is too small to detect with any practical sample.');
+      if (hi > 1e7) fail('The difference is too small to detect with any practical sample.', 'delta');
     }
     const exact = bisect(f, power, 2, hi, 1e-10);
     return { exact, n: ceilN(exact) };
@@ -452,8 +482,8 @@
 
   /** Cohen's h = 2·arcsin(√p₁) − 2·arcsin(√p₂). methods.md §4. */
   function cohensH(p1, p2) {
-    requireOpenUnit(p1, 'Success rate 1');
-    requireOpenUnit(p2, 'Success rate 2');
+    requireOpenUnit(p1, 'Success rate 1', 'p1');
+    requireOpenUnit(p2, 'Success rate 2', 'p2');
     return 2 * Math.asin(Math.sqrt(p1)) - 2 * Math.asin(Math.sqrt(p2));
   }
 
@@ -461,7 +491,7 @@
   function nTwoProportions(p1, p2, alpha, power) {
     requireAlphaPower(alpha, power);
     const h = cohensH(p1, p2);
-    if (h === 0) fail('The two success rates must differ.');
+    if (h === 0) fail('The two success rates must differ.', 'p2');
     const z = normalQuantile(1 - alpha / 2) + normalQuantile(power);
     const exact = 2 * (z / h) * (z / h);
     return { h, exact, n: ceilN(exact) };
@@ -470,7 +500,7 @@
   /** Power of the two-proportion test at n per condition. methods.md §7. */
   function powerTwoProportions(n, p1, p2, alpha) {
     requireAlphaPower(alpha);
-    requirePositive(n, 'Participants');
+    requirePositive(n, 'Participants', 'participants');
     const h = Math.abs(cohensH(p1, p2));
     const za = normalQuantile(1 - alpha / 2);
     const shift = h * Math.sqrt(n / 2);
@@ -479,24 +509,24 @@
 
   /** Default discordance ψ = p₁(1 − p₂) + p₂(1 − p₁). methods.md §3.2. */
   function defaultDiscordance(p1, p2) {
-    requireOpenUnit(p1, 'Success rate 1');
-    requireOpenUnit(p2, 'Success rate 2');
+    requireOpenUnit(p1, 'Success rate 1', 'p1');
+    requireOpenUnit(p2, 'Success rate 2', 'p2');
     return p1 * (1 - p2) + p2 * (1 - p1);
   }
 
   // methods.md §3.2: an entered ψ must be at least |p₂ − p₁|, and no more than
   // the two rates allow.
   function checkDiscordance(p1, p2, psi) {
-    requireOpenUnit(psi, 'Share who differ between conditions (discordance)');
+    requireOpenUnit(psi, 'Share who differ between conditions (discordance)', 'psi');
     const delta = Math.abs(p2 - p1);
     if (psi < delta - 1e-12) {
       fail(`The share who differ between conditions (discordance) must be at least ` +
-        `the difference in success rates (${round(delta, 4)}).`);
+        `the difference in success rates (${round(delta, 4)}).`, 'psi');
     }
     const maxPsi = Math.min(p1, 1 - p2) + Math.min(p2, 1 - p1);
     if (psi > maxPsi + 1e-12) {
       fail(`With success rates of ${p1} and ${p2}, the share who differ between ` +
-        `conditions (discordance) can be at most ${round(maxPsi, 4)}.`);
+        `conditions (discordance) can be at most ${round(maxPsi, 4)}.`, 'psi');
     }
   }
 
@@ -506,10 +536,10 @@
    */
   function nMcNemar(p1, p2, alpha, power, psi) {
     requireAlphaPower(alpha, power);
-    requireOpenUnit(p1, 'Success rate 1');
-    requireOpenUnit(p2, 'Success rate 2');
+    requireOpenUnit(p1, 'Success rate 1', 'p1');
+    requireOpenUnit(p2, 'Success rate 2', 'p2');
     const delta = p2 - p1;
-    if (delta === 0) fail('The two success rates must differ.');
+    if (delta === 0) fail('The two success rates must differ.', 'p2');
     const usedPsi = psi === undefined ? defaultDiscordance(p1, p2) : psi;
     checkDiscordance(p1, p2, usedPsi);
     const za = normalQuantile(1 - alpha / 2);
@@ -522,7 +552,7 @@
   /** Power of McNemar's test at n participants (Connor solved for power). methods.md §7. */
   function powerMcNemar(n, p1, p2, alpha, psi) {
     requireAlphaPower(alpha);
-    requirePositive(n, 'Participants');
+    requirePositive(n, 'Participants', 'participants');
     const delta = Math.abs(p2 - p1);
     const usedPsi = psi === undefined ? defaultDiscordance(p1, p2) : psi;
     checkDiscordance(p1, p2, usedPsi);
@@ -536,7 +566,7 @@
 
   /** Rank-based adjustment: ceil(n ÷ (3/π)), n already rounded up. methods.md §2.1. */
   function rankAdjust(n) {
-    requirePositive(n, 'Participants');
+    requirePositive(n, 'Participants', 'participants');
     return ceilN(n / RANK_EFFICIENCY);
   }
 
@@ -546,30 +576,31 @@
 
   /** m for "each vs. baseline" (k − 1) or "every pair" (k(k − 1)/2). methods.md §1.2. */
   function countComparisons(k, scheme) {
-    if (!Number.isInteger(k) || k < 2) fail('A study needs at least 2 conditions.');
+    if (!Number.isInteger(k) || k < 2) fail('A study needs at least 2 conditions.', 'levels');
     if (scheme === 'baseline') return k - 1;
     if (scheme === 'all-pairs') return (k * (k - 1)) / 2;
-    fail(`Unknown comparison choice "${scheme}". Use "baseline" or "all-pairs".`);
+    fail(`Unknown comparison choice "${scheme}". Use "baseline" or "all-pairs".`, 'comparisons');
   }
 
   /** Alpha per comparison: alpha / m (Bonferroni) when adjusting, else alpha. methods.md §1.3. */
   function alphaPerComparison(alpha, m, adjust) {
-    requireOpenUnit(alpha, 'Alpha');
-    if (!Number.isInteger(m) || m < 1) fail('There must be at least one comparison.');
+    requireOpenUnit(alpha, 'Alpha', 'alpha');
+    if (!Number.isInteger(m) || m < 1) fail('There must be at least one comparison.', 'comparisons');
     return adjust ? alpha / m : alpha;
   }
 
   /** Every combination of levels across the factors, in order. methods.md §1.1. */
   function buildCells(factors) {
     if (!Array.isArray(factors) || factors.length === 0) {
-      fail('The study needs at least one independent variable.');
+      fail('The study needs at least one independent variable.', 'factors');
     }
     factors.forEach((f) => {
       if (!f || !Array.isArray(f.levels) || f.levels.length < 2) {
-        fail(`Each independent variable needs at least 2 conditions (${f && f.name}).`);
+        fail(`Each independent variable needs at least 2 conditions (${f && f.name}).`,
+          { field: 'levels', factor: f ? f.name : null });
       }
       if (new Set(f.levels).size !== f.levels.length) {
-        fail(`Condition names must be unique within ${f.name}.`);
+        fail(`Condition names must be unique within ${f.name}.`, { field: 'levels', factor: f.name });
       }
     });
     let cells = [[]];
@@ -584,7 +615,7 @@
   /** Cells per level of one factor when the others are pooled. methods.md §1.5. */
   function cellsPerLevel(factors, factorName) {
     const idx = factors.findIndex((f) => f.name === factorName);
-    if (idx < 0) fail(`Unknown independent variable "${factorName}".`);
+    if (idx < 0) fail(`Unknown independent variable "${factorName}".`, { field: 'comparisons', factor: factorName });
     return factors.reduce((acc, f, i) => (i === idx ? acc : acc * f.levels.length), 1);
   }
 
@@ -598,36 +629,36 @@
   function rhoFromConsistency(level) {
     const key = level === undefined ? 'low' : level;
     if (!Object.prototype.hasOwnProperty.call(CONSISTENCY_RHO, key)) {
-      fail(`Consistency must be "low", "medium", or "high", not "${level}".`);
+      fail(`Consistency must be "low", "medium", or "high", not "${level}".`, 'consistency');
     }
     return CONSISTENCY_RHO[key];
   }
 
   /** σ_diff = σ·√(2(1 − ρ)). methods.md §3.1. */
   function sdDiffFromSd(sd, rho) {
-    requirePositive(sd, 'Standard deviation');
-    requireNumber(rho, 'Correlation');
-    if (rho <= -1 || rho >= 1) fail('The correlation must be between -1 and 1.');
+    requirePositive(sd, 'Standard deviation', 'sd');
+    requireNumber(rho, 'Correlation', 'consistency');
+    if (rho <= -1 || rho >= 1) fail('The correlation must be between -1 and 1.', 'consistency');
     return sd * Math.sqrt(2 * (1 - rho));
   }
 
   // k of 10 is accepted only as a whole number from 6 to 9 (methods.md §3.1).
   function requireK(k) {
     if (!Number.isInteger(k) || k < 6 || k > 9) {
-      fail(`"How many of 10 participants would do better" must be a whole number from 6 to 9, not ${k}.`);
+      fail(`"How many of 10 participants would do better" must be a whole number from 6 to 9, not ${k}.`, 'k');
     }
   }
 
   /** Within: σ_diff = Δ / Φ⁻¹(k/10). methods.md §3.1. */
   function sdDiffFromK(delta, k) {
-    requirePositive(Math.abs(delta), 'The difference that matters');
+    requirePositive(Math.abs(delta), 'The difference that matters', 'delta');
     requireK(k);
     return Math.abs(delta) / normalQuantile(k / 10);
   }
 
   /** Between: σ = Δ / (√2·Φ⁻¹(k/10)). methods.md §3.1. */
   function sdFromK(delta, k) {
-    requirePositive(Math.abs(delta), 'The difference that matters');
+    requirePositive(Math.abs(delta), 'The difference that matters', 'delta');
     requireK(k);
     return Math.abs(delta) / (Math.SQRT2 * normalQuantile(k / 10));
   }
@@ -667,21 +698,21 @@
 
   /** Largest possible SD on [min, max] at a given mean (Bhatia & Davis, 2000). methods.md §2.2. */
   function maxSdOnScale(mean, min, max) {
-    requireNumber(mean, 'Expected average');
-    requireNumber(min, 'Scale minimum');
-    requireNumber(max, 'Scale maximum');
-    if (!(max > min)) fail('The scale maximum must be above the minimum.');
-    if (mean < min || mean > max) fail(`The expected average must lie between ${min} and ${max}.`);
+    requireNumber(mean, 'Expected average', 'mean');
+    requireNumber(min, 'Scale minimum', 'scale');
+    requireNumber(max, 'Scale maximum', 'scale');
+    if (!(max > min)) fail('The scale maximum must be above the minimum.', 'scale');
+    if (mean < min || mean > max) fail(`The expected average must lie between ${min} and ${max}.`, 'mean');
     return Math.sqrt((max - mean) * (mean - min));
   }
 
   /** Reject an SD above the Bhatia–Davis bound. methods.md §2.2. */
   function checkBoundedSd(sd, mean, min, max) {
-    requirePositive(sd, 'Standard deviation');
+    requirePositive(sd, 'Standard deviation', 'sd');
     const bound = maxSdOnScale(mean, min, max);
     if (sd > bound + 1e-12) {
       fail(`On a ${min} to ${max} scale with an average of ${mean}, the standard deviation ` +
-        `can be at most ${round(bound, 2)}. ${sd} is not possible.`);
+        `can be at most ${round(bound, 2)}. ${sd} is not possible.`, 'sd');
     }
     return bound;
   }
@@ -712,11 +743,11 @@
     const { design, n, alpha } = opts;
     const target = opts.power === undefined ? 0.8 : opts.power;
     requireAlphaPower(alpha, target);
-    if (design !== 'within' && design !== 'between') fail('Design must be "within" or "between".');
-    if (!(n >= 2)) fail('The confidence report needs at least 2 participants.');
+    if (design !== 'within' && design !== 'between') fail('Design must be "within" or "between".', 'design');
+    if (!(n >= 2)) fail('The confidence report needs at least 2 participants.', 'participants');
     const nEff = opts.rank ? n * RANK_EFFICIENCY : n;
     const powerFn = design === 'within' ? powerPairedT : powerIndependentT;
-    if (!(nEff > 1)) fail('Too few participants for the rank-based test.');
+    if (!(nEff > 1)) fail('Too few participants for the rank-based test.', 'participants');
 
     const effectSize = opts.effectSize;
     const result = { n, effectiveN: nEff };
@@ -731,7 +762,7 @@
     };
 
     if (hasUnits) {
-      requirePositive(opts.sd, 'Standard deviation');
+      requirePositive(opts.sd, 'Standard deviation', 'sd');
       const df = design === 'within' ? n - 1 : 2 * (n - 1);
       const se = design === 'within' ? opts.sd / Math.sqrt(n) : opts.sd * Math.sqrt(2 / n);
       result.precision = { halfWidth: tQuantile(0.975, df) * se, se, df };
@@ -753,10 +784,10 @@
     const { design, n, p1, p2, alpha } = opts;
     const target = opts.power === undefined ? 0.8 : opts.power;
     requireAlphaPower(alpha, target);
-    requireOpenUnit(p1, 'Success rate 1');
-    requireOpenUnit(p2, 'Success rate 2');
-    requirePositive(n, 'Participants');
-    if (p1 === p2) fail('The two success rates must differ.');
+    requireOpenUnit(p1, 'Success rate 1', 'p1');
+    requireOpenUnit(p2, 'Success rate 2', 'p2');
+    requirePositive(n, 'Participants', 'participants');
+    if (p1 === p2) fail('The two success rates must differ.', 'p2');
     const dir = p2 > p1 ? 1 : -1;
     const fixedPsi = opts.psi;
     let powerAtP2;
@@ -779,7 +810,7 @@
       const delta = p2 - p1;
       halfWidth = z975 * Math.sqrt((psi - delta * delta) / n);
     } else {
-      fail('Design must be "within" or "between".');
+      fail('Design must be "within" or "between".', 'design');
     }
 
     // Search p₂ between p₁ and the end of the scale in the entered direction.
@@ -825,7 +856,7 @@
    * square plus its mirror image). Two conditions give two orders. methods.md §6.
    */
   function williamsSquare(k) {
-    if (!Number.isInteger(k) || k < 2) fail('Counterbalancing needs at least 2 conditions.');
+    if (!Number.isInteger(k) || k < 2) fail('Counterbalancing needs at least 2 conditions.', 'levels');
     // First row: 0, 1, k−1, 2, k−2, ...
     const first = [0];
     for (let i = 1, lo = 1, hi = k - 1; i < k; i++) {
@@ -841,14 +872,14 @@
 
   /** Number of counterbalancing orders: k (even k) or 2k (odd k). methods.md §6. */
   function orderCount(k) {
-    if (!Number.isInteger(k) || k < 2) fail('Counterbalancing needs at least 2 conditions.');
+    if (!Number.isInteger(k) || k < 2) fail('Counterbalancing needs at least 2 conditions.', 'levels');
     return k % 2 === 0 ? k : 2 * k;
   }
 
   /** Round n up to a multiple of the number of orders. methods.md §6. */
   function roundToOrders(n, orders) {
-    requirePositive(n, 'Participants');
-    if (!Number.isInteger(orders) || orders < 1) fail('The number of orders must be a whole number.');
+    requirePositive(n, 'Participants', 'participants');
+    if (!Number.isInteger(orders) || orders < 1) fail('The number of orders must be a whole number.', 'levels');
     return Math.ceil(n / orders) * orders;
   }
 
@@ -856,25 +887,29 @@
   // Problem discovery (methods.md §9)
   // ---------------------------------------------------------------------------
 
-  /** n = ln(1 − P) / ln(1 − p), rounded up. methods.md §9. */
+  /**
+   * n = ln(1 − P) / ln(1 − p), rounded up. methods.md §9.
+   * Also returns the trail's terms: missOne = 1 − p (one participant misses
+   * the problem) and missAll = 1 − P (the largest allowed chance that all miss it).
+   */
   function nProblemDiscovery(p, P) {
-    requireOpenUnit(p, 'Problem frequency (p)');
-    requireOpenUnit(P, 'Chance of seeing the problem (P)');
+    requireOpenUnit(p, 'Problem frequency (p)', 'p');
+    requireOpenUnit(P, 'Chance of seeing the problem (P)', 'P');
     const exact = Math.log1p(-P) / Math.log1p(-p);
-    return { exact, n: ceilN(exact) };
+    return { exact, n: ceilN(exact), missOne: 1 - p, missAll: 1 - P };
   }
 
   /** Chance of seeing a problem at least once: 1 − (1 − p)ⁿ. methods.md §9. */
   function chanceOfSeeing(p, n) {
-    requireOpenUnit(p, 'Problem frequency (p)');
-    if (!(n >= 0)) fail('Participants must be zero or more.');
+    requireOpenUnit(p, 'Problem frequency (p)', 'p');
+    if (!(n >= 0)) fail('Participants must be zero or more.', 'participants');
     return -Math.expm1(n * Math.log1p(-p));
   }
 
   /** Smallest frequency seen with chance P at n: 1 − (1 − P)^(1/n). methods.md §9. */
   function smallestFrequencySeen(n, P) {
-    requireOpenUnit(P, 'Chance of seeing the problem (P)');
-    if (!(n >= 1)) fail('Participants must be at least 1.');
+    requireOpenUnit(P, 'Chance of seeing the problem (P)', 'P');
+    if (!(n >= 1)) fail('Participants must be at least 1.', 'participants');
     return -Math.expm1(Math.log1p(-P) / n);
   }
 
@@ -931,14 +966,14 @@
   // Resolve the comparison list. methods.md §1.2, §1.5.
   function resolveComparisons(study, cells) {
     const spec = study.comparisons;
-    if (!spec) fail('Choose which comparisons the decision rests on.');
+    if (!spec) fail('Choose which comparisons the decision rests on.', 'comparisons');
     const cellKey = (c) => c.join(' × ');
     const findCell = (levels) => {
       if (!Array.isArray(levels) || levels.length !== study.factors.length) {
-        fail('A specific combination must name one level of every independent variable.');
+        fail('A specific combination must name one level of every independent variable.', 'comparisons');
       }
       const i = cells.findIndex((c) => c.every((l, j) => l === levels[j]));
-      if (i < 0) fail(`Unknown combination "${levels.join(' × ')}".`);
+      if (i < 0) fail(`Unknown combination "${levels.join(' × ')}".`, 'comparisons');
       return cells[i];
     };
     if (spec.scheme) {
@@ -962,42 +997,44 @@
       return out;
     }
     if (!Array.isArray(spec.list) || spec.list.length === 0) {
-      fail('Choose at least one comparison.');
+      fail('Choose at least one comparison.', 'comparisons');
     }
     const ids = new Set();
     return spec.list.map((c) => {
-      if (!c.id) fail('Each comparison needs an id.');
-      if (ids.has(c.id)) fail(`Comparison id "${c.id}" is used twice.`);
+      const where = { field: 'comparisons', comparison: c.id === undefined ? null : c.id };
+      if (!c.id) fail('Each comparison needs an id.', where);
+      if (ids.has(c.id)) fail(`Comparison id "${c.id}" is used twice.`, where);
       ids.add(c.id);
       if (c.type === 'interaction') {
         fail('Interaction comparisons are planned for a later version. ' +
-          'In this version, compare specific combinations or main effects.');
+          'In this version, compare specific combinations or main effects.', where);
       }
       if (c.type === 'cell') {
         const a = findCell(c.a);
         const b = findCell(c.b);
-        if (a === b) fail(`Comparison "${c.id}" compares a combination with itself.`);
+        if (a === b) fail(`Comparison "${c.id}" compares a combination with itself.`, where);
         return { id: c.id, type: 'cell', a, b };
       }
       if (c.type === 'main') {
         const f = study.factors.find((x) => x.name === c.factor);
-        if (!f) fail(`Unknown independent variable "${c.factor}".`);
+        if (!f) fail(`Unknown independent variable "${c.factor}".`, Object.assign({ factor: c.factor }, where));
         if (!f.levels.includes(c.a) || !f.levels.includes(c.b) || c.a === c.b) {
-          fail(`Comparison "${c.id}" must name two different levels of ${c.factor}.`);
+          fail(`Comparison "${c.id}" must name two different levels of ${c.factor}.`,
+            Object.assign({ factor: c.factor }, where));
         }
         return { id: c.id, type: 'main', factor: c.factor, a: c.a, b: c.b };
       }
-      fail(`Unknown comparison type "${c.type}". Use "cell" or "main".`);
+      fail(`Unknown comparison type "${c.type}". Use "cell" or "main".`, where);
     });
   }
 
   // Inputs for one comparison, shared or per comparison (methods.md §1.5, §3).
   function effectFor(measure, comparison) {
     const e = measure.effect;
-    if (!e) fail(`Describe the improvement for ${measure.name}.`);
+    if (!e) fail(`Describe the improvement for ${measure.name}.`, 'effect');
     if (e.byComparison) {
       const v = e.byComparison[comparison.id];
-      if (!v) fail(`Describe the improvement for ${measure.name} in comparison "${comparison.id}".`);
+      if (!v) fail(`Describe the improvement for ${measure.name} in comparison "${comparison.id}".`, 'effect');
       return v;
     }
     return e;
@@ -1018,10 +1055,10 @@
       });
       return { effectSize: es, delta: null, sd: null, estimate: true };
     }
-    if (input.mode !== 'units') fail(`Unknown way of describing the improvement "${input.mode}". Use "units" or "participants".`);
+    if (input.mode !== 'units') fail(`Unknown way of describing the improvement "${input.mode}". Use "units" or "participants".`, 'mode');
     const delta = input.delta;
-    requireNumber(delta, 'The difference that matters');
-    if (delta === 0) fail('The difference that matters must not be zero.');
+    requireNumber(delta, 'The difference that matters', 'delta');
+    if (delta === 0) fail('The difference that matters must not be zero.', 'delta');
     const absDelta = Math.abs(delta);
     steps.push({ step: 'inputs', label: `${label}Smallest difference that matters (Δ)`, value: absDelta, unit: measure.unit, source: 'entered' });
 
@@ -1039,11 +1076,11 @@
         source: 'your estimate',
       });
     } else if (paired && input.sdDiff !== undefined) {
-      requirePositive(input.sdDiff, 'Variability of the differences (σ_diff)');
+      requirePositive(input.sdDiff, 'Variability of the differences (σ_diff)', 'sdDiff');
       sd = input.sdDiff;
       steps.push({ step: 'variability', label: `${label}Variability of the differences (σ_diff)`, value: sd, unit: measure.unit, source: 'entered' });
     } else if (input.sd !== undefined) {
-      requirePositive(input.sd, 'Standard deviation');
+      requirePositive(input.sd, 'Standard deviation', 'sd');
       if (measure.scale && input.mean !== undefined) {
         const bound = checkBoundedSd(input.sd, input.mean, measure.scale.min, measure.scale.max);
         steps.push({ step: 'variability', label: `${label}Largest possible SD on this scale at an average of ${input.mean}`, value: bound, unit: measure.unit, source: 'calculated' });
@@ -1059,7 +1096,7 @@
         sd = input.sd;
       }
     } else {
-      fail(`Give the variability for ${measure.name}: a standard deviation, or how many of 10 participants would do better.`);
+      fail(`Give the variability for ${measure.name}: a standard deviation, or how many of 10 participants would do better.`, 'sd');
     }
     const es = absDelta / sd;
     steps.push({
@@ -1093,7 +1130,7 @@
   function plan(study) {
     if (!study || typeof study !== 'object') fail('Describe the study to plan.');
     const design = study.design;
-    if (design !== 'within' && design !== 'between') fail('Design must be "within" or "between".');
+    if (design !== 'within' && design !== 'between') fail('Design must be "within" or "between".', 'design');
     const alpha = study.alpha === undefined ? 0.05 : study.alpha;
     const power = study.power === undefined ? 0.8 : study.power;
     requireAlphaPower(alpha, power);
@@ -1105,13 +1142,13 @@
     const alphaEach = alphaPerComparison(alpha, m, adjust);
     const orders = design === 'within' ? orderCount(k) : null;
 
-    if (!Array.isArray(study.measures) || study.measures.length === 0) fail('Add at least one measure.');
+    if (!Array.isArray(study.measures) || study.measures.length === 0) fail('Add at least one measure.', 'measures');
     const primaries = study.measures.filter((x) => x.primary);
-    if (primaries.length !== 1) fail('Mark exactly one measure as primary.');
+    if (primaries.length !== 1) fail('Mark exactly one measure as primary.', 'primary');
 
-    const results = study.measures.map((measure) => {
+    const results = study.measures.map((measure) => withWhere({ measure: measure.name }, () => {
       if (!MEASURE_TYPES[measure.type]) {
-        fail(`Unknown result type "${measure.type}" for ${measure.name}.`);
+        fail(`Unknown result type "${measure.type}" for ${measure.name}.`, 'type');
       }
       const type = MEASURE_TYPES[measure.type];
       const linked = measure.linked !== false;
@@ -1139,7 +1176,8 @@
       const perComparison = comparisons.map((comp) => {
         if (comp.type === 'main' && type.binary) {
           fail(`For success / failure measures (${measure.name}), only comparisons between ` +
-            'specific conditions are supported. Main effects are not available for this result type.');
+            'specific conditions are supported. Main effects are not available for this result type.',
+          { field: 'comparisons', comparison: comp.id, factor: comp.factor });
         }
         const key = shared ? kindKey(comp) : comp.id;
         if (cache.has(key)) return Object.assign({}, cache.get(key), { comparison: comp });
@@ -1148,7 +1186,9 @@
         else if (shared && kinds.size > 1) {
           label = comp.type === 'main' ? `Main effect of ${comp.factor}: ` : 'Specific combinations: ';
         }
-        const res = sizeComparison(comp, effectFor(measure, comp), label);
+        const res = shared
+          ? sizeComparison(comp, effectFor(measure, comp), label)
+          : withWhere({ comparison: comp.id }, () => sizeComparison(comp, effectFor(measure, comp), label));
         cache.set(key, res);
         return res;
       });
@@ -1158,8 +1198,8 @@
         let testN;
         let calc;
         if (type.binary) {
-          requireOpenUnit(input.p1, 'Success rate 1');
-          requireOpenUnit(input.p2, 'Success rate 2');
+          requireOpenUnit(input.p1, 'Success rate 1', 'p1');
+          requireOpenUnit(input.p2, 'Success rate 2', 'p2');
           steps.push({ step: 'inputs', label: `${label}Expected success rates`, value: [input.p1, input.p2], source: 'entered' });
           if (paired) {
             calc = nMcNemar(input.p1, input.p2, alphaEach, power, input.psi);
@@ -1177,7 +1217,11 @@
             steps.push({ step: 'sample size', label: `${label}Two-proportion test: n per condition = ${round(calc.exact, 4)}, rounded up`, value: calc.n, source: 'calculated' });
           }
           testN = calc.n;
-          return { comparison: comp, n: testN, effect: { p1: input.p1, p2: input.p2, psi: calc.psi } };
+          return {
+            comparison: comp,
+            n: testN,
+            effect: { p1: input.p1, p2: input.p2, psi: calc.psi, psiEntered: paired && input.psi !== undefined },
+          };
         }
 
         const eff = continuousEffect(input, paired, measure, steps, label);
@@ -1243,7 +1287,7 @@
         steps,
         usesEstimate: perComparison.some((c) => c.effect && c.effect.estimate),
       };
-    });
+    }));
 
     const primary = results.find((r) => r.primary);
     const recommendedN = primary.total;
@@ -1290,6 +1334,8 @@
       alphaPerComparison: alphaEach,
       power,
       orders,
+      // Participants per counterbalancing order at the recommended n (methods.md §6).
+      participantsPerOrder: orders === null ? null : recommendedN / orders,
       measures: results,
       recommendedN,
       primary: primary.name,
@@ -1297,6 +1343,243 @@
       nCoverAll,
       underpowered,
     };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Confidence report for a planned study (methods.md §7)
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Confidence report for one measure of a plan() result at the number of
+   * participants the user can recruit. methods.md §7.
+   * Uses the measure's deciding comparison (the largest n). Total participants
+   * are converted to the test's n as in plan(): within subjects, n itself;
+   * between subjects, floor(n ÷ k) per condition, times the cells per level
+   * for a main effect. measureName defaults to the primary measure.
+   * Returns the confidenceT / confidenceBinary result plus what the report and
+   * powerCurve() need: mode ('units' | 'participants' | 'binary'), target,
+   * precision low and high ends, and the inputs used.
+   */
+  function confidenceReport(planResult, participants, measureName) {
+    if (!planResult || !Array.isArray(planResult.measures)) fail('Plan the study before the confidence report.');
+    const name = measureName === undefined ? planResult.primary : measureName;
+    const m = planResult.measures.find((x) => x.name === name);
+    if (!m) fail(`Unknown measure "${name}".`, 'measures');
+    return withWhere({ measure: m.name }, () => {
+      requireNumber(participants, 'Participants', 'participants');
+      if (!Number.isInteger(participants) || participants < 1) {
+        fail('Participants must be a whole number of at least 1.', 'participants');
+      }
+      const top = m.comparisons.reduce((a, b) => (b.n > a.n ? b : a));
+      let n = participants;
+      if (planResult.design === 'between') {
+        const perCell = Math.floor(participants / planResult.k);
+        n = top.cellsPerLevel ? perCell * top.cellsPerLevel : perCell;
+      }
+      const alpha = planResult.alphaPerComparison;
+      const power = planResult.power;
+      const testDesign = m.paired ? 'within' : 'between';
+      const base = {
+        measure: m.name,
+        unit: m.unit,
+        comparison: top.comparison.id,
+        participants,
+        n,
+        design: planResult.design,
+        testDesign,
+        rank: m.rank,
+        alpha,
+        targetPower: power,
+      };
+      const e = top.effect;
+
+      if (m.type === 'binary') {
+        const psi = e.psiEntered ? e.psi : defaultDiscordance(e.p1, e.p2);
+        const r = confidenceBinary({
+          design: testDesign, n, p1: e.p1, p2: e.p2, alpha, power,
+          psi: e.psiEntered ? e.psi : undefined,
+        });
+        const pp = 100 * Math.abs(e.p2 - e.p1);
+        return Object.assign(base, {
+          mode: 'binary',
+          estimate: false,
+          power: r.power,
+          detectable: r.detectable,
+          precision: {
+            halfWidth: r.precision.percentagePoints,
+            low: pp - r.precision.percentagePoints,
+            high: pp + r.precision.percentagePoints,
+          },
+          target: { percentagePoints: pp },
+          p1: e.p1,
+          p2: e.p2,
+          psi: testDesign === 'within' ? psi : null,
+        });
+      }
+
+      const units = e.delta !== null;
+      const r = confidenceT({
+        design: testDesign, n, alpha, power, rank: m.rank,
+        effectSize: e.effectSize, sd: units ? e.sd : undefined,
+      });
+      return Object.assign(base, {
+        mode: units ? 'units' : 'participants',
+        estimate: !!e.estimate,
+        power: r.power,
+        effectiveN: r.effectiveN,
+        detectable: r.detectable,
+        precision: units
+          ? { halfWidth: r.precision.halfWidth, low: e.delta - r.precision.halfWidth, high: e.delta + r.precision.halfWidth }
+          : null,
+        target: units
+          ? { units: e.delta }
+          : { kOf10: testDesign === 'within' ? kFromDz(e.effectSize) : kFromD(e.effectSize) },
+        effectSize: e.effectSize,
+        sd: units ? e.sd : null,
+      });
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Power curves (methods.md §7.1)
+  // ---------------------------------------------------------------------------
+
+  /** Standard normal density. Supports methods.md §7.1. */
+  function normalPdf(x) {
+    return ONE_OVER_SQRT_2PI * Math.exp(-0.5 * x * x);
+  }
+
+  // Density as the numerical derivative of a CDF (methods.md §7.1).
+  function densityFromCdf(cdf, x) {
+    const h = 1e-4 * Math.max(1, Math.abs(x));
+    return Math.max(0, (cdf(x + h) - cdf(x - h)) / (2 * h));
+  }
+
+  // Evenly spaced "nice" tick values (steps of 1, 2, 2.5 or 5 × 10^k) covering [lo, hi].
+  function niceTicks(lo, hi, count) {
+    const span = hi - lo;
+    if (!(span > 0)) return [lo];
+    const raw = span / count;
+    const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+    const norm = raw / mag;
+    const step = (norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 2.5 ? 2.5 : norm <= 5 ? 5 : 10) * mag;
+    const out = [];
+    for (let v = Math.ceil(lo / step) * step; v <= hi + step * 1e-9; v += step) {
+      out.push(Math.abs(v) < step * 1e-9 ? 0 : round(v, 10));
+    }
+    return out;
+  }
+
+  const CURVE_POINTS = 201;
+
+  /**
+   * Geometry for the two-curve power visual, from a confidenceReport() result.
+   * methods.md §7.1. The curves come from the same distributions as the
+   * report's power, so shadedShare equals report.power.
+   * Returns { axis: { kind: 'units' | 'percentage points' | 'participants',
+   * ticks: [{ x, value }] }, xMin, xMax, yMax, critical (the significance bar),
+   * lowerCritical (two-sided tests, else null), centers: { none, target },
+   * points: [{ x, none, target }] (densities), shadedShare, unshadedShare }.
+   */
+  function powerCurve(report) {
+    if (!report || !report.mode) fail('Run the confidence report before drawing its curves.');
+    const sample = (xMin, xMax, f0, f1) => {
+      const pts = [];
+      for (let i = 0; i < CURVE_POINTS; i++) {
+        const x = xMin + ((xMax - xMin) * i) / (CURVE_POINTS - 1);
+        pts.push({ x, none: f0(x), target: f1(x) });
+      }
+      return pts;
+    };
+    const finish = (out) => {
+      out.yMax = out.points.reduce((a, p) => Math.max(a, p.none, p.target), 0);
+      out.unshadedShare = 1 - out.shadedShare;
+      return out;
+    };
+
+    if (report.mode === 'binary') {
+      const { n, p1, p2, alpha } = report;
+      const za = zTwoSided(alpha);
+      if (report.testDesign === 'within') {
+        // McNemar: normal curves on the difference in success rates.
+        const psi = report.psi;
+        const delta = Math.abs(p2 - p1);
+        const se0 = Math.sqrt(psi / n);
+        const se1 = Math.sqrt((psi - delta * delta) / n);
+        const critical = za * se0;
+        const xMin = -4 * se0;
+        const xMax = Math.max(delta + 4 * se1, critical + se0);
+        const ticks = niceTicks(100 * xMin, 100 * xMax, 6).map((v) => ({ x: v / 100, value: v }));
+        return finish({
+          axis: { kind: 'percentage points', ticks },
+          xMin, xMax, critical, lowerCritical: null,
+          centers: { none: 0, target: delta },
+          points: sample(xMin, xMax, (x) => normalPdf(x / se0) / se0, (x) => normalPdf((x - delta) / se1) / se1),
+          shadedShare: normalCdf((delta - critical) / se1),
+        });
+      }
+      // Two proportions: normal curves on the Cohen's h scale, ticks in percentage points.
+      const h = Math.abs(cohensH(p1, p2));
+      const se = Math.sqrt(2 / n);
+      const critical = za * se;
+      const xMin = -4 * se;
+      const xMax = Math.max(h + 4 * se, critical + se);
+      const dir = p2 > p1 ? 1 : -1;
+      const a1 = Math.asin(Math.sqrt(p1));
+      const ppAt = (x) => {
+        const angle = Math.min(Math.PI / 2, Math.max(0, a1 + (dir * x) / 2));
+        return 100 * dir * (Math.pow(Math.sin(angle), 2) - p1);
+      };
+      const xAt = (v) => dir * (2 * Math.asin(Math.sqrt(p1 + (dir * v) / 100)) - 2 * a1);
+      const ticks = niceTicks(ppAt(xMin), ppAt(xMax), 6)
+        .filter((v) => {
+          const q = p1 + (dir * v) / 100;
+          return q >= 0 && q <= 1;
+        })
+        .map((v) => ({ x: xAt(v), value: v }))
+        .filter((t) => t.x >= xMin && t.x <= xMax);
+      return finish({
+        axis: { kind: 'percentage points', ticks },
+        xMin, xMax, critical, lowerCritical: -critical,
+        centers: { none: 0, target: h },
+        points: sample(xMin, xMax, (x) => normalPdf(x / se) / se, (x) => normalPdf((x - h) / se) / se),
+        shadedShare: normalCdf((h - critical) / se) + normalCdf((-critical - h) / se),
+      });
+    }
+
+    // t-based: central and noncentral t, scaled by SE (effective n for rank-based).
+    const paired = report.testDesign === 'within';
+    const nEff = report.effectiveN;
+    const df = paired ? nEff - 1 : 2 * (nEff - 1);
+    const es = Math.abs(report.effectSize);
+    const scale = report.mode === 'units' ? report.sd : 1;
+    const se = paired ? scale / Math.sqrt(nEff) : scale * Math.sqrt(2 / nEff);
+    const ncp = paired ? es * Math.sqrt(nEff) : es * Math.sqrt(nEff / 2);
+    const tc = tQuantile(1 - report.alpha / 2, df);
+    const critical = tc * se;
+    const width = Math.max(4, tQuantile(0.999, df));
+    const xMin = -width * se;
+    const xMax = Math.max((ncp + 1.4 * width) * se, critical + se);
+    const f0 = (x) => densityFromCdf((t) => tCdf(t, df), x / se) / se;
+    const f1 = (x) => densityFromCdf((t) => noncentralTCdf(t, df, ncp), x / se) / se;
+    let ticks;
+    if (report.mode === 'units') {
+      ticks = niceTicks(xMin, xMax, 6).map((v) => ({ x: v, value: v }));
+    } else {
+      // Participants of 10 who do better: 10·Φ(x) within, 10·Φ(x/√2) between (methods.md §7).
+      ticks = [];
+      for (let k = 1; k <= 9; k++) {
+        const x = paired ? normalQuantile(k / 10) : Math.SQRT2 * normalQuantile(k / 10);
+        if (x >= xMin && x <= xMax) ticks.push({ x, value: k });
+      }
+    }
+    return finish({
+      axis: { kind: report.mode === 'units' ? 'units' : 'participants', ticks },
+      xMin, xMax, critical, lowerCritical: -critical,
+      centers: { none: 0, target: ncp * se },
+      points: sample(xMin, xMax, f0, f1),
+      shadedShare: (1 - noncentralTCdf(tc, df, ncp)) + noncentralTCdf(-tc, df, ncp),
+    });
   }
 
   return {
@@ -1343,6 +1626,9 @@
     // Confidence report
     confidenceT,
     confidenceBinary,
+    confidenceReport,
+    normalPdf,
+    powerCurve,
     // Counterbalancing
     williamsSquare,
     orderCount,

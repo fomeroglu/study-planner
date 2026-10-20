@@ -23,6 +23,13 @@ cat("7a power at n = 12:          ",
 cat("7b detectable (units):       ",
     pwr.t.test(n = 12, power = 0.8, sig.level = 0.025, type = "paired", tol = tol)$d * sd, "\n")
 cat("7c precision half-width:     ", qt(0.975, 11) * sd / sqrt(12), "\n")
+# 7d, 7e: Task time is rank-based, so power and detectable difference use
+# the effective n = 12 x 3/pi (methods.md section 7).
+n_eff <- 12 * 3 / pi
+cat("7d rank power, n_eff:        ",
+    pwr.t.test(n = n_eff, d = dz8, sig.level = 0.025, type = "paired")$power, "\n")
+cat("7e rank detectable (units):  ",
+    pwr.t.test(n = n_eff, power = 0.8, sig.level = 0.025, type = "paired", tol = tol)$d * 10 / dz8, "\n")
 
 cat("8  18 / (3/pi):              ", 18 / (3 / pi), "-> ceiling", ceiling(18 / (3 / pi)), "\n")
 
