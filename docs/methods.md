@@ -46,10 +46,26 @@ version (section 13).
 
 ### 1.3 Adjusting for multiple comparisons
 
-Comparisons are always adjusted, since the goal is to pick a winner:
-each comparison uses alpha / m (Bonferroni), keeping the overall
-false-alarm risk at alpha. With one comparison, alpha / m = alpha.
-Holm's procedure can be used at analysis and is never less powerful.
+The goal is to pick a winner, so the overall chance of a false result
+is kept at alpha. How depends on the number of conditions:
+
+- **Two conditions** (one comparison): one test at alpha.
+- **Exactly three conditions, one independent variable:** Fisher's
+  protected least significant difference (LSD). At analysis, the
+  overall test (section 1.4) is run at alpha; only if it is
+  significant, each pair is compared at alpha, unadjusted. With three
+  groups this keeps the familywise false-alarm risk at alpha (Hayter,
+  1986). For planning, each pairwise comparison is sized at alpha.
+  Assumption: planned assuming the overall test is significant; the
+  true chance of finding a winner is slightly lower. A simulation check
+  is planned for version 1.1 (section 13).
+- **Four or more conditions, or two or more independent variables:**
+  each comparison is planned at alpha / m (Bonferroni), keeping the
+  overall false-alarm risk at alpha. With four or more groups, Fisher's
+  protected LSD no longer does this (Hayter, 1986). At analysis, Holm's
+  procedure is used: it is never stricter than Bonferroni (only the
+  first, smallest p-value is compared with alpha / m), so the planned
+  sample covers it.
 
 Treating each comparison as its own question, without adjustment, is
 planned for a later version (section 13).
@@ -58,8 +74,12 @@ planned for a later version (section 13).
 
 - Two conditions: one step, the pairwise test for the measure
   (section 2).
-- One independent variable with three or more conditions: two steps.
-  1. An omnibus test across all conditions.
+- Exactly three conditions, one independent variable: two steps
+  (Fisher's protected LSD, section 1.3).
+  1. The overall test across all conditions, at alpha.
+  2. If it is significant, the pairwise test for each pair, at alpha.
+- Four or more conditions, one independent variable: two steps.
+  1. The overall test across all conditions.
   2. The pairwise test for every pair, with the Holm adjustment across
      the m comparisons.
 - Two or more independent variables: the selected comparisons
@@ -67,8 +87,9 @@ planned for a later version (section 13).
   across the m comparisons. A factorial omnibus analysis is not planned
   in this version.
 - The sample size is based on the pairwise comparisons, planned at the
-  Bonferroni level alpha / m (section 1.3). Holm is never stricter than
-  Bonferroni, so the planned sample covers the Holm analysis either way.
+  per-comparison alpha from section 1.3: alpha for two or three
+  conditions, alpha / m (Bonferroni) otherwise. Holm is never stricter
+  than Bonferroni, so the planned sample covers the Holm analysis.
 
 | Result type | Step 1, within subjects | Step 1, between subjects | Step 2, within subjects | Step 2, between subjects |
 |---|---|---|---|---|
@@ -359,9 +380,14 @@ Values from the user's own estimate are labeled as such.
   labor cost, since it counts every slow task in full.
 - Count: the geometric mean can't be used when any value is zero.
 - Success / failure: report rates and differences in percentage points.
-- Three or more conditions: report the omnibus test, then the adjusted
-  pairwise comparisons. Declare a winner only when the top conditions
-  differ significantly from each other; otherwise report a tie.
+- Three conditions: report the overall test; if it is significant,
+  report the pairwise comparisons at alpha (Fisher's protected LSD). If
+  it is not, report that no difference was found.
+- Four or more conditions: report the overall test, then the
+  Holm-adjusted pairwise comparisons.
+- Three or more conditions: declare a winner only when the top
+  conditions differ significantly from each other; otherwise report a
+  tie.
 
 ## 11. Measure library defaults
 
@@ -386,6 +412,10 @@ recorded in validation/answer-key.md.
 | Confidence report: n = 12, σ_diff = 11.88, alpha 0.025 | Hand / R | power 0.63; detectable 12.0 s; ± 7.5 s |
 | Same, rank-based (effective n = 12 × 3/π) | Hand / R | power 0.60; detectable 12.3 s; ± 7.5 s |
 | Rank adjustment and Latin square: 18 ÷ 0.955, 3 conditions | Hand calculation | 19, rounded to 24 |
+| Running example, protected LSD (alpha 0.05): task time, 14 ÷ 0.955 | Hand calculation | 15, rounded to 18 |
+| Running example, protected LSD: NASA-TLX, dz = 10 / 15, alpha 0.05 | pwr.t.test | 20, rounded to 24 |
+| Running example, protected LSD: McNemar, 0.70 vs. 0.85, default ψ, alpha 0.05 | Hand / G*Power | 124, rounded to 126 |
+| Running example confidence report: n = 12, rank-based, alpha 0.05 | Hand / R | power 0.73; detectable 10.9 s; ± 7.5 s |
 | Two proportions, 0.60 vs. 0.80 | pwr.2p.test | 81 per condition |
 | McNemar, 0.60 vs. 0.80, default ψ | G*Power | 84 |
 | Problem discovery, p = 0.31, P = 0.85 | Hand calculation | 6 |
@@ -401,6 +431,9 @@ recorded in validation/answer-key.md.
 - Later: unadjusted comparisons, where each comparison answers its own
   question and uses the full alpha. This is a defensible position when
   each comparison stands as a separate claim (Rothman, 1990).
+- Later: simulation-based planning for Fisher's protected LSD, which
+  sizes the study for the chance that the overall test and the
+  pairwise comparison are both significant (version 1.1).
 - Later: interaction comparisons (a difference of differences). These
   are usually smaller than main effects and need many more
   participants; between subjects they need a different calculation.
@@ -434,6 +467,9 @@ recorded in validation/answer-key.md.
 - Fagerland, M. W. (2012). t-tests, non-parametric tests, and large
   studies: a paradox of statistical practice? BMC Medical Research
   Methodology, 12, 78.
+- Hayter, A. J. (1986). The maximum familywise error rate of Fisher's
+  least significant difference test. Journal of the American
+  Statistical Association, 81(396), 1000–1004.
 - Hodges, J. L., & Lehmann, E. L. (1956). The efficiency of some
   nonparametric competitors of the t-test. The Annals of Mathematical
   Statistics, 27(2), 324–335.

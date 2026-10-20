@@ -47,6 +47,22 @@
     return String(s === undefined || s === null ? '' : s).replace(/[&<>"']/g, (c) => ESC[c]);
   }
 
+  // Tooltip ids are numbered afresh on every render, in page order.
+  let tipSeq = 0;
+
+  // Rich text from logic.js: strings, arrays, and alpha tokens { alpha, tip }.
+  // A token becomes a focusable value whose tooltip shows on hover and on
+  // focus, and is linked with aria-describedby. Escape hides it.
+  function rich(parts, opts) {
+    if (parts === null || parts === undefined) return '';
+    if (typeof parts === 'string') return esc(parts);
+    if (Array.isArray(parts)) return parts.map((p) => rich(p, opts)).join('');
+    tipSeq += 1;
+    const id = `tip-${tipSeq}`;
+    return `<span class="tip${opts && opts.end ? ' tip-end' : ''}" tabindex="0" aria-describedby="${id}">${esc(parts.alpha)}` +
+      `<span class="tip-text" role="tooltip" id="${id}">${esc(parts.tip)}</span></span>`;
+  }
+
   function dataAttrs(data) {
     return Object.keys(data || {}).map((k) => ` data-${k}="${esc(data[k])}"`).join('');
   }
@@ -217,7 +233,7 @@
       `<div id="${ids.factorLevels(f.id)}-label">Conditions</div><div class="level-grid">${levels}` +
       `<button type="button" class="dashed-btn" id="add-level-${f.id}" data-action="add-level" data-factor="${f.id}">+ Add condition</button></div>` +
       `${errorEl(ids.factorLevels(f.id), levelIssue)}</div>` +
-      (note !== undefined ? `<p class="soft-note" id="${ids.comparisons()}" aria-live="polite">${note ? esc(note) : ''}</p>` : '') +
+      (note !== undefined ? `<p class="soft-note" id="${ids.comparisons()}" aria-live="polite">${rich(note)}</p>` : '') +
       (many ? `<div><button type="button" class="small-btn" id="remove-factor-${f.id}" data-action="remove-factor" data-factor="${f.id}">Remove independent variable ${i + 1}</button></div>` : '') +
       `</div>`;
   }
@@ -241,7 +257,7 @@
     const comparisons = v.single
       ? ''
       : `<section class="card" aria-labelledby="${ids.comparisons()}-label">${group(ids.comparisons(), '<h2 class="card-title" id="%ID%">Which comparisons matter?</h2>',
-        `<p class="hint">${esc(v.comparisonLine)}</p>` +
+        `<p class="hint">${rich(v.comparisonLine)}</p>` +
         `<div class="field"><div class="card-title" style="font-size:16px">Main effects</div><p class="hint">One level against another, averaged across the other variable.</p>` +
         `${comparisonChips(v.candidates.main, v.mainDisabled, 'main')}</div>` +
         `<div class="field"><div class="card-title" style="font-size:16px">Specific combinations</div><p class="hint">One combination of levels against another.</p>${comparisonChips(v.candidates.cell, null, 'cell')}</div>` +
@@ -420,7 +436,7 @@
     };
     const forced = visibleIssue(ids.alpha()) || visibleIssue(ids.power());
     return `<details class="advanced" data-open-key="advanced"${open || forced ? ' open' : ''}><summary>Advanced: power, alpha, test adjustment</summary>` +
-      `<div class="details-body"><p class="hint" style="line-height:1.6">${esc(L.advancedSummary(form))}</p>` +
+      `<div class="details-body"><p class="hint" style="line-height:1.6">${rich(L.advancedSummary(form))}</p>` +
       `<div class="grid-2">${field(ids.power(), 'Chance of detecting the difference if it is real (power)', form.power, 'Default 0.80. Applies to every measure.')}` +
       `${field(ids.alpha(), 'Overall false-alarm risk (alpha)', form.alpha, 'Default 0.05, two-sided. Applies to every measure.')}</div></div></details>`;
   }
@@ -564,7 +580,7 @@
       const key = `trail-${t.name}`;
       const open = state.ui.open[key] === undefined ? t.open : state.ui.open[key];
       return `<details class="trail-details" data-open-key="${esc(key)}"${open ? ' open' : ''}><summary>${t.primary ? '★ ' : ''}${esc(t.name)}</summary>` +
-        `<ol class="trail">${t.groups.map((g) => `<li><b>${esc(g.title)}.</b> ${g.lines.map(esc).join(' ')}</li>`).join('')}</ol></details>`;
+        `<ol class="trail">${t.groups.map((g) => `<li><b>${esc(g.title)}.</b> ${g.lines.map((line) => rich(line)).join(' ')}</li>`).join('')}</ol></details>`;
     }).join('');
     const op = v.orderPlan;
     const orders = op.within
@@ -577,7 +593,7 @@
       `<div><div class="label-caps">Participants</div><div class="hero">${v.participants}</div></div>` +
       `<div><div class="label-caps">Driven by</div><div class="value">${esc(v.drivenBy)}</div></div>` +
       `<div><div class="label-caps">Design</div><div class="value">${esc(v.design)}</div></div>` +
-      `<div><div class="label-caps">Power · alpha</div><div class="value mono">${esc(v.powerAlpha)}</div></div></div>` +
+      `<div><div class="label-caps">Power · alpha</div><div class="value mono">${rich(v.powerAlpha, { end: true })}</div></div></div>` +
       `<button type="button" class="link-btn" id="to-how" data-action="scroll-how">How we got this number →</button></section>` +
       `<section class="card square" aria-labelledby="per-measure-title"><h2 class="section-title" id="per-measure-title">Per measure</h2>` +
       `<div class="table-wrap" tabindex="0" role="region" aria-label="Per measure table"><table class="plan-table"><thead><tr>` +
@@ -589,8 +605,8 @@
       `<p class="hint">Run these after the study. The sample size above is based on the last step.</p>` +
       v.analysis.map((a) => `<div class="analysis-measure"><h3 class="analysis-name">${a.primary ? '★ ' : ''}${esc(a.name)}</h3>` +
         (a.steps.length > 1
-          ? `<ol class="analysis-steps">${a.steps.map((st) => `<li>${esc(st)}</li>`).join('')}</ol>`
-          : `<p class="analysis-one">${esc(a.steps[0])}</p>`) + '</div>').join('') +
+          ? `<ul class="analysis-steps">${a.steps.map((st) => `<li>${rich(st)}</li>`).join('')}</ul>`
+          : `<p class="analysis-one">${rich(a.steps[0])}</p>`) + '</div>').join('') +
       '</section>' +
       confidenceSection(plan) +
       `<section class="card square" id="how" aria-labelledby="how-title"><h2 class="section-title" id="how-title" tabindex="-1">How these numbers were reached</h2>${trails}</section>` +
@@ -744,6 +760,7 @@
   function update() {
     live = L.liveStatus(state.form);
     const activeId = document.activeElement && document.activeElement.id;
+    tipSeq = 0;
     const t = document.createElement('template');
     t.innerHTML = header() + screenHtml();
     const app = document.getElementById('app');
@@ -1037,6 +1054,19 @@
     const key = e.target.dataset && e.target.dataset.openKey;
     if (key) state.ui.open[key] = e.target.open;
   }, true);
+
+  // Alpha tooltips: Escape hides an open tooltip until focus or the pointer
+  // moves away (WCAG 1.4.13, content on hover or focus).
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    document.querySelectorAll('.tip:hover, .tip:focus').forEach((t) => t.classList.add('tip-dismissed'));
+  });
+  const undismiss = (e) => {
+    const t = e.target.closest && e.target.closest('.tip');
+    if (t) t.classList.remove('tip-dismissed');
+  };
+  document.addEventListener('focusout', undismiss);
+  document.addEventListener('mouseout', undismiss);
 
   // Tabs: arrow keys, Home and End (ARIA tabs pattern).
   document.addEventListener('keydown', (e) => {

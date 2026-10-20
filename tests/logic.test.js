@@ -89,28 +89,30 @@ test('formatting: significant figures, percentages, units and phrases', () => {
 // Form → study
 // ---------------------------------------------------------------------------
 
-test('buildStudy: one variable, every pair, always adjusted, and the inputs it passes on', () => {
+test('buildStudy: one variable, every pair, and the inputs it passes on', () => {
   const form = simpleForm('rating', { mode: 'units', variability: 'sd', delta: '5', sd: '10', consistency: 'high' });
   form.factors[0].levels.push(L.newLevel('Other'));
   const b = L.buildStudy(form);
   assert.deepEqual(b.issues, []);
   assert.deepEqual(b.study.comparisons, { scheme: 'all-pairs' });
-  assert.equal(b.study.adjust, undefined); // the engine always adjusts (methods.md §1.3)
-  assert.equal(L.runPlan(form).plan.alphaPerComparison, 0.05 / 3);
+  assert.equal(b.study.adjust, undefined); // the engine picks the procedure (methods.md §1.3)
+  assert.equal(L.runPlan(form).plan.procedure, 'protected-lsd');
   assert.deepEqual(b.study.factors, [{ name: 'Design', levels: ['Current', 'New', 'Other'] }]);
   assert.deepEqual(b.study.measures[0].effect, { mode: 'units', delta: 5, sd: 10, consistency: 'high' });
   assert.equal(b.study.alpha, 0.05);
   assert.equal(b.study.power, 0.8);
 });
 
-test('buildStudy: one variable needs no comparison choices; alpha is split across every pair', () => {
+test('buildStudy: one variable needs no comparison choices; alpha follows the number of conditions', () => {
   const form = simpleForm('time', { delta: '10', k: '8' });
   assert.equal(issueAt(L.buildStudy(form).issues, 'comparisons'), undefined);
   assert.equal(L.runPlan(form).plan.alphaPerComparison, 0.05);
   form.factors[0].levels.push(L.newLevel('Third'));
   const plan = L.runPlan(form).plan;
   assert.equal(plan.m, 3);
-  assert.equal(plan.alphaPerComparison, 0.05 / 3);
+  assert.equal(plan.alphaPerComparison, 0.05); // protected LSD
+  form.factors[0].levels.push(L.newLevel('Fourth'));
+  assert.equal(L.runPlan(form).plan.alphaPerComparison, 0.05 / 6); // Bonferroni
 });
 
 test('buildStudy: between subjects, unlinked measures, presets and participants mode', () => {
@@ -175,7 +177,7 @@ test('defaults are generic: unnamed variable and measure, conditions A, B, C ...
   assert.equal(L.conditionName(25), 'Condition Z');
   assert.equal(L.conditionName(26), 'Condition 27');
   assert.equal(L.newFactor().levels[1].name, 'Condition B');
-  assert.equal(L.step1View(form).conditionsNote.startsWith('With 3 conditions'), true);
+  assert.equal(L.plainText(L.step1View(form).conditionsNote).startsWith('With 3 conditions'), true);
   // Presets still fill their own names.
   assert.equal(L.presetMeasure('nasa-tlx').name, 'NASA-TLX');
 });
@@ -351,16 +353,26 @@ test('disabled options use the exact explanation text', () => {
 // Step text and sidebar
 // ---------------------------------------------------------------------------
 
-test('step 1 note: none for two conditions, every pair at three or more, or the selected ones', () => {
+test('step 1 note: none for two conditions, protected LSD at three, Bonferroni-Holm at four or more', () => {
   const form = simpleForm('time', { delta: '10', k: '8' });
   assert.equal(L.step1View(form).conditionsNote, null); // two conditions: no note
   form.factors[0].levels.push(L.newLevel('Other'));
-  const v = L.step1View(form);
-  assert.equal(v.conditions, 3);
-  assert.equal(v.conditionsNote,
-    'With 3 conditions, every pair is compared (3 comparisons), using a stricter test for each so the overall chance of a false result stays at 5%.');
-  form.alpha = '0.1';
-  assert.match(L.step1View(form).conditionsNote, /stays at 10%\.$/);
+  const three = L.step1View(form).conditionsNote;
+  assert.equal(L.plainText(three),
+    "With 3 conditions, every pair is compared. Run the overall test first; if it's significant, compare each pair at the usual 0.05 (Fisher's protected LSD).");
+  const lsdToken = three.find((p) => typeof p === 'object');
+  assert.equal(lsdToken.alpha, '0.05');
+  assert.equal(lsdToken.tip, "With exactly three conditions, the overall test protects the comparisons, so each uses the usual 0.05 (Fisher's protected LSD).");
+
+  form.factors[0].levels.push(L.newLevel('Fourth'));
+  const four = L.step1View(form).conditionsNote;
+  assert.equal(L.plainText(four),
+    "With 4 conditions, every pair is compared (6 comparisons). Fisher's protected LSD only keeps false results at 5% with up to three conditions, so each comparison now uses a stricter test (alpha 0.00833 for planning, Holm adjustment at analysis).");
+  assert.equal(four.find((p) => typeof p === 'object').tip,
+    '4 conditions = 6 pairs. 0.05 ÷ 6 = 0.00833 per comparison, so the overall chance of a false result stays at 5%. At analysis, the Holm adjustment is less strict: only the first comparison faces 0.00833.');
+  // Back to three: the note follows the conditions live.
+  form.factors[0].levels.pop();
+  assert.match(L.plainText(L.step1View(form).conditionsNote), /Fisher's protected LSD\)\.$/);
 
   const two = twoFactorForm();
   assert.equal(L.step1View(two).comparisonLine, 'No comparisons selected yet.');
@@ -368,9 +380,11 @@ test('step 1 note: none for two conditions, every pair at three or more, or the 
   two.comparisons.selected = [c.main[0].key];
   assert.equal(L.step1View(two).comparisonLine, '1 comparison selected.');
   two.comparisons.selected = [c.main[0].key, c.cell[0].key];
-  assert.equal(L.step1View(two).comparisonLine,
-    '2 comparisons selected, using a stricter test for each so the overall chance of a false result stays at 5%.');
-  // Always adjusted: there is no adjustment question to answer.
+  const line = L.step1View(two).comparisonLine;
+  assert.equal(L.plainText(line),
+    '2 comparisons selected. Each uses a stricter test (alpha 0.025 for planning, Holm adjustment at analysis), so the overall chance of a false result stays at 5%.');
+  assert.match(line.find((p) => typeof p === 'object').tip, /^2 comparisons\. 0\.05 ÷ 2 = 0\.025 per comparison/);
+  // There is no adjustment question to answer.
   assert.equal(L.buildStudy(two).issues.some((i) => i.target === 'adjust'), false);
 });
 
@@ -428,9 +442,13 @@ test('step 3 readouts: variability from the engine, labeled your estimate or cal
   const badK = simpleForm('time', { delta: '10', k: '5' });
   assert.equal(L.variabilityReadout(badK, badK.measures[0], 'all'), null);
   const adv = simpleForm('time', { delta: '10', k: '8' });
-  assert.equal(L.advancedSummary(adv), 'Power 0.80 · alpha 0.05 · +5% for rank-based test (conservative)');
+  assert.equal(L.plainText(L.advancedSummary(adv)), 'Power 0.80 · alpha 0.05 · +5% for rank-based test (conservative)');
   adv.factors[0].levels.push(L.newLevel('Other'));
-  assert.equal(L.advancedSummary(adv), 'Power 0.80 · alpha 0.05, adjusted to 0.0167 for 3 comparisons · +5% for rank-based test (conservative)');
+  assert.equal(L.plainText(L.advancedSummary(adv)),
+    "Power 0.80 · alpha 0.05, then each pair at 0.05 after a significant overall test (Fisher's protected LSD) · +5% for rank-based test (conservative)");
+  adv.factors[0].levels.push(L.newLevel('Fourth'));
+  assert.equal(L.plainText(L.advancedSummary(adv)),
+    'Power 0.80 · alpha 0.05, adjusted to 0.00833 for 6 comparisons (Holm at analysis) · +5% for rank-based test (conservative)');
 });
 
 // ---------------------------------------------------------------------------
@@ -495,17 +513,30 @@ test('find problems: one column when the frequency is 31%, and the axis grows wi
   assert.equal(rare.slider.max, 80);
 });
 
-test('analysis plan: one step for two conditions, two for three or more, selected comparisons for two variables', () => {
+test('analysis plan: one step for two conditions, protected LSD at three, Holm at four or more, selected comparisons for two variables', () => {
   const two = simpleForm('time', { delta: '10', k: '8' });
   const a2 = L.planView(L.runPlan(two).plan, two).analysis[0];
-  assert.deepEqual(a2.steps, ['Wilcoxon signed-rank comparing Current and New, at alpha 0.05.']);
+  assert.deepEqual(a2.steps.map(L.plainText), ['Wilcoxon signed-rank comparing Current and New, at alpha 0.05.']);
 
   const three = simpleForm('binary', { p1: '70', p2: '85' });
   three.factors[0].levels.push(L.newLevel('Other'));
   const a3 = L.planView(L.runPlan(three).plan, three).analysis[0];
-  assert.deepEqual(a3.steps, [
-    "Cochran's Q test across all 3 conditions, to see whether they differ at all.",
-    "McNemar for each pair, with the Holm adjustment (3 comparisons). The sample size is planned with the stricter Bonferroni level, alpha 0.0167, so it's covered either way.",
+  assert.deepEqual(a3.steps.map(L.plainText), [
+    "Step 1: Cochran's Q test at 0.05.",
+    "Step 2: if it's significant, McNemar for each pair at 0.05 (Fisher's protected LSD).",
+  ]);
+  // Test names that are not named after a person are lowercase mid-sentence.
+  const rating = simpleForm('rating', { variability: 'sdDiff', delta: '5', sdDiff: '10' });
+  rating.factors[0].levels.push(L.newLevel('Other'));
+  assert.equal(L.plainText(L.planView(L.runPlan(rating).plan, rating).analysis[0].steps[1]),
+    "Step 2: if it's significant, paired t-test for each pair at 0.05 (Fisher's protected LSD).");
+
+  const four = simpleForm('binary', { p1: '70', p2: '85' });
+  four.factors[0].levels.push(L.newLevel('Other'), L.newLevel('Fourth'));
+  const a4 = L.planView(L.runPlan(four).plan, four).analysis[0];
+  assert.deepEqual(a4.steps.map(L.plainText), [
+    "Step 1: Cochran's Q test across all 4 conditions, to see whether they differ at all.",
+    "Step 2: McNemar for each pair, with the Holm adjustment (6 comparisons). The sample size is planned with the stricter Bonferroni level, alpha 0.00833, so it's covered either way.",
   ]);
 
   const factorial = twoFactorForm();
@@ -514,5 +545,5 @@ test('analysis plan: one step for two conditions, two for three or more, selecte
   c.main.slice(0, 1).concat(c.cell.slice(0, 1)).forEach((x) => Object.assign(L.inputsFor(factorial.measures[0], x.key), { mode: 'participants', k: '8' }));
   const af = L.planView(L.runPlan(factorial).plan, factorial).analysis[0];
   assert.equal(af.steps.length, 1);
-  assert.equal(af.steps[0], "Wilcoxon signed-rank for each selected comparison, with the Holm adjustment (2 comparisons). The sample size is planned with the stricter Bonferroni level, alpha 0.025, so it's covered either way.");
+  assert.equal(L.plainText(af.steps[0]), "Wilcoxon signed-rank for each selected comparison, with the Holm adjustment (2 comparisons). The sample size is planned with the stricter Bonferroni level, alpha 0.025, so it's covered either way.");
 });

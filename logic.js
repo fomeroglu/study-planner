@@ -686,25 +686,85 @@
   const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
   // ---------------------------------------------------------------------------
+  // Rich text: arrays of strings and alpha tokens { alpha, tip }. The interface
+  // renders a token as a focusable value with a tooltip (on hover and on focus).
+  // ---------------------------------------------------------------------------
+
+  /**
+   * The per-comparison alpha as display text, with its explanation (methods.md
+   * §1.3). Returns a token { alpha, tip } for protected LSD and Bonferroni-Holm,
+   * or plain text for a single comparison.
+   */
+  function alphaToken(procedure, alpha, alphaEach, k, m, factorCount) {
+    const each = fmtAlpha(alphaEach);
+    if (procedure === 'protected-lsd') {
+      return {
+        alpha: each,
+        tip: `With exactly three conditions, the overall test protects the comparisons, so each uses the usual ${fmtAlpha(alpha)} (Fisher's protected LSD).`,
+      };
+    }
+    if (procedure === 'bonferroni-holm') {
+      const lead = factorCount === 1 ? `${k} conditions = ${m} pairs.` : `${m} comparisons.`;
+      return {
+        alpha: each,
+        tip: `${lead} ${fmtAlpha(alpha)} ÷ ${m} = ${each} per comparison, so the overall chance of a false result stays at ${fmtPercent(alpha)}. ` +
+          `At analysis, the Holm adjustment is less strict: only the first comparison faces ${each}.`,
+      };
+    }
+    return each;
+  }
+
+  // Rich text to plain text (tests, aria labels, the live region).
+  function plainText(parts) {
+    if (typeof parts === 'string') return parts;
+    if (!Array.isArray(parts)) return parts.alpha;
+    return parts.map(plainText).join('');
+  }
+
+  // Procedure and alpha token for the form as it stands (before a plan exists).
+  function formComparisons(form) {
+    const k = conditionCount(form);
+    const m = comparisonCount(form);
+    if (!k || !m) return null;
+    let alpha = parseNumber(form.alpha).value;
+    if (!(alpha > 0 && alpha < 1)) alpha = 0.05; // shown with the default until alpha is fixed
+    const mc = E.multipleComparisons(alpha, k, m, form.factors.length);
+    return Object.assign({ k, m, alpha, token: alphaToken(mc.procedure, alpha, mc.alphaPerComparison, k, m, form.factors.length) }, mc);
+  }
+
+  // Alpha token for a plan() result.
+  function planAlphaToken(plan) {
+    return alphaToken(plan.procedure, plan.alpha, plan.alphaPerComparison, plan.k, plan.m, plan.factorCount);
+  }
+
+  // ---------------------------------------------------------------------------
   // Step 1 view: option text
   // ---------------------------------------------------------------------------
 
-  // Which comparisons are made, in one line (methods.md §1.2, §1.3).
+  // Which comparisons are made and how false results are controlled
+  // (methods.md §1.2, §1.3). Rich text, updated as conditions change.
   function step1View(form) {
     const k = conditionCount(form);
     const m = comparisonCount(form);
-    const alpha = parseNumber(form.alpha).value;
-    const overall = alpha > 0 && alpha < 1 ? fmtPercent(alpha) : 'the alpha you set';
-    const stricter = `using a stricter test for each so the overall chance of a false result stays at ${overall}`;
-    // One variable: a note under the conditions, only at three or more.
+    const mc = formComparisons(form);
     let conditionsNote = null;
     let comparisonLine = null;
     if (form.factors.length < 2) {
-      if (m > 1) conditionsNote = `With ${k} conditions, every pair is compared (${m} comparisons), ${stricter}.`;
+      // One variable: no note at two conditions.
+      if (mc && mc.procedure === 'protected-lsd') {
+        conditionsNote = [`With 3 conditions, every pair is compared. Run the overall test first; if it's significant, compare each pair at the usual `,
+          mc.token, " (Fisher's protected LSD)."];
+      } else if (mc && mc.procedure === 'bonferroni-holm') {
+        conditionsNote = [`With ${k} conditions, every pair is compared (${m} comparisons). Fisher's protected LSD only keeps false results at ${fmtPercent(mc.alpha)} ` +
+          'with up to three conditions, so each comparison now uses a stricter test (alpha ', mc.token, ' for planning, Holm adjustment at analysis).'];
+      }
     } else if (!m) {
       comparisonLine = 'No comparisons selected yet.';
+    } else if (m === 1) {
+      comparisonLine = '1 comparison selected.';
     } else {
-      comparisonLine = m === 1 ? '1 comparison selected.' : `${m} comparisons selected, ${stricter}.`;
+      comparisonLine = [`${m} comparisons selected. Each uses a stricter test (alpha `, mc.token,
+        ` for planning, Holm adjustment at analysis), so the overall chance of a false result stays at ${fmtPercent(mc.alpha)}.`];
     }
     const candidates = candidateComparisons(form);
     return {
@@ -911,19 +971,29 @@
     return null;
   }
 
-  // Summary line in the Advanced section (step 3).
+  // Summary line in the Advanced section (step 3), as rich text.
   function advancedSummary(form) {
     const a = parseNumber(form.alpha).value;
     const p = parseNumber(form.power).value;
-    const m = comparisonCount(form);
-    const parts = [];
-    if (p > 0 && p < 1) parts.push(`Power ${fmtPower(p)}`);
+    const out = [];
+    const sep = () => { if (out.length) out.push(' · '); };
+    if (p > 0 && p < 1) out.push(`Power ${fmtPower(p)}`);
     if (a > 0 && a < 1) {
-      if (m > 1) parts.push(`alpha ${fmtAlpha(a)}, adjusted to ${fmtAlpha(E.alphaPerComparison(a, m))} for ${m} comparisons`);
-      else parts.push(`alpha ${fmtAlpha(a)}`);
+      sep();
+      const mc = formComparisons(form);
+      if (mc && mc.procedure === 'protected-lsd') {
+        out.push(`alpha ${fmtAlpha(a)}, then each pair at `, mc.token, " after a significant overall test (Fisher's protected LSD)");
+      } else if (mc && mc.procedure === 'bonferroni-holm') {
+        out.push(`alpha ${fmtAlpha(a)}, adjusted to `, mc.token, ` for ${mc.m} comparisons (Holm at analysis)`);
+      } else {
+        out.push(`alpha ${fmtAlpha(a)}`);
+      }
     }
-    if (form.measures.some((x) => x.type === 'time' || x.type === 'count')) parts.push('+5% for rank-based test (conservative)');
-    return parts.join(' · ');
+    if (form.measures.some((x) => x.type === 'time' || x.type === 'count')) {
+      sep();
+      out.push('+5% for rank-based test (conservative)');
+    }
+    return out;
   }
 
   // ---------------------------------------------------------------------------
@@ -955,15 +1025,19 @@
     { title: 'Variability', steps: ['variability'] },
     { title: 'Effect size', steps: ['effect size'] },
     { title: 'Alpha', steps: ['alpha'] },
+    { title: 'Assumption', steps: ['assumption'] },
     { title: 'Sample size', steps: ['sample size', 'rank adjustment', 'main-effect split'] },
     { title: 'Order plan', steps: ['counterbalancing'] },
     { title: 'Total', steps: ['total'] },
   ];
 
-  // One engine trail step as a sentence (methods.md §8).
-  function stepSentence(s) {
+  // One engine trail step as a sentence (methods.md §8). The alpha step is rich
+  // text, with the per-comparison alpha as a tooltip token.
+  function stepSentence(s, token) {
     const source = s.source === 'entered' ? ' (entered)' : s.source === 'your estimate' ? ' (your estimate)' : '';
     if (/^The same inputs apply/.test(s.label)) return `${s.label}.`;
+    if (s.value === undefined) return s.label;
+    if (s.step === 'alpha' && token) return [`${s.label}: `, token, '.'];
     let value;
     if (Array.isArray(s.value)) value = s.value.map((v) => fmtPercent(v)).join(' and ');
     else if (typeof s.value === 'string') value = capitalize(s.value) + (s.detail ? ` (${s.detail})` : '');
@@ -975,9 +1049,10 @@
   }
 
   function trailFor(m, plan) {
+    const token = planAlphaToken(plan);
     const groups = [{ title: 'Planned method', lines: [`${m.method}. ${m.reason}`] }];
     TRAIL_GROUPS.forEach((g) => {
-      const lines = m.steps.filter((s) => g.steps.includes(s.step)).map(stepSentence);
+      const lines = m.steps.filter((s) => g.steps.includes(s.step)).map((s) => stepSentence(s, token));
       if (g.title === 'Order plan' && m.primary && plan.participantsPerOrder !== null) {
         lines.push(`${m.total} fits ${plan.orders} orders: ${plan.participantsPerOrder} participant${plan.participantsPerOrder === 1 ? '' : 's'} each.`);
       }
@@ -1010,23 +1085,32 @@
     };
   }
 
+  // A test name inside a sentence: lowercase unless it is named after a person.
+  function midSentence(name) {
+    return /^(Wilcoxon|Mann|McNemar|Friedman|Kruskal|Cochran)/.test(name) ? name : name.charAt(0).toLowerCase() + name.slice(1);
+  }
+
   // "Your analysis plan": the steps of the planned analysis for each measure,
-  // from plan().measures[].analysis (methods.md §1.4).
+  // from plan().measures[].analysis (methods.md §1.4). Steps are rich text.
   function analysisPlan(plan) {
-    const alpha = (a) => `alpha ${fmtAlpha(a)}`;
+    const token = planAlphaToken(plan);
     return plan.measures.map((m) => {
       const a = m.analysis;
-      const steps = [];
-      if (a.omnibus) {
-        steps.push(`${a.omnibus} across all ${plan.k} conditions, to see whether they differ at all.`);
-      }
-      if (a.comparisons === 1) {
-        steps.push(`${a.pairwise} comparing ${plan.conditions[0]} and ${plan.conditions[1]}, at ${alpha(a.alphaPerComparison)}.`);
+      let steps;
+      if (a.procedure === 'single') {
+        steps = [`${a.pairwise} comparing ${plan.conditions[0]} and ${plan.conditions[1]}, at alpha ${fmtAlpha(a.alphaPerComparison)}.`];
+      } else if (a.procedure === 'protected-lsd') {
+        steps = [
+          `Step 1: ${a.omnibus} at ${fmtAlpha(plan.alpha)}.`,
+          [`Step 2: if it's significant, ${midSentence(a.pairwise)} for each pair at `, token, " (Fisher's protected LSD)."],
+        ];
       } else {
         // Analysed with Holm; sized at the stricter Bonferroni level (methods.md §1.4).
-        const what = plan.comparisons.every((c) => c.type === 'cell') && a.omnibus ? 'each pair' : 'each selected comparison';
-        steps.push(`${a.pairwise} for ${what}, with the Holm adjustment (${a.comparisons} comparisons). ` +
-          `The sample size is planned with the stricter Bonferroni level, ${alpha(a.alphaPerComparison)}, so it's covered either way.`);
+        const holm = (what) => [`${a.pairwise} for ${what}, with the Holm adjustment (${a.comparisons} comparisons). ` +
+          'The sample size is planned with the stricter Bonferroni level, alpha ', token, ", so it's covered either way."];
+        steps = a.omnibus
+          ? [`Step 1: ${a.omnibus} across all ${plan.k} conditions, to see whether they differ at all.`, ['Step 2: '].concat(holm('each pair'))]
+          : [holm('each selected comparison')];
       }
       return { name: m.name, primary: m.primary, steps };
     });
@@ -1044,12 +1128,20 @@
         out.push({ lead: m.name, text: 'report success rates and differences in percentage points.' });
       }
     });
-    if (plan.k >= 3) {
-      const omnibus = plan.design === 'within' ? 'repeated-measures ANOVA or Friedman test' : 'one-way ANOVA or Kruskal–Wallis test';
+    const winner = 'Declare a winner only when the top conditions differ significantly from each other; otherwise report a tie.';
+    const omnibus = plan.design === 'within' ? 'overall test (repeated-measures ANOVA, Friedman or Cochran\'s Q)' : 'overall test (one-way ANOVA, Kruskal–Wallis or chi-square)';
+    if (plan.procedure === 'protected-lsd') {
+      out.push({
+        lead: 'Three conditions',
+        text: `report the ${omnibus}. If it is significant, report the pairwise comparisons at alpha ${fmtAlpha(plan.alpha)} (Fisher's protected LSD); if not, report that no difference was found. ${winner}`,
+      });
+    } else if (plan.procedure === 'bonferroni-holm' && plan.measures[0].analysis.omnibus) {
       out.push({
         lead: `${capitalize(numberWord(plan.k))} conditions`,
-        text: `report the ${omnibus}, then the adjusted pairwise comparisons. Declare a winner only when the top conditions differ significantly from each other; otherwise report a tie.`,
+        text: `report the ${omnibus}, then the Holm-adjusted pairwise comparisons. ${winner}`,
       });
+    } else if (plan.procedure === 'bonferroni-holm') {
+      out.push({ lead: 'Selected comparisons', text: `report each with the Holm adjustment across the ${plan.m} comparisons. ${winner}` });
     }
     out.push({ lead: 'Every difference', text: 'report it in its own units with its confidence interval, not only a p-value.' });
     return out;
@@ -1073,7 +1165,7 @@
       participants: plan.recommendedN,
       drivenBy: plan.primary,
       design: `${plan.design === 'within' ? 'Within' : 'Between'} · ${plan.k} conditions`,
-      powerAlpha: `${fmtPower(plan.power)} · ${fmtAlpha(plan.alphaPerComparison)}`,
+      powerAlpha: [`${fmtPower(plan.power)} · `, planAlphaToken(plan)],
       rows,
       warnings,
       coverAll: plan.underpowered.length
@@ -1347,6 +1439,8 @@
     placeError,
     runPlan,
     liveStatus,
+    alphaToken,
+    plainText,
     fmtSig,
     fmtPercent,
     fmtFraction,

@@ -30,6 +30,11 @@ Tolerance (methods.md §12): exact match on the rounded-up n, except McNemar
 | 10 | McNemar, 0.60 vs. 0.80, default ψ = 0.44 | G*Power | 84 (±2) | 83.9405 | PROVISIONAL |
 | 11 | Problem discovery, p = 0.31, P = 0.85 | Hand calculation | 6 | 5.1127 | CONFIRMED |
 | 12 | Problem discovery, p = 0.10, P = 0.80 | Hand calculation | 16 | 15.2755 | CONFIRMED |
+| 13 | Running example, protected LSD (alpha 0.05): task time 14 ÷ (3/π), 6 orders | Hand calculation | 15, rounded to 18 | 14.6608 | PROVISIONAL |
+| 14 | Running example, protected LSD: NASA-TLX, paired dz = 10/15, alpha 0.05 | pwr.t.test | 20, rounded to 24 | 19.6669 | PROVISIONAL |
+| 15 | Running example, protected LSD: McNemar, 0.70 vs. 0.85, default ψ = 0.36, alpha 0.05 | G*Power | 124 (±2), rounded to 126 | 123.1976 | PROVISIONAL |
+| 16a | Running example confidence report: n = 12, rank-based (effective n = 12 × 3/π), alpha 0.05: power | pwr.t.test | 0.73 | 0.7327 | PROVISIONAL |
+| 16b | Same: detectable difference at power 0.80 | pwr.t.test | 10.9 s | 10.8621 | PROVISIONAL |
 
 ## Notes
 
@@ -41,17 +46,22 @@ Tolerance (methods.md §12): exact match on the rounded-up n, except McNemar
 - Rows 3 to 5: dz is the exact Φ⁻¹(0.8) = 0.841621..., not 0.842. Row 4
   sits 0.037 above the boundary at 16. With dz = 0.842 it would still
   round to 17.
-- The running example (three keyboard designs) compares every pair, always
-  adjusted (methods.md §1.2, §1.3): m = 3, alpha 0.05/3 per comparison.
-  Its task-time recommendation follows rows 5b and 8: n = 17.7366 → 18,
-  18 ÷ 0.955 = 18.85 → 19, rounded up to 24 for 6 orders. The interface's
-  end-to-end test (tests/e2e.test.js) expects 24.
-- Rows 7a to 7e use alpha 0.025, from an earlier version of the running
-  example (each design vs. Current, 2 comparisons). They remain valid
-  reference cases for the confidence report but no longer match the
-  running example, whose report at 12 participants uses alpha 0.05/3
-  (power 0.53, detectable 13.2 s; precision ± 7.5 s is unchanged because
-  intervals are not adjusted).
+- The running example (three keyboard designs, one variable) compares
+  every pair with Fisher's protected LSD (methods.md §1.3): each pair is
+  planned at alpha 0.05. Its task-time recommendation follows row 3 and
+  row 13: n = 13.1301 → 14, 14 ÷ 0.955 = 14.66 → 15, rounded up to 18 for
+  6 orders. The interface's end-to-end test (tests/e2e.test.js) expects
+  18. Rows 13 to 16 hold the running example's values under this rule.
+- The plan assumes the overall test is significant; the true chance of
+  finding a winner is slightly lower (methods.md §1.3). Rows 13 to 16
+  check the planning arithmetic only, not that assumption. A simulation
+  check is planned for version 1.1.
+- Rows 5b and 8 (alpha 0.05/3, 18 → 19 → 24) are the earlier Bonferroni
+  version of the running example. They remain valid reference cases for
+  the engine's arithmetic. Rows 7a to 7e (alpha 0.025) likewise come from
+  an earlier version (each design vs. Current, 2 comparisons).
+- Row 15: Connor's (1987) formula, so the ±2 tolerance applies, as for
+  row 10.
 - Rows 7d and 7e: Task time is rank-based, so power and detectable
   difference use the effective n 12 × 3/π ≈ 11.46 (methods.md section 7).
   Precision (7c) uses the actual n, so it is unchanged.

@@ -242,7 +242,7 @@ test('rank adjustment uses the exact 3/π', () => {
 // Comparisons, variability, effect size
 // ---------------------------------------------------------------------------
 
-test('comparison counts and alpha per comparison (every pair, always adjusted)', () => {
+test('comparison counts and the Bonferroni alpha per comparison', () => {
   assert.equal(E.countComparisons(2), 1);
   assert.equal(E.countComparisons(3, 'all-pairs'), 3);
   assert.equal(E.countComparisons(4, 'all-pairs'), 6);
@@ -391,36 +391,60 @@ test('equal rates or zero difference are rejected', () => {
 
 const threeDesigns = { name: 'Design', levels: ['Current', 'A', 'B'] };
 
-test('plan: 3 conditions within, task time, alpha 0.0167 trail gives 18, 19, then 24', () => {
-  // Every pair of 3 conditions: m = 3, alpha 0.05/3. dz = Φ⁻¹(0.8) gives n = 18.
+test('plan: 3 conditions within, protected LSD at alpha 0.05 gives 14, 15, then 18', () => {
+  // Exactly three conditions: Fisher's protected LSD, each pair at alpha (methods.md §1.3).
+  // dz = Φ⁻¹(0.8) at alpha 0.05 gives n = 14 (answer-key row 3).
   const r = E.plan({
     design: 'within',
     factors: [threeDesigns],
     comparisons: { scheme: 'all-pairs' },
-    adjust: true,
     measures: [{ name: 'Task time', type: 'time', unit: 's', primary: true, effect: { mode: 'units', delta: 10, k: 8 } }],
   });
   assert.equal(r.m, 3);
-  near(r.alphaPerComparison, 0.05 / 3, 1e-15);
+  assert.equal(r.procedure, 'protected-lsd');
+  assert.equal(r.alphaPerComparison, 0.05);
   const m = r.measures[0];
   assert.equal(m.method, 'Wilcoxon signed-rank');
-  const byStep = (s) => m.steps.filter((x) => x.step === s);
-  assert.equal(byStep('sample size')[0].value, 18);
-  assert.equal(byStep('rank adjustment')[0].value, 19);
+  const byStep = (st) => m.steps.filter((x) => x.step === st);
+  assert.match(byStep('alpha')[0].label, /Fisher's protected LSD, three conditions/);
+  assert.equal(byStep('assumption')[0].label, E.LSD_ASSUMPTION);
+  assert.equal(E.LSD_ASSUMPTION, 'Planned assuming the overall test is significant; the true chance of finding a winner is slightly lower. A simulation check is planned for version 1.1.');
+  assert.equal(byStep('sample size')[0].value, 14);
+  assert.equal(byStep('rank adjustment')[0].value, 15);
   assert.match(byStep('rank adjustment')[0].label, /÷ 0\.955 \(3\/π\)/);
-  assert.equal(byStep('counterbalancing')[0].value, 24);
-  assert.equal(m.total, 24);
-  assert.equal(r.recommendedN, 24);
+  assert.equal(byStep('counterbalancing')[0].value, 18);
+  assert.equal(m.total, 18);
+  assert.equal(r.recommendedN, 18);
   assert.equal(r.orders, 6);
   // Values from k of 10 are labeled as the user's estimate.
-  assert.ok(m.steps.some((s) => s.step === 'variability' && s.source === 'your estimate'));
+  assert.ok(m.steps.some((x) => x.step === 'variability' && x.source === 'your estimate'));
   assert.ok(m.usesEstimate);
   // Shared inputs are worked through once.
   assert.equal(byStep('sample size').length, 1);
   assert.equal(m.comparisons.length, 3);
 });
 
-test('plan: comparisons are always adjusted; one comparison keeps the full alpha', () => {
+test('plan: 4 conditions within, Bonferroni alpha 0.05 / 6 gives 21, 22, then 24', () => {
+  const r = E.plan({
+    design: 'within',
+    factors: [{ name: 'Design', levels: ['Current', 'A', 'B', 'C'] }],
+    comparisons: { scheme: 'all-pairs' },
+    measures: [{ name: 'Task time', type: 'time', unit: 's', primary: true, effect: { mode: 'units', delta: 10, k: 8 } }],
+  });
+  assert.equal(r.m, 6);
+  assert.equal(r.procedure, 'bonferroni-holm');
+  near(r.alphaPerComparison, 0.05 / 6, 1e-15);
+  const m = r.measures[0];
+  const byStep = (st) => m.steps.filter((x) => x.step === st);
+  assert.match(byStep('alpha')[0].label, /0\.05 ÷ 6 comparisons \(Bonferroni; Holm at analysis\)/);
+  assert.equal(byStep('assumption').length, 0);
+  assert.equal(byStep('sample size')[0].value, 21);
+  assert.equal(byStep('rank adjustment')[0].value, 22);
+  assert.equal(r.orders, 4);
+  assert.equal(r.recommendedN, 24);
+});
+
+test('plan: the procedure follows the number of conditions and variables (methods.md §1.3)', () => {
   const study = (levels, extra) => Object.assign({
     design: 'within',
     factors: [{ name: 'Design', levels }],
@@ -429,18 +453,48 @@ test('plan: comparisons are always adjusted; one comparison keeps the full alpha
   }, extra);
   const one = E.plan(study(['Current', 'A']));
   assert.equal(one.m, 1);
-  assert.equal(one.adjust, true);
+  assert.equal(one.procedure, 'single');
   assert.equal(one.alphaPerComparison, 0.05);
   assert.equal(one.measures[0].n, 34);
   assert.equal(one.measures[0].total, 34); // already even
   assert.match(one.measures[0].steps.find((x) => x.step === 'alpha').label, /\(one comparison\)/);
-  // No adjust flag needed: three conditions split alpha three ways.
   const three = E.plan(study(['Current', 'A', 'B']));
-  assert.equal(three.m, 3);
-  assert.equal(three.alphaPerComparison, 0.05 / 3);
+  assert.equal(three.procedure, 'protected-lsd');
+  assert.equal(three.alphaPerComparison, 0.05);
+  const four = E.plan(study(['Current', 'A', 'B', 'C']));
+  assert.equal(four.procedure, 'bonferroni-holm');
+  near(four.alphaPerComparison, 0.05 / 6, 1e-15);
+  // Two variables: Bonferroni-Holm, even with three comparisons.
+  const factorial = E.plan({
+    design: 'within',
+    factors: [oneFactor, { name: 'Posture', levels: ['Seated', 'Standing'] }],
+    comparisons: {
+      list: [
+        { id: 'a', type: 'cell', a: ['A', 'Seated'], b: ['Current', 'Seated'] },
+        { id: 'b', type: 'cell', a: ['A', 'Standing'], b: ['Current', 'Standing'] },
+        { id: 'c', type: 'cell', a: ['Current', 'Standing'], b: ['Current', 'Seated'] },
+      ],
+    },
+    measures: [{ name: 'Rating', type: 'rating', primary: true, effect: { mode: 'participants', k: 8 } }],
+  });
+  assert.equal(factorial.factorCount, 2);
+  assert.equal(factorial.procedure, 'bonferroni-holm');
+  near(factorial.alphaPerComparison, 0.05 / 3, 1e-15);
   // Unadjusted and baseline-only comparisons are planned for a later version (methods.md §13).
   throwsWhere(() => E.plan(study(['Current', 'A', 'B'], { adjust: false })), { field: 'comparisons' });
   throwsWhere(() => E.plan(study(['Current', 'A', 'B'], { comparisons: { scheme: 'baseline' } })), { field: 'comparisons' });
+});
+
+test('multipleComparisons: single, protected LSD, Bonferroni-Holm', () => {
+  assert.deepEqual(E.multipleComparisons(0.05, 2, 1, 1), { procedure: 'single', alphaPerComparison: 0.05 });
+  assert.deepEqual(E.multipleComparisons(0.05, 3, 3, 1), { procedure: 'protected-lsd', alphaPerComparison: 0.05 });
+  assert.deepEqual(E.multipleComparisons(0.1, 3, 3, 1), { procedure: 'protected-lsd', alphaPerComparison: 0.1 });
+  assert.deepEqual(E.multipleComparisons(0.05, 4, 6, 1), { procedure: 'bonferroni-holm', alphaPerComparison: 0.05 / 6 });
+  assert.deepEqual(E.multipleComparisons(0.05, 4, 3, 2), { procedure: 'bonferroni-holm', alphaPerComparison: 0.05 / 3 });
+  // Two variables with one selected comparison: one test.
+  assert.deepEqual(E.multipleComparisons(0.05, 4, 1, 2), { procedure: 'single', alphaPerComparison: 0.05 });
+  throwsWhere(() => E.multipleComparisons(1.5, 3, 3, 1), { field: 'alpha' });
+  throwsWhere(() => E.multipleComparisons(0.05, 3, 0, 1), { field: 'comparisons' });
 });
 
 test('plan: consistency defaults to Low (ρ = 0.3)', () => {
@@ -693,7 +747,7 @@ test('errors: problem discovery and helpers name their field', () => {
 // ---------------------------------------------------------------------------
 
 // The running example (design/README.md): three keyboard designs, within
-// subjects, every pair compared (3 comparisons), always adjusted.
+// subjects, every pair compared (3 comparisons) with Fisher's protected LSD.
 const runningExample = () => E.plan({
   design: 'within',
   factors: [{ name: 'Keyboard design', levels: ['Current', 'Prototype A', 'Prototype B'] }],
@@ -707,10 +761,10 @@ const runningExample = () => E.plan({
 
 test('plan: participants per order, and whether ψ was entered', () => {
   const r = runningExample();
-  // Answer-key rows 5b and 8: 18, then 19, then 24 for 6 orders.
-  assert.equal(r.recommendedN, 24);
+  // Protected LSD at alpha 0.05: 14, then 15, then 18 for 6 orders.
+  assert.equal(r.recommendedN, 18);
   assert.equal(r.orders, 6);
-  assert.equal(r.participantsPerOrder, 4);
+  assert.equal(r.participantsPerOrder, 3);
   assert.equal(r.measures[2].comparisons[0].effect.psiEntered, false);
   const entered = E.plan(studyWith([{ name: 'Success', type: 'binary', primary: true, effect: { p1: 0.6, p2: 0.8, psi: 0.3 } }]));
   assert.equal(entered.measures[0].comparisons[0].effect.psiEntered, true);
@@ -744,16 +798,16 @@ test('confidence report: running example at 12 participants (rank-based task tim
   assert.equal(r.rank, true);
   assert.equal(r.estimate, true);
   near(r.effectiveN, 12 * 3 / Math.PI, 1e-12);
-  // Alpha 0.05 / 3 per comparison.
-  near(r.power, 0.5261, 5e-5);
-  near(r.detectable.units, 13.2136, 5e-4);
+  // Protected LSD: alpha 0.05 per comparison.
+  near(r.power, 0.7327, 5e-5);
+  near(r.detectable.units, 10.8621, 5e-4);
   // 7.5494 with the exact σ_diff = 11.8818 (answer-key row 7c uses 11.88 and gives 7.5482).
   near(r.precision.halfWidth, 7.5494, 5e-4);
   near(r.precision.low, 10 - r.precision.halfWidth, 1e-12);
   near(r.precision.high, 10 + r.precision.halfWidth, 1e-12);
   assert.equal(r.target.units, 10);
   // Same as calling confidenceT directly with the plan's values.
-  const direct = E.confidenceT({ design: 'within', n: 12, alpha: 0.05 / 3, power: 0.8, rank: true, effectSize: DZ_K8, sd: 10 / DZ_K8 });
+  const direct = E.confidenceT({ design: 'within', n: 12, alpha: 0.05, power: 0.8, rank: true, effectSize: DZ_K8, sd: 10 / DZ_K8 });
   near(r.power, direct.power, 1e-15);
   near(r.detectable.units, direct.detectable.units, 1e-12);
 });
@@ -955,7 +1009,8 @@ test('plan: analysis steps, omnibus only with one variable and three or more con
   ]);
   r.measures.forEach((m) => {
     assert.equal(m.analysis.comparisons, 3);
-    near(m.analysis.alphaPerComparison, 0.05 / 3, 1e-15);
+    assert.equal(m.analysis.procedure, 'protected-lsd');
+    assert.equal(m.analysis.alphaPerComparison, 0.05);
   });
   // Two conditions: one step.
   const two = E.plan(studyWith(timeWith({ mode: 'participants', k: 8 })));
@@ -977,4 +1032,19 @@ test('plan: analysis steps, omnibus only with one variable and three or more con
     measures: timeWith({ mode: 'participants', k: 8 }),
   });
   assert.equal(factorial.measures[0].analysis.omnibus, null);
+});
+
+test('answer key: running example under protected LSD (rows 13 to 16)', () => {
+  near(14 / E.RANK_EFFICIENCY, 14.6608, 5e-5);
+  assert.equal(E.rankAdjust(14), 15);
+  assert.equal(E.roundToOrders(15, 6), 18);
+  const tlx = E.nPairedT(10 / 15, 0.05, 0.8);
+  near(tlx.exact, 19.6669, 5e-5);
+  assert.equal(E.roundToOrders(tlx.n, 6), 24);
+  const mc = E.nMcNemar(0.7, 0.85, 0.05, 0.8);
+  near(mc.exact, 123.1976, 5e-5);
+  assert.equal(E.roundToOrders(mc.n, 6), 126);
+  const r = E.confidenceT({ design: 'within', n: 12, alpha: 0.05, power: 0.8, rank: true, effectSize: DZ_K8, sd: 10 / DZ_K8 });
+  near(r.power, 0.7327, 5e-5);
+  near(r.detectable.units, 10.8621, 5e-4);
 });

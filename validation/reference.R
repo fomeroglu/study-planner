@@ -43,3 +43,16 @@ cat("10 McNemar (Connor):         ", n_mc, "\n")
 
 cat("11 problem discovery .31/.85:", log(1 - 0.85) / log(1 - 0.31), "\n")
 cat("12 problem discovery .10/.80:", log(1 - 0.80) / log(1 - 0.10), "\n")
+
+# 13 to 16: the running example under Fisher's protected LSD, alpha 0.05 per pair.
+cat("13 task time 14 / (3/pi):    ", 14 / (3 / pi), "-> ceiling", ceiling(14 / (3 / pi)),
+    "-> 6 orders", 6 * ceiling(ceiling(14 / (3 / pi)) / 6), "\n")
+cat("14 NASA-TLX dz = 10/15:      ",
+    pwr.t.test(d = 10 / 15, sig.level = 0.05, power = 0.8, type = "paired", tol = tol)$n, "\n")
+p1 <- 0.70; p2 <- 0.85; psi <- p1 * (1 - p2) + p2 * (1 - p1); delta <- p2 - p1
+n_lsd <- (qnorm(0.975) * sqrt(psi) + qnorm(0.8) * sqrt(psi - delta^2))^2 / delta^2
+cat("15 McNemar .70/.85 (Connor): ", n_lsd, "\n")
+cat("16a rank power n_eff, a=.05: ",
+    pwr.t.test(n = 12 * 3 / pi, d = dz8, sig.level = 0.05, type = "paired")$power, "\n")
+cat("16b rank detectable (units): ",
+    pwr.t.test(n = 12 * 3 / pi, power = 0.8, sig.level = 0.05, type = "paired", tol = tol)$d * 10 / dz8, "\n")

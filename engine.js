@@ -586,11 +586,32 @@
     fail(`Unknown comparison choice "${s}". Use "all-pairs".`, 'comparisons');
   }
 
-  /** Alpha per comparison: alpha / m (Bonferroni), always. methods.md §1.3. */
+  /** Bonferroni alpha per comparison: alpha / m. methods.md §1.3. */
   function alphaPerComparison(alpha, m) {
     requireOpenUnit(alpha, 'Alpha', 'alpha');
     if (!Number.isInteger(m) || m < 1) fail('There must be at least one comparison.', 'comparisons');
     return alpha / m;
+  }
+
+  // Assumption behind planning with Fisher's protected LSD (methods.md §1.3).
+  const LSD_ASSUMPTION = 'Planned assuming the overall test is significant; the true chance of finding a winner ' +
+    'is slightly lower. A simulation check is planned for version 1.1.';
+
+  /**
+   * Multiple-comparison procedure and the alpha each comparison is planned at.
+   * methods.md §1.3:
+   * - one comparison: 'single', alpha;
+   * - one independent variable with exactly three conditions: 'protected-lsd'
+   *   (Fisher's protected LSD; Hayter, 1986), alpha;
+   * - otherwise: 'bonferroni-holm', alpha / m (Holm at analysis).
+   */
+  function multipleComparisons(alpha, k, m, factorCount) {
+    requireOpenUnit(alpha, 'Alpha', 'alpha');
+    if (!Number.isInteger(k) || k < 2) fail('A study needs at least 2 conditions.', 'levels');
+    if (!Number.isInteger(m) || m < 1) fail('There must be at least one comparison.', 'comparisons');
+    if (m === 1) return { procedure: 'single', alphaPerComparison: alpha };
+    if (factorCount === 1 && k === 3) return { procedure: 'protected-lsd', alphaPerComparison: alpha };
+    return { procedure: 'bonferroni-holm', alphaPerComparison: alphaPerComparison(alpha, m) };
   }
 
   /** Every combination of levels across the factors, in order. methods.md §1.1. */
@@ -1146,9 +1167,10 @@
     const k = cells.length;
     const comparisons = resolveComparisons(study, cells);
     const m = comparisons.length;
-    // Always adjusted: the goal is to pick a winner (methods.md §1.3).
-    if (study.adjust === false) fail('Unadjusted comparisons are planned for a later version. In this version, alpha is always split across the comparisons (Bonferroni).', 'comparisons');
-    const alphaEach = alphaPerComparison(alpha, m);
+    // The overall false-alarm risk is always controlled (methods.md §1.3).
+    if (study.adjust === false) fail('Unadjusted comparisons are planned for a later version. In this version, the overall chance of a false result is always kept at alpha.', 'comparisons');
+    const mc = multipleComparisons(alpha, k, m, study.factors.length);
+    const alphaEach = mc.alphaPerComparison;
     const orders = design === 'within' ? orderCount(k) : null;
 
     if (!Array.isArray(study.measures) || study.measures.length === 0) fail('Add at least one measure.', 'measures');
@@ -1166,12 +1188,17 @@
       const steps = [];
       steps.push({
         step: 'alpha',
-        label: m > 1
-          ? `Alpha per comparison = ${alpha} ÷ ${m} comparisons (Bonferroni)`
-          : `Alpha per comparison = ${alpha} (one comparison)`,
+        label: mc.procedure === 'bonferroni-holm'
+          ? `Alpha per comparison = ${alpha} ÷ ${m} comparisons (Bonferroni; Holm at analysis)`
+          : mc.procedure === 'protected-lsd'
+            ? `Alpha per comparison = ${alpha}, after a significant overall test (Fisher's protected LSD, three conditions)`
+            : `Alpha per comparison = ${alpha} (one comparison)`,
         value: alphaEach,
         source: 'calculated',
       });
+      if (mc.procedure === 'protected-lsd') {
+        steps.push({ step: 'assumption', label: LSD_ASSUMPTION, source: 'calculated' });
+      }
 
       // With one input shared by every comparison, comparisons of the same
       // kind give the same n, so each kind is worked through once in the trail.
@@ -1287,11 +1314,13 @@
         primary: !!measure.primary,
         method,
         reason: methodReason(measure.type, paired, design === 'within'),
-        // Planned analysis (methods.md §1.4): an omnibus test only for one
-        // variable with three or more conditions, then the adjusted pairwise test.
+        // Planned analysis (methods.md §1.4): an overall test only for one
+        // variable with three or more conditions, then the pairwise test
+        // (protected LSD at three conditions, Holm otherwise).
         analysis: {
           omnibus: study.factors.length === 1 && k >= 3 ? omnibusTest(measure.type, paired) : null,
           pairwise: method,
+          procedure: mc.procedure,
           comparisons: m,
           alphaPerComparison: alphaEach,
         },
@@ -1346,7 +1375,8 @@
       k,
       comparisons: comparisons.map((c) => ({ id: c.id, type: c.type })),
       m,
-      adjust: true,
+      factorCount: study.factors.length,
+      procedure: mc.procedure,
       alpha,
       alphaPerComparison: alphaEach,
       power,
@@ -1625,6 +1655,8 @@
     // Comparisons
     countComparisons,
     alphaPerComparison,
+    multipleComparisons,
+    LSD_ASSUMPTION,
     buildCells,
     cellsPerLevel,
     // Variability and effect

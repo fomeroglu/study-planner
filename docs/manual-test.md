@@ -21,46 +21,71 @@ you saw.
       comparison questions.
 - [ ] With two conditions there is no note. Add a third condition: a small
       grey note appears under the conditions, "With 3 conditions, every pair
-      is compared (3 comparisons), using a stricter test for each so the
-      overall chance of a false result stays at 5%." Remove it again: the
-      note goes away.
+      is compared. Run the overall test first; if it's significant, compare
+      each pair at the usual 0.05 (Fisher's protected LSD)."
+- [ ] Add a fourth: the note changes to "With 4 conditions, every pair is
+      compared (6 comparisons). Fisher's protected LSD only keeps false
+      results at 5% with up to three conditions, so each comparison now uses
+      a stricter test (alpha 0.00833 for planning, Holm adjustment at
+      analysis)." Remove it again: the three-condition note returns.
+      Remove another: the note goes away.
+- [ ] Alpha tooltips: in the note, the dotted-underlined alpha (0.05 or
+      0.00833) shows a tooltip on hover and when reached with Tab. Three
+      conditions: "With exactly three conditions, the overall test protects
+      the comparisons, so each uses the usual 0.05 (Fisher's protected
+      LSD)." Four: "4 conditions = 6 pairs. 0.05 ÷ 6 = 0.00833 per
+      comparison, so the overall chance of a false result stays at 5%. At
+      analysis, the Holm adjustment is less strict: only the first
+      comparison faces 0.00833." Escape hides the tooltip; the pointer can
+      move onto it without it closing.
 - [ ] Name the variable "Keyboard design" and rename the conditions to
       Current, Prototype A and Prototype B (or keep A, B, C). Choose "All
       conditions". Sidebar: Within subjects, 3, "3 (every pair)".
 - [ ] Step 2: the measure name is empty with the hint "e.g., Task time".
       Name measure 1 "Task time", unit "seconds", type Time. Add the
-      NASA-TLX preset (it fills its own name). Add a measure "Task success", type Success / failure.
-      Sidebar: "3 (primary: Task time)".
+      NASA-TLX preset (it fills its own name). Add a measure "Task
+      success", type Success / failure. Sidebar: "3 (primary: Task time)".
 - [ ] Step 3, Task time: 10 seconds, estimate, 8 of 10. The question reads
       "At a 10-second difference, how many of 10 participants would be
       faster on the better condition?" Variability shows "≈ 12 s", "Your
-      estimate, not measured." Sidebar shows 24 and "Set by Task time, your
-      primary measure. Updates as you type."
+      estimate, not measured." Sidebar shows 18 and "Set by Task time, your
+      primary measure. Updates as you type." The Advanced summary reads
+      "alpha 0.05, then each pair at 0.05 after a significant overall test
+      (Fisher's protected LSD)", with the tooltip on the second 0.05.
 - [ ] NASA-TLX: 10, "I know the standard deviation", 15, Medium. Task
-      success: 70 and 85. Sidebar: 24, 30, 168. Before a measure is
+      success: 70 and 85. Sidebar: 18, 24, 126. Before a measure is
       filled in, its row reads "not filled in yet".
-- [ ] Plan: 24 participants, driven by Task time, "Within · 3 conditions",
-      "0.80 · 0.0167". Table: 24 covered, 30 and 168 underpowered (amber, with
-      the words "underpowered"). Two warnings: "NASA-TLX is underpowered at
-      24: 75% chance of detecting your target. It would need 30. Report it as
-      supporting evidence." and the same for Task success with 11% and 168.
-- [ ] "Your analysis plan" lists two steps for each measure: Task time,
-      Friedman test across all 3 conditions, then Wilcoxon signed-rank for
-      each pair with the Holm adjustment (3 comparisons), noting the sample
-      size is planned at the stricter Bonferroni level, alpha 0.0167; NASA-TLX, repeated-measures
-      ANOVA then paired t-test; Task success, Cochran's Q test then
-      McNemar. With two conditions there is a single step.
-- [ ] Move the slider to 12: tiles show 13 s, ± 7.5 s, 53%. The shaded
-      area is labeled "53% caught" and "47% missed". The precision bar shows
+- [ ] Plan: 18 participants, driven by Task time, "Within · 3 conditions",
+      Power · alpha "0.80 · 0.05" (the 0.05 has the three-condition
+      tooltip). Table: 18 covered, 24 and 126 underpowered (amber, with the
+      words "underpowered"). Two warnings: "NASA-TLX is underpowered at 18:
+      76% chance of detecting your target. It would need 24. Report it as
+      supporting evidence." and the same for Task success with 18% and 126.
+- [ ] "Your analysis plan" lists two steps for each measure:
+      Task time, "Step 1: Friedman test at 0.05." then "Step 2: if it's
+      significant, Wilcoxon signed-rank for each pair at 0.05 (Fisher's
+      protected LSD)."; NASA-TLX, repeated-measures ANOVA then paired
+      t-test; Task success, Cochran's Q test then McNemar. The 0.05 in each
+      step 2 has the tooltip. With two conditions there is a single step.
+- [ ] Move the slider to 12: tiles show 11 s, ± 7.5 s, 73%. The shaded
+      area is labeled "73% caught" and "27% missed". The precision bar shows
       2.5 s, 10 s, 17.5 s.
 - [ ] Drag the slider: tiles, curves and precision bar all update while
       dragging.
 - [ ] "How these numbers were reached": Task time open, others closed.
-      Alpha reads "0.05 ÷ 3 comparisons (Bonferroni): 0.0167". The rank step
-      reads "18 ÷ 0.955 (3/π) = 18.85, rounded up: 19", and the order plan
-      "24 fits 6 orders: 4 participants each."
+      Alpha reads "Alpha per comparison = 0.05, after a significant overall
+      test (Fisher's protected LSD, three conditions): 0.05" (tooltip on the
+      last 0.05). An "Assumption" line reads "Planned assuming the overall
+      test is significant; the true chance of finding a winner is slightly
+      lower. A simulation check is planned for version 1.1." Sample size
+      reads "n = 13.1301, rounded up: 14" and "14 ÷ 0.955 (3/π) = 14.66,
+      rounded up: 15", and the order plan "18 fits 6 orders: 3 participants
+      each."
 - [ ] Order plan: 6 orders (A B C, B C A, C A B, C B A, A C B, B A C), key
       A = Current, B = Prototype A, C = Prototype B.
+- [ ] With a fourth condition, the Plan screen's alpha is 0.00833 with the
+      four-condition tooltip, and the analysis plan reads "Step 2: ... with
+      the Holm adjustment (6 comparisons)".
 
 ## 2. Find problems
 
@@ -86,7 +111,8 @@ you saw.
 ## 4. Keyboard only (no mouse)
 
 - [ ] Tab through every screen: each control shows a visible teal focus
-      outline, and the order follows the page.
+      outline, and the order follows the page. Tab also stops on each
+      dotted-underlined alpha and shows its tooltip.
 - [ ] Option buttons toggle with Enter and Space.
 - [ ] Step 3 tabs: Left and Right arrows move between measures; Home and
       End go to the first and last.
@@ -96,7 +122,7 @@ you saw.
 - [ ] "How we got this number →" moves focus to "How these numbers were
       reached".
 - [ ] With a screen reader on: the participant count is announced once
-      after you stop typing ("Participants needed: 24").
+      after you stop typing ("Participants needed: 18").
 
 ## 5. Disabled options (visible, not selectable)
 
