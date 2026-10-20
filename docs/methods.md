@@ -189,21 +189,38 @@ Presets: NASA-TLX (rating scale, 0 to 100, raw TLX), SUS (rating scale,
 
 ## 3. Describing the improvement
 
-### 3.1 Continuous measures: three options
+### 3.1 Continuous measures
 
-The user chooses one per measure.
+The interface asks the same questions for every continuous measure and
+picks the mode from the answers:
+
+1. "Smallest difference that would matter" (Δ), in the measure's own
+   unit. Optional.
+2. "Out of 10 participants, how many should do better on the better
+   condition?" (k, from 6 to 9). Between subjects, it is asked as pairs
+   of participants, one from each condition (see below). 5 of 10 means
+   no improvement; 10 of 10 would mean everyone improves by the same
+   amount, which never happens in real data.
+
+With both answers: in units, with variability from the estimate. With
+question 1 left empty: in participants. With data from a past study,
+the SD replaces question 2: in units, with the SD known, and question 1
+is then required.
 
 **In units.** Inputs: smallest difference that matters (Δ), and
 variability. Variability is given one of two ways:
 
-- Known: the SD between participants (σ). Within subjects, also how
-  consistent participants are across conditions (consistency): Low,
-  Medium, or High, mapped to a correlation ρ of 0.3, 0.5, or 0.7. Then
-  σ_diff = σ·√(2(1 − ρ)). The default is Low, labeled as the cautious
-  choice (it gives the largest σ_diff).
-  Advanced: enter σ_diff directly.
-- Your estimate: "At a difference of Δ, how many of 10 participants
-  would do better on the new condition?" (k, from 6 to 9).
+- Known (data from a past study): the SD between participants (σ).
+  Within subjects, how consistent participants are across conditions
+  (consistency) sets a correlation ρ: Low 0.3, Medium 0.5, or High 0.7.
+  Then σ_diff = σ·√(2(1 − ρ)). In version 1 the interface always uses
+  Low, the cautious choice (it gives the largest σ_diff), and states
+  this assumption in the trail (section 8). Choosing the consistency,
+  and entering σ_diff directly, are supported by the engine and planned
+  for the interface in version 1.1 (section 13).
+- Your estimate: k from question 2, read as "at a difference of Δ, how
+  many of 10 participants would do better on the better condition?"
+  (k, from 6 to 9).
   - Within: σ_diff = Δ / Φ⁻¹(k/10)
   - Between: σ = Δ / (√2 · Φ⁻¹(k/10)), where k/10 is read as the chance
     that a randomly chosen participant on the new condition outperforms
@@ -213,7 +230,7 @@ variability. Variability is given one of two ways:
     answers are labeled "your estimate" wherever they appear; typed
     values are labeled "entered".
 
-**In participants.** Input: k of 10 participants should do better.
+**In participants** (question 1 left empty). Input: k of 10 participants should do better.
 - Within: dz = Φ⁻¹(k/10)
 - Between: d = √2 · Φ⁻¹(k/10)
 - This is the common language effect size (probability of
@@ -223,6 +240,10 @@ variability. Variability is given one of two ways:
 
 These are the two input modes in version 1. Entering Cohen's d directly
 is planned for a later version (section 13).
+
+In version 1 the interface does not ask for an expected average, so the
+bounded-scale check in section 2.2 is not applied to entered SDs. The
+engine still supports it.
 
 ### 3.2 Success / failure
 
@@ -431,6 +452,9 @@ recorded in validation/answer-key.md.
 - Later: unadjusted comparisons, where each comparison answers its own
   question and uses the full alpha. This is a defensible position when
   each comparison stands as a separate claim (Rothman, 1990).
+- 1.1 (interface): choosing how consistent participants are across
+  conditions (Low, Medium, High) and entering the SD of the differences
+  (σ_diff) directly. The engine supports both (section 3.1).
 - Later: simulation-based planning for Fisher's protected LSD, which
   sizes the study for the chance that the overall test and the
   pairwise comparison are both significant (version 1.1).

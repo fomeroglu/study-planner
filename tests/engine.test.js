@@ -1041,6 +1041,10 @@ test('answer key: running example under protected LSD (rows 13 to 16)', () => {
   const tlx = E.nPairedT(10 / 15, 0.05, 0.8);
   near(tlx.exact, 19.6669, 5e-5);
   assert.equal(E.roundToOrders(tlx.n, 6), 24);
+  // Row 14b: SD 15 at Low consistency.
+  const tlxLow = E.nPairedT(10 / E.sdDiffFromSd(15, E.rhoFromConsistency('low')), 0.05, 0.8);
+  near(tlxLow.exact, 26.7083, 5e-5);
+  assert.equal(E.roundToOrders(tlxLow.n, 6), 30);
   const mc = E.nMcNemar(0.7, 0.85, 0.05, 0.8);
   near(mc.exact, 123.1976, 5e-5);
   assert.equal(E.roundToOrders(mc.n, 6), 126);

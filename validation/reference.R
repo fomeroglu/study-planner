@@ -49,6 +49,8 @@ cat("13 task time 14 / (3/pi):    ", 14 / (3 / pi), "-> ceiling", ceiling(14 / (
     "-> 6 orders", 6 * ceiling(ceiling(14 / (3 / pi)) / 6), "\n")
 cat("14 NASA-TLX dz = 10/15:      ",
     pwr.t.test(d = 10 / 15, sig.level = 0.05, power = 0.8, type = "paired", tol = tol)$n, "\n")
+cat("14b NASA-TLX, Low (rho 0.3):",
+    pwr.t.test(d = 10 / (15 * sqrt(2 * (1 - 0.3))), sig.level = 0.05, power = 0.8, type = "paired", tol = tol)$n, "\n")
 p1 <- 0.70; p2 <- 0.85; psi <- p1 * (1 - p2) + p2 * (1 - p1); delta <- p2 - p1
 n_lsd <- (qnorm(0.975) * sqrt(psi) + qnorm(0.8) * sqrt(psi - delta^2))^2 / delta^2
 cat("15 McNemar .70/.85 (Connor): ", n_lsd, "\n")

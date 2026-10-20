@@ -32,6 +32,7 @@ Tolerance (methods.md §12): exact match on the rounded-up n, except McNemar
 | 12 | Problem discovery, p = 0.10, P = 0.80 | Hand calculation | 16 | 15.2755 | CONFIRMED |
 | 13 | Running example, protected LSD (alpha 0.05): task time 14 ÷ (3/π), 6 orders | Hand calculation | 15, rounded to 18 | 14.6608 | PROVISIONAL |
 | 14 | Running example, protected LSD: NASA-TLX, paired dz = 10/15, alpha 0.05 | pwr.t.test | 20, rounded to 24 | 19.6669 | PROVISIONAL |
+| 14b | Running example, protected LSD: NASA-TLX, SD 15 at Low consistency (σ_diff = 15 × √1.4), alpha 0.05 | pwr.t.test | 27, rounded to 30 | 26.7083 | PROVISIONAL |
 | 15 | Running example, protected LSD: McNemar, 0.70 vs. 0.85, default ψ = 0.36, alpha 0.05 | G*Power | 124 (±2), rounded to 126 | 123.1976 | PROVISIONAL |
 | 16a | Running example confidence report: n = 12, rank-based (effective n = 12 × 3/π), alpha 0.05: power | pwr.t.test | 0.73 | 0.7327 | PROVISIONAL |
 | 16b | Same: detectable difference at power 0.80 | pwr.t.test | 10.9 s | 10.8621 | PROVISIONAL |
@@ -60,6 +61,10 @@ Tolerance (methods.md §12): exact match on the rounded-up n, except McNemar
   version of the running example. They remain valid reference cases for
   the engine's arithmetic. Rows 7a to 7e (alpha 0.025) likewise come from
   an earlier version (each design vs. Current, 2 comparisons).
+- Rows 14 and 14b: the interface now always uses Low consistency (ρ = 0.3)
+  for an SD from past data (methods.md §3.1), so the running example's
+  NASA-TLX follows row 14b (27, rounded to 30). Row 14 (dz = 10/15, which
+  is Medium consistency) remains a valid case for the engine.
 - Row 15: Connor's (1987) formula, so the ±2 tolerance applies, as for
   row 10.
 - Rows 7d and 7e: Task time is rank-based, so power and detectable

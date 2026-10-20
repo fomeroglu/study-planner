@@ -10,8 +10,8 @@ const L = require(path.join(__dirname, '..', 'logic.js'));
 // The running example as a user would fill in the form: three keyboard designs,
 // within subjects; one variable with exactly three conditions, so every pair is
 // compared with Fisher's protected LSD at alpha 0.05 (methods.md §1.2, §1.3); task time primary (10 s, 8 of 10
-// faster); NASA-TLX (10 points, SD 15, medium consistency); task success (70%
-// vs. 85%).
+// faster); NASA-TLX (10 points, SD 15 from past data, Low consistency, the
+// only setting in this version); task success (70% vs. 85%).
 function runningExampleForm() {
   const form = L.newForm();
   form.design = 'within';
@@ -25,10 +25,10 @@ function runningExampleForm() {
   time.name = 'Task time';
   time.unit = 'seconds';
   time.type = 'time';
-  Object.assign(L.inputsFor(time, 'all'), { mode: 'units', variability: 'estimate', delta: '10', k: '8' });
+  Object.assign(L.inputsFor(time, 'all'), { delta: '10', k: '8' });
 
   const tlx = L.presetMeasure('nasa-tlx');
-  Object.assign(L.inputsFor(tlx, 'all'), { mode: 'units', variability: 'sd', delta: '10', sd: '15', consistency: 'medium' });
+  Object.assign(L.inputsFor(tlx, 'all'), { variability: 'sd', delta: '10', sd: '15' });
   form.measures.push(tlx);
 
   const success = L.newMeasure(false);
@@ -68,13 +68,13 @@ test('running example: per-measure table and underpowered warnings', () => {
   const view = L.planView(L.runPlan(form).plan, form);
   const row = (name) => view.rows.find((x) => x.name === name);
   assert.deepEqual([row('Task time').needed, row('Task time').status, row('Task time').method], [18, 'covered', 'Wilcoxon signed-rank']);
-  assert.deepEqual([row('NASA-TLX').needed, row('NASA-TLX').status, row('NASA-TLX').method], [24, 'underpowered', 'Paired t-test']);
+  assert.deepEqual([row('NASA-TLX').needed, row('NASA-TLX').status, row('NASA-TLX').method], [30, 'underpowered', 'Paired t-test']);
   assert.deepEqual([row('Task success').needed, row('Task success').status, row('Task success').method], [126, 'underpowered', 'McNemar']);
   assert.equal(row('Task time').why, 'Times usually skew right; +5% applied (conservative)');
   assert.equal(row('NASA-TLX').why, 'Composite rating, usually near-normal');
   assert.equal(row('Task success').why, 'Same participants, yes/no outcome');
   assert.deepEqual(view.warnings, [
-    'NASA-TLX is underpowered at 18: 76% chance of detecting your target. It would need 24. Report it as supporting evidence.',
+    'NASA-TLX is underpowered at 18: 62% chance of detecting your target. It would need 30. Report it as supporting evidence.',
     'Task success is underpowered at 18: 18% chance of detecting your target. It would need 126. Report it as supporting evidence.',
   ]);
   assert.equal(view.coverAll, 'To cover every measure: 126 participants (Task success).');
@@ -192,4 +192,14 @@ test('running example: your analysis plan lists two steps for each measure (prot
   ]);
   // The per-comparison alpha in step 2 carries the tooltip.
   assert.deepEqual(tokenOf(a[0].steps[1]), { alpha: '0.05', tip: LSD_TIP });
+});
+
+test('running example: NASA-TLX from past data states the consistency assumption', () => {
+  const form = runningExampleForm();
+  const trail = L.planView(L.runPlan(form).plan, form).trails.find((t) => t.name === 'NASA-TLX');
+  const group = (title) => trail.groups.find((g) => g.title === title).lines.map(L.plainText).join(' ');
+  assert.match(group('Variability'), /σ_diff = σ × √\(2\(1 − 0\.3\)\): 17\.7 points\./);
+  assert.match(group('Assumption'), /consistency Low, ρ = 0\.3/);
+  assert.match(group('Sample size'), /n = 26\.7083, rounded up: 27\./);
+  assert.match(group('Order plan'), /27 rounded up to a multiple of 6 orders \(balanced Latin square\): 30\./);
 });

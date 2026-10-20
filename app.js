@@ -306,7 +306,9 @@
       return `<section class="card" style="padding:20px 24px;flex-direction:row;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px" aria-labelledby="mname-${m.id}">` +
         `<div style="display:flex;flex-direction:column;gap:4px"><div style="font-size:17px;font-weight:600" id="mname-${m.id}">${m.primary ? '★ ' : ''}${esc(name)}${m.preset ? '<span class="badge">Preset</span>' : ''}</div>` +
         `<div class="hint">${esc(measureSummary(m))}</div>${issues.length ? `<p class="error">${esc(issues[0].message)}</p>` : ''}</div>` +
-        `<button type="button" class="small-btn" id="edit-${m.id}" data-action="edit-measure" data-measure="${m.id}" aria-label="Edit ${esc(name)}">Edit</button></section>`;
+        `<div class="chip-row"><button type="button" class="small-btn" id="edit-${m.id}" data-action="edit-measure" data-measure="${m.id}" aria-label="Edit ${esc(name)}">Edit</button>` +
+        (form.measures.length > 1 ? `<button type="button" class="small-btn" id="remove-measure-${m.id}" data-action="remove-measure" data-measure="${m.id}" aria-label="Remove ${esc(name)}">Remove</button>` : '') +
+        '</div></section>';
     }
     const binaryWhy = L.binaryTypeDisabled(form);
     const types = L.TYPE_ORDER.map((t) => optButton({
@@ -319,7 +321,7 @@
         `<div id="${ids.measureScale(m.id)}-label">Scale range</div><div class="field-row">` +
         `<label class="field-row" for="measure-${m.id}-scalemin"><span class="after">From</span></label>${textInput({ id: `measure-${m.id}-scalemin`, bind: 'scale-min', data: { measure: m.id }, value: m.scaleMin, cls: 'number w-80', inputmode: 'decimal' })}` +
         `<label class="field-row" for="measure-${m.id}-scalemax"><span class="after">to</span></label>${textInput({ id: `measure-${m.id}-scalemax`, bind: 'scale-max', data: { measure: m.id }, value: m.scaleMax, cls: 'number w-80', inputmode: 'decimal' })}</div>` +
-        `<p class="small-hint" id="${ids.measureScale(m.id)}-hint">Optional. Used to check that a standard deviation is possible on the scale.</p>${errorEl(ids.measureScale(m.id), visibleIssue(ids.measureScale(m.id)))}</div>`
+        `<p class="small-hint" id="${ids.measureScale(m.id)}-hint">Optional. The lowest and highest possible values.</p>${errorEl(ids.measureScale(m.id), visibleIssue(ids.measureScale(m.id)))}</div>`
       : '';
     const linked = form.design === 'between' ? ''
       : `<div role="group" class="field" aria-labelledby="linked-${m.id}-label"><div id="linked-${m.id}-label">Does each participant give one value per condition?</div><div class="chip-row">` +
@@ -335,7 +337,7 @@
       group(ids.measureType(m.id), '<div id="%ID%" style="font-size:14px;font-weight:500">Result type</div>',
         `<div class="chip-row">${types}</div>${m.type ? `<p class="small-hint">${esc(L.TYPE_HELP[m.type])}</p>` : ''}`, 'field') +
       scale + linked +
-      (form.measures.length > 1 ? `<div><button type="button" class="small-btn" id="remove-measure-${m.id}" data-action="remove-measure" data-measure="${m.id}">Remove ${esc(name)}</button></div>` : '') +
+      (form.measures.length > 1 ? `<div><button type="button" class="small-btn" id="remove-measure-${m.id}" data-action="remove-measure" data-measure="${m.id}" aria-label="Remove ${esc(name)}">Remove</button></div>` : '') +
       `</section>`;
   }
 
@@ -345,10 +347,12 @@
       `<div class="intro"><h1 tabindex="-1" id="page-title">What are you measuring?</h1><p>Add each dependent variable. Mark the one your decision rests on as primary.</p></div>` +
       `<div id="${ids.measures()}" style="display:flex;flex-direction:column;gap:24px" tabindex="-1">${form.measures.map(measureCard).join('')}${errorEl(ids.measures(), visibleIssue(ids.measures()))}</div>` +
       `<div class="chip-row" style="align-items:center"><button type="button" class="dashed-btn" style="height:48px" id="add-measure" data-action="add-measure">+ Add measure</button>` +
-      `<span class="hint" style="margin-left:8px" id="presets-label">Presets:</span>` +
+      `<span class="hint" style="margin-left:8px" id="presets-label">Fill the measure you're editing with a preset:</span>` +
       ['nasa-tlx', 'sus', 'seq'].map((k) => `<button type="button" class="chip round" id="preset-${k}" data-action="preset" data-value="${k}" aria-describedby="presets-label">${esc(L.PRESET_DISPLAY[k].name)}</button>`).join('') +
       `</div>` + generalError() +
-      navRow('#/compare/1', '<button type="button" class="btn primary" id="next-2" data-action="next" data-step="2">Next: Inputs</button>') +
+      `<div class="nav-row"><a class="btn" href="#/compare/1" id="back">Back</a><div class="chip-row">` +
+      `<button type="button" class="btn" id="start-over" data-action="new-plan">Start over</button>` +
+      '<button type="button" class="btn primary" id="next-2" data-action="next" data-step="2">Next: Inputs</button></div></div>' +
       `</main>${sidebar(2)}</div>`;
   }
 
@@ -384,46 +388,31 @@
         psi + '</section>';
     }
 
-    const modeBtns = `<div class="opt-grid wide">${optButton({ id: `mode-${m.id}-${key}-units`, action: 'mode', data: { measure: m.id, key, value: 'units' }, pressed: inp.mode === 'units', title: t.modeUnits, sub: t.modeUnitsHint })}` +
-      `${optButton({ id: `mode-${m.id}-${key}-participants`, action: 'mode', data: { measure: m.id, key, value: 'participants' }, pressed: inp.mode === 'participants', title: t.modeParticipants, sub: t.modeParticipantsHint })}</div>`;
-    const modeCard = `<section class="card" aria-labelledby="mode-${m.id}-${key}-title">${head}<h3 class="card-title" id="mode-${m.id}-${key}-title">How do you want to describe the improvement?</h3>${modeBtns}</section>`;
+    const readout = L.variabilityReadout(form, m, key);
+    const readoutHtml = readout
+      ? `<div class="readout-line"><span class="hint">${esc(readout.label)}</span><span class="value">${esc(readout.value)}</span><span class="small-hint">${esc(readout.note)}</span></div>`
+      : '';
+    const deltaField = numberField({ id: id('delta'), data: d('delta'), label: `1. ${t.deltaLabel}`, hint: t.deltaHint, value: inp.delta, placeholder: t.deltaRequired ? '' : 'Optional', after: t.unit, large: true });
 
-    let body;
-    if (inp.mode === 'participants') {
-      body = numberField({ id: id('k'), data: d('k'), label: t.participantsQuestion, hint: '(6 to 9)', value: inp.k, placeholder: '8', after: 'of 10', width: 'w-80', inputmode: 'numeric', large: true });
-    } else {
-      const readout = L.variabilityReadout(form, m, key);
-      const readoutHtml = readout
-        ? `<div class="readout-line"><span class="hint">${esc(readout.label)}</span><span class="value">${esc(readout.value)}</span><span class="small-hint">${esc(readout.note)}</span></div>`
-        : '';
-      const vary = inp.variability === 'estimate' ? 'estimate' : 'sd';
-      let panel;
-      if (vary === 'estimate') {
-        panel = numberField({ id: id('k'), data: d('k'), label: t.kQuestion, value: inp.k, placeholder: '8', after: 'of 10', width: 'w-80', inputmode: 'numeric' }) + readoutHtml;
-      } else {
-        const sdDiffOn = inp.variability === 'sdDiff' && t.paired;
-        const consistency = t.paired && !sdDiffOn
-          ? `<div role="group" class="field" aria-labelledby="cons-${m.id}-${key}-label"><div id="cons-${m.id}-${key}-label">${esc(t.consistencyLabel)}</div><div class="chip-row">` +
-            [['low', 'Low (cautious)'], ['medium', 'Medium'], ['high', 'High']].map(([v, label]) => optButton({
-              id: `cons-${m.id}-${key}-${v}`, action: 'consistency', data: { measure: m.id, key, value: v }, cls: 'chip', pressed: (inp.consistency || 'low') === v, title: label,
-            })).join('') + `</div>${errorEl(id('consistency'), visibleIssue(id('consistency')))}</div>`
-          : '';
-        const sdFields = sdDiffOn
-          ? numberField({ id: id('sdDiff'), data: d('sdDiff'), label: t.sdDiffLabel, value: inp.sdDiff, after: t.unit })
-          : numberField({ id: id('sd'), data: d('sd'), label: t.sdLabel, value: inp.sd, after: t.unit }) +
-            (t.scale ? numberField({ id: id('mean'), data: d('mean'), label: t.meanLabel, hint: t.meanHint, value: inp.mean, after: t.unit }) : '');
-        const toggle = t.paired
-          ? `<label class="check"><input type="checkbox" id="sddiff-${m.id}-${key}" data-bind="sddiff" data-measure="${m.id}" data-key="${esc(key)}"${sdDiffOn ? ' checked' : ''}> ${esc(t.sdDiffToggle)}</label>`
-          : '';
-        panel = sdFields + consistency + toggle + readoutHtml;
-      }
-      body = numberField({ id: id('delta'), data: d('delta'), label: t.deltaLabel, hint: t.deltaHint, value: inp.delta, placeholder: '10', after: t.unit, large: true }) +
-        `<div style="display:flex;flex-direction:column;gap:10px"><div role="group" aria-labelledby="vary-${m.id}-${key}-label" style="display:flex;flex-direction:column;gap:10px"><div style="font-size:16px;font-weight:500" id="vary-${m.id}-${key}-label">How much do people vary?</div><div class="chip-row">` +
-        optButton({ id: `vary-${m.id}-${key}-estimate`, action: 'variability', data: { measure: m.id, key, value: 'estimate' }, cls: 'chip', pressed: vary === 'estimate', title: 'I don\'t know: let me estimate it' }) +
-        optButton({ id: `vary-${m.id}-${key}-sd`, action: 'variability', data: { measure: m.id, key, value: 'sd' }, cls: 'chip', pressed: vary === 'sd', title: 'I know the standard deviation' }) +
-        `</div></div><div class="inset">${panel}</div></div>`;
-    }
-    return modeCard + `<section class="card focus-card" style="gap:20px" aria-label="${esc(t.heading || `${trimmed(m.name)} inputs`)}">${body}</section>`;
+    // Question 2, or the past-data section that replaces it.
+    const kId = id('k');
+    const kIssue = visibleIssue(kId);
+    const question2 = t.pastData ? '' :
+      `<div class="field large"><label for="${esc(kId)}">2. ${esc(t.kQuestion)}</label>` +
+      `<span class="field-hint" id="${esc(kId)}-hint">${esc(t.kRange)} ${rich(t.kTip)}${t.kContext ? ` ${esc(t.kContext)}` : ''}</span>` +
+      `<span class="field-row">${textInput({ id: kId, bind: 'input', data: d('k'), value: inp.k, placeholder: '8', cls: 'number w-80', inputmode: 'numeric', hintId: `${kId}-hint` })}<span class="after">of 10</span></span>` +
+      `${errorEl(kId, kIssue)}</div>`;
+    const pastId = `past-${m.id}-${key}`;
+    const pastData = `<div class="past-data"><button type="button" class="disclosure" id="${esc(pastId)}" data-action="past-data" data-measure="${m.id}" data-key="${esc(key)}" aria-expanded="${t.pastData}" aria-controls="${esc(pastId)}-body">` +
+      `<span aria-hidden="true">${t.pastData ? '▾' : '▸'}</span> ${esc(t.pastDataToggle)}</button>` +
+      (t.pastData
+        ? `<div class="inset" id="${esc(pastId)}-body">` +
+          numberField({ id: id('sd'), data: d('sd'), label: t.sdLabel, value: inp.sd, after: t.unit }) +
+          (t.consistencyNote ? `<p class="small-hint" style="margin:0;line-height:1.5">${esc(t.consistencyNote)}</p>` : '') +
+          '</div>'
+        : '') + '</div>';
+    const body = deltaField + question2 + pastData + readoutHtml + `<p class="small-hint" style="margin:0">${esc(t.resultsIn)}</p>`;
+    return `<section class="card focus-card" style="gap:20px" aria-label="${esc(t.heading || `${trimmed(m.name)} inputs`)}">${head}${body}</section>`;
   }
 
   function advancedSection() {
@@ -454,6 +443,7 @@
     const keys = L.inputKeys(form);
     const measureIssue = visibleIssue(ids.measureInputs(m.id));
     const panel = `<div role="tabpanel" id="panel-${m.id}" aria-labelledby="tab-${m.id}" style="display:flex;flex-direction:column;gap:24px">` +
+      `<h2 class="measure-heading" id="measure-heading-${m.id}">${esc(L.inputText(form, m, keys[0]).measureHeading)}</h2>` +
       `<div id="${ids.measureInputs(m.id)}" tabindex="-1">${measureIssue ? `<p class="warning">${esc(measureIssue.message)}</p>` : ''}</div>` +
       (m.type ? keys.map((k) => inputsBlock(m, k)).join('') : '<p class="warning">Choose a result type for this measure in step 2.</p>') +
       `<section class="card">${advancedSection()}</section></div>`;
@@ -959,8 +949,9 @@
       return () => focusTarget(ids.measureName(m.id));
     },
     preset(el) {
-      const m = L.presetMeasure(el.dataset.value);
-      state.form.measures.push(m);
+      // Fills the measure being edited; "+ Add measure" is the only way to add one.
+      const m = state.form.measures.find((x) => x.id === state.ui.openMeasure) || state.form.measures[0];
+      L.applyPreset(m, el.dataset.value);
       state.ui.openMeasure = m.id;
       return () => focusTarget(ids.measureName(m.id));
     },
@@ -968,9 +959,11 @@
       state.ui.tab = el.dataset.measure;
       return () => focusTarget(`tab-${el.dataset.measure}`);
     },
-    mode(el) { L.inputsFor(findMeasure(el.dataset.measure), el.dataset.key).mode = el.dataset.value; },
-    variability(el) { L.inputsFor(findMeasure(el.dataset.measure), el.dataset.key).variability = el.dataset.value; },
-    consistency(el) { L.inputsFor(findMeasure(el.dataset.measure), el.dataset.key).consistency = el.dataset.value; },
+    'past-data'(el) {
+      const inp = L.inputsFor(findMeasure(el.dataset.measure), el.dataset.key);
+      inp.variability = inp.variability === 'sd' ? 'estimate' : 'sd';
+      return () => focusTarget(inp.variability === 'sd' ? ids.input(el.dataset.measure, el.dataset.key, 'sd') : el.id);
+    },
     'scroll-how'() {
       return () => {
         const h = document.getElementById('how-title');
@@ -980,7 +973,7 @@
     },
     'new-plan'() {
       // eslint-disable-next-line no-alert
-      if (!window.confirm('Start a new plan? This clears everything you entered.')) return 'skip';
+      if (!window.confirm('Start over? This clears everything you entered for this plan.')) return 'skip';
       const theme = currentTheme();
       state = freshState();
       document.documentElement.setAttribute('data-theme', theme);
@@ -1013,7 +1006,6 @@
     'scale-min'(el) { findMeasure(el.dataset.measure).scaleMin = el.value; },
     'scale-max'(el) { findMeasure(el.dataset.measure).scaleMax = el.value; },
     input(el) { L.inputsFor(findMeasure(el.dataset.measure), el.dataset.key)[el.dataset.field] = el.value; },
-    sddiff(el) { L.inputsFor(findMeasure(el.dataset.measure), el.dataset.key).variability = el.checked ? 'sdDiff' : 'sd'; },
     alpha(el) { state.form.alpha = el.value; },
     power(el) { state.form.power = el.value; },
     'find-p'(el) { state.find.p = el.value; state.find.participants = null; },

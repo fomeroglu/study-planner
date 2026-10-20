@@ -90,7 +90,7 @@ test('formatting: significant figures, percentages, units and phrases', () => {
 // ---------------------------------------------------------------------------
 
 test('buildStudy: one variable, every pair, and the inputs it passes on', () => {
-  const form = simpleForm('rating', { mode: 'units', variability: 'sd', delta: '5', sd: '10', consistency: 'high' });
+  const form = simpleForm('rating', { variability: 'sd', delta: '5', sd: '10', consistency: 'high' });
   form.factors[0].levels.push(L.newLevel('Other'));
   const b = L.buildStudy(form);
   assert.deepEqual(b.issues, []);
@@ -98,7 +98,8 @@ test('buildStudy: one variable, every pair, and the inputs it passes on', () => 
   assert.equal(b.study.adjust, undefined); // the engine picks the procedure (methods.md §1.3)
   assert.equal(L.runPlan(form).plan.procedure, 'protected-lsd');
   assert.deepEqual(b.study.factors, [{ name: 'Design', levels: ['Current', 'New', 'Other'] }]);
-  assert.deepEqual(b.study.measures[0].effect, { mode: 'units', delta: 5, sd: 10, consistency: 'high' });
+  // Past data: consistency is always Low in this version (methods.md §3.1).
+  assert.deepEqual(b.study.measures[0].effect, { mode: 'units', delta: 5, sd: 10, consistency: 'low' });
   assert.equal(b.study.alpha, 0.05);
   assert.equal(b.study.power, 0.8);
 });
@@ -153,7 +154,7 @@ test('buildStudy: two variables give one input set per selected comparison', () 
   assert.ok(seated);
   form.comparisons.selected = [c.main[0].key, seated.key];
   const m = form.measures[0];
-  Object.assign(L.inputsFor(m, c.main[0].key), { delta: '5', variability: 'sdDiff', sdDiff: '10' });
+  Object.assign(L.inputsFor(m, c.main[0].key), { delta: '5', variability: 'sd', sd: '10' });
   Object.assign(L.inputsFor(m, seated.key), { mode: 'participants', k: '8' });
   const b = L.buildStudy(form);
   assert.deepEqual(b.issues, []);
@@ -195,10 +196,17 @@ test('buildStudy: missing names, types and inputs are reported, not guessed', ()
   assert.ok(targets.includes(L.ids.measureType(form.measures[0].id)));
   assert.ok(b.issues.every((i) => i.kind === 'missing'));
 
+  // Question 1 is optional; question 2 is required.
   const empty = simpleForm('time', { delta: '', k: '' });
   const e = L.buildStudy(empty).issues;
-  assert.equal(issueAt(e, L.ids.input(empty.measures[0].id, 'all', 'delta')).kind, 'missing');
+  assert.equal(issueAt(e, L.ids.input(empty.measures[0].id, 'all', 'delta')), undefined);
   assert.equal(issueAt(e, L.ids.input(empty.measures[0].id, 'all', 'k')).kind, 'missing');
+  // With past data, the difference and the SD are both required.
+  const past = simpleForm('time', { variability: 'sd', delta: '', sd: '' });
+  const pe = L.buildStudy(past).issues;
+  assert.equal(issueAt(pe, L.ids.input(past.measures[0].id, 'all', 'delta')).message, 'Enter the smallest difference that would matter to use your past data.');
+  assert.equal(issueAt(pe, L.ids.input(past.measures[0].id, 'all', 'sd')).message, 'Enter the standard deviation from your past data.');
+  assert.equal(issueAt(pe, L.ids.input(past.measures[0].id, 'all', 'k')), undefined);
 
   const typo = simpleForm('time', { delta: 'ten', k: '8' });
   assert.equal(issueAt(L.buildStudy(typo).issues, L.ids.input(typo.measures[0].id, 'all', 'delta')).message, 'Enter a number.');
@@ -221,11 +229,10 @@ test('runPlan: each engine error lands on the input that caused it, with the eng
     ['k out of range', simpleForm('time', { delta: '10', k: '5' }), 'k', /6 to 9/],
     ['zero difference', simpleForm('time', { delta: '0', k: '8' }), 'delta', /must not be zero|greater than 0/],
     ['negative SD', simpleForm('rating', { variability: 'sd', delta: '5', sd: '-2' }), 'sd', /Standard deviation must be greater than 0/],
-    ['σ_diff not positive', simpleForm('rating', { variability: 'sdDiff', delta: '5', sdDiff: '0' }), 'sdDiff', /σ_diff/],
     ['equal rates', simpleForm('binary', { p1: '60', p2: '60' }), 'p2', /must differ/],
     ['ψ too small', simpleForm('binary', { p1: '60', p2: '80', psi: '10' }), 'psi', /discordance/],
     ['ψ too large', simpleForm('binary', { p1: '60', p2: '80', psi: '70' }), 'psi', /at most/],
-    ['participants k', simpleForm('numeric', { mode: 'participants', k: '9.5' }), 'k', /whole number/],
+    ['participants k', simpleForm('numeric', { k: '9.5' }), 'k', /whole number/],
   ];
   cases.forEach(([name, form, field, pattern]) => {
     const r = L.runPlan(form);
@@ -237,18 +244,33 @@ test('runPlan: each engine error lands on the input that caused it, with the eng
   });
 });
 
-test('runPlan: scale bound and expected average on a preset', () => {
-  const form = simpleForm('time', { delta: '10', k: '8' }, (f, m) => {
-    const seq = L.presetMeasure('seq');
-    Object.assign(L.inputsFor(seq, 'all'), { variability: 'sd', delta: '1', sd: '3', mean: '6' });
-    f.measures.push(seq);
-  });
-  const seq = form.measures[1];
-  const r = L.runPlan(form);
-  assert.equal(r.error.target, L.ids.input(seq.id, 'all', 'sd'));
-  assert.match(r.error.message, /can be at most 2\.24/);
-  seq.inputs.all.mean = '9';
-  assert.equal(L.runPlan(form).error.target, L.ids.input(seq.id, 'all', 'mean'));
+test('one flow: the answers pick the mode (methods.md §3.1)', () => {
+  // Both answers: in units, variability from the estimate.
+  assert.deepEqual(L.buildStudy(simpleForm('time', { delta: '10', k: '8' })).study.measures[0].effect, { mode: 'units', delta: 10, k: 8 });
+  // Question 1 empty: in participants.
+  assert.deepEqual(L.buildStudy(simpleForm('time', { delta: '', k: '8' })).study.measures[0].effect, { mode: 'participants', k: 8 });
+  // Past data replaces question 2: in units with the SD, consistency Low.
+  assert.deepEqual(L.buildStudy(simpleForm('time', { variability: 'sd', delta: '10', sd: '12', k: '8' })).study.measures[0].effect,
+    { mode: 'units', delta: 10, sd: 12, consistency: 'low' });
+  // Between subjects: no consistency.
+  const between = simpleForm('time', { variability: 'sd', delta: '10', sd: '12' }, (f) => { f.design = 'between'; });
+  assert.deepEqual(L.buildStudy(between).study.measures[0].effect, { mode: 'units', delta: 10, sd: 12 });
+  // The trail states the consistency assumption instead of an entered value.
+  const form = simpleForm('rating', { variability: 'sd', delta: '10', sd: '15' });
+  const trail = L.planView(L.runPlan(form).plan, form).trails[0];
+  const assumption = trail.groups.find((g) => g.title === 'Assumption').lines.map(L.plainText).join(' ');
+  assert.equal(assumption, "Assumed: participants aren't especially consistent across conditions (consistency Low, ρ = 0.3), the cautious choice. If they are, your study may need fewer participants than shown.");
+  const inputs = trail.groups.find((g) => g.title === 'Your inputs').lines.map(L.plainText).join(' ');
+  assert.ok(!/consistency/.test(inputs));
+});
+
+test('step 2: a preset fills the measure being edited', () => {
+  const m = L.newMeasure(true);
+  m.name = 'Workload';
+  m.linked = false;
+  L.applyPreset(m, 'nasa-tlx');
+  assert.deepEqual([m.name, m.unit, m.type, m.preset, m.scaleMin, m.scaleMax, m.primary, m.linked],
+    ['NASA-TLX', 'points', 'rating', 'nasa-tlx', '0', '100', true, false]);
 });
 
 test('runPlan: study-level errors land on alpha, power and the conditions', () => {
@@ -407,14 +429,32 @@ test('step 3 wording follows the design and the comparison', () => {
   const form = simpleForm('time', { delta: '10', k: '8' });
   form.factors[0].name = 'Keyboard design';
   form.measures[0].unit = 'seconds';
+  form.measures[0].name = 'Task time';
   const t = L.inputText(form, form.measures[0], 'all');
-  assert.equal(t.kQuestion, 'At a 10-second difference, how many of 10 participants would be faster on the better condition?');
-  assert.equal(t.modeUnits, 'In seconds');
-  assert.equal(t.participantsQuestion, 'How many of 10 participants should do better on the better condition?');
-  assert.equal(t.sdLabel, 'How much do values vary between participants? (standard deviation)');
+  assert.equal(t.measureHeading, 'Task time (Measure 1 of 1)');
+  assert.equal(t.deltaLabel, 'Smallest difference that would matter');
+  assert.equal(t.deltaHint, "Optional. Leave empty if you don't have a target in seconds.");
+  assert.equal(t.kQuestion, 'Out of 10 participants, how many should do better on the better condition?');
+  assert.equal(t.kRange, '(6 to 9)');
+  assert.deepEqual(t.kTip, {
+    alpha: 'Why 6 to 9?',
+    tip: '5 of 10 means no improvement: half would do better by chance. 10 of 10 means everyone improves by the same amount, which never happens in real data. So the tool accepts 6 to 9.',
+  });
+  assert.equal(t.kContext, 'Answer for a 10-second difference.');
+  assert.equal(t.resultsIn, 'Results will be in seconds.');
+  assert.equal(t.pastDataToggle, 'I have data from a past study');
+  assert.equal(t.sdLabel, 'Standard deviation of Task time in your past data');
+  assert.equal(t.consistencyNote, "We assume people aren't especially consistent across conditions, the cautious choice. If they are, your study may need fewer participants than shown.");
+  form.measures[0].inputs.all.delta = '';
+  const noTarget = L.inputText(form, form.measures[0], 'all');
+  assert.equal(noTarget.kContext, null);
+  assert.equal(noTarget.resultsIn, 'Results will be in participants (how many of 10 do better).');
+  form.measures[0].inputs.all.variability = 'sd';
+  assert.equal(L.inputText(form, form.measures[0], 'all').deltaHint, 'Needed to use your past data, in seconds.');
   form.design = 'between';
   assert.equal(L.inputText(form, form.measures[0], 'all').kQuestion,
-    'At a 10-second difference, pick one participant from each condition at random. Out of 10 such pairs, how often would the one on the better condition be faster?');
+    'Pick one participant from each condition at random. Out of 10 such pairs, how often should the one on the better condition do better?');
+  assert.equal(L.inputText(form, form.measures[0], 'all').consistencyNote, null);
   // Success / failure: two conditions are named; three or more are described.
   const rates = simpleForm('binary', { p1: '', p2: '' });
   assert.equal(L.inputText(rates, rates.measures[0], 'all').p1Label, 'Expected success rate on Current');
@@ -437,8 +477,12 @@ test('step 3 readouts: variability from the engine, labeled your estimate or cal
   const est = L.variabilityReadout(form, form.measures[0], 'all');
   assert.equal(est.value, '≈ 12 s');
   assert.equal(est.note, 'Your estimate, not measured.');
-  const sd = simpleForm('rating', { variability: 'sd', delta: '10', sd: '15', consistency: 'medium' });
-  assert.equal(L.variabilityReadout(sd, sd.measures[0], 'all').value, '≈ 15 points');
+  // Past data: σ_diff from the SD at Low consistency, 15 × √1.4 ≈ 18.
+  const sd = simpleForm('rating', { variability: 'sd', delta: '10', sd: '15' });
+  assert.equal(L.variabilityReadout(sd, sd.measures[0], 'all').value, '≈ 18 points');
+  // No target: no variability readout.
+  const noTarget = simpleForm('time', { delta: '', k: '8' });
+  assert.equal(L.variabilityReadout(noTarget, noTarget.measures[0], 'all'), null);
   const badK = simpleForm('time', { delta: '10', k: '5' });
   assert.equal(L.variabilityReadout(badK, badK.measures[0], 'all'), null);
   const adv = simpleForm('time', { delta: '10', k: '8' });
@@ -526,7 +570,7 @@ test('analysis plan: one step for two conditions, protected LSD at three, Holm a
     "Step 2: if it's significant, McNemar for each pair at 0.05 (Fisher's protected LSD).",
   ]);
   // Test names that are not named after a person are lowercase mid-sentence.
-  const rating = simpleForm('rating', { variability: 'sdDiff', delta: '5', sdDiff: '10' });
+  const rating = simpleForm('rating', { variability: 'sd', delta: '5', sd: '10' });
   rating.factors[0].levels.push(L.newLevel('Other'));
   assert.equal(L.plainText(L.planView(L.runPlan(rating).plan, rating).analysis[0].steps[1]),
     "Step 2: if it's significant, paired t-test for each pair at 0.05 (Fisher's protected LSD).");

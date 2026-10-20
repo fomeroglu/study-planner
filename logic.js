@@ -97,18 +97,23 @@
     };
   }
 
-  // A preset measure (methods.md §2 presets).
-  function presetMeasure(key) {
+  // Fill a measure from a preset (methods.md §2 presets). Keeps the measure's
+  // place, primary flag and "one value per condition" answer.
+  function applyPreset(measure, key) {
     const p = E.PRESETS[key];
     const d = PRESET_DISPLAY[key];
-    const m = newMeasure(false);
-    m.name = d.name;
-    m.unit = d.unit;
-    m.type = p.type;
-    m.preset = key;
-    m.scaleMin = String(p.min);
-    m.scaleMax = String(p.max);
-    return m;
+    measure.name = d.name;
+    measure.unit = d.unit;
+    measure.type = p.type;
+    measure.preset = key;
+    measure.scaleMin = String(p.min);
+    measure.scaleMax = String(p.max);
+    return measure;
+  }
+
+  // A new measure filled from a preset.
+  function presetMeasure(key) {
+    return applyPreset(newMeasure(false), key);
   }
 
   function newForm() {
@@ -403,25 +408,21 @@
       if (psi !== undefined) out.psi = psi;
       return out;
     }
-    if (inp.mode === 'participants') {
-      return { mode: 'participants', k: numberField(issues, inp.k, t('k'), o(true, { missing: 'Enter a number from 6 to 9.' })) };
-    }
-    const out = { mode: 'units' };
-    out.delta = numberField(issues, inp.delta, t('delta'), o(true, { missing: 'Enter the smallest difference that would matter.' }));
+    // One flow (methods.md §3.1). With data from a past study: the difference
+    // and the SD, consistency Low. Otherwise: k of 10, in units when the
+    // difference is given (variability from the estimate), in participants
+    // when it is left empty.
     const paired = form.design === 'within' && measure.linked;
-    if (inp.variability === 'estimate') {
-      out.k = numberField(issues, inp.k, t('k'), o(true, { missing: 'Enter a number from 6 to 9.' }));
-    } else if (inp.variability === 'sdDiff' && paired) {
-      out.sdDiff = numberField(issues, inp.sdDiff, t('sdDiff'), o(true, { missing: 'Enter the standard deviation of the differences.' }));
-    } else {
-      out.sd = numberField(issues, inp.sd, t('sd'), o(true, { missing: 'Enter the standard deviation.' }));
-      if (paired) out.consistency = inp.consistency || 'low';
-      if (scaleOf(measure)) {
-        const mean = numberField(issues, inp.mean, t('mean'), o(false));
-        if (mean !== undefined) out.mean = mean;
-      }
+    if (inp.variability === 'sd') {
+      const out = { mode: 'units' };
+      out.delta = numberField(issues, inp.delta, t('delta'), o(true, { missing: 'Enter the smallest difference that would matter to use your past data.' }));
+      out.sd = numberField(issues, inp.sd, t('sd'), o(true, { missing: 'Enter the standard deviation from your past data.' }));
+      if (paired) out.consistency = 'low';
+      return out;
     }
-    return out;
+    const k = numberField(issues, inp.k, t('k'), o(true, { missing: 'Enter a number from 6 to 9.' }));
+    if (parseNumber(inp.delta).empty) return { mode: 'participants', k };
+    return { mode: 'units', delta: numberField(issues, inp.delta, t('delta'), o(false)), k };
   }
 
   // Scale for a rating measure, when both ends are given.
@@ -519,6 +520,8 @@
   // ---------------------------------------------------------------------------
 
   const INPUT_FIELDS = ['delta', 'k', 'sd', 'sdDiff', 'mean', 'consistency', 'p1', 'p2', 'psi', 'mode', 'effect'];
+  // Engine fields the interface does not show, mapped to the field that feeds them.
+  const SHOWN_FIELD = { sdDiff: 'sd', mean: 'sd', consistency: 'sd', mode: 'k' };
 
   /**
    * Place an EngineError next to the input that caused it, by its field,
@@ -549,11 +552,7 @@
     if (f === 'participants') return issue(4, ids.participants(), err.message, kind, extra);
     if (measure && INPUT_FIELDS.includes(f)) {
       const key = keyOf();
-      const inp = inputsFor(measure, key);
-      // σ_diff is entered directly only in that mode; otherwise the SD field caused it.
-      const field = f === 'effect' ? (measure.type === 'binary' ? 'p1' : 'delta')
-        : f === 'mode' ? 'delta'
-          : f === 'consistency' && inp.variability !== 'sd' ? 'sd' : f;
+      const field = f === 'effect' ? (measure.type === 'binary' ? 'p1' : 'k') : SHOWN_FIELD[f] || f;
       return issue(3, ids.input(measure.id, key, field), err.message, kind, Object.assign({ key }, extra));
     }
     if (measure) return issue(3, ids.measureInputs(measure.id), err.message, kind, extra);
@@ -854,29 +853,31 @@
     return 'the better condition';
   }
 
+  const K_TIP = '5 of 10 means no improvement: half would do better by chance. 10 of 10 means everyone improves by the same amount, ' +
+    'which never happens in real data. So the tool accepts 6 to 9.';
+  const CONSISTENCY_NOTE = "We assume people aren't especially consistent across conditions, the cautious choice. " +
+    'If they are, your study may need fewer participants than shown.';
+
+  // Heading for a measure in step 3: "[name] (Measure i of n)".
+  function measureHeading(form, measure) {
+    const i = form.measures.indexOf(measure);
+    return `${trimmed(measure.name) || `Measure ${i + 1}`} (Measure ${i + 1} of ${form.measures.length})`;
+  }
+
   function inputText(form, measure, key) {
     const inp = inputsFor(measure, key);
     const comp = comparisonFor(form, key);
     const unit = trimmed(measure.unit);
-    const isTime = measure.type === 'time';
     const paired = form.design === 'within' && measure.linked;
-    const better = isTime ? 'be faster' : 'do better';
     const newName = newConditionName(form, comp);
     const d = parseNumber(inp.delta).value;
     const deltaShown = d !== undefined && d !== 0 ? Math.abs(d) : null;
-    let diffPhrase = 'At that difference';
-    if (deltaShown !== null) {
-      const adj = timeAdjective(deltaShown, unit);
-      diffPhrase = adj ? `At a ${adj} difference` : `At a difference of ${fmtSig(deltaShown, 3)}${unit ? ` ${unit}` : ''}`;
-    }
 
     let heading = null;
     let deltaLabel = 'Smallest difference that would matter';
-    let deltaHint = '(minimum meaningful difference)';
     if (comp && comp.type === 'main') {
       heading = `${comp.a} vs. ${comp.b}, averaged across ${comp.others}`;
       deltaLabel = `Averaged across all levels of ${comp.others}, what's the smallest difference that would matter between ${comp.a} and ${comp.b}?`;
-      deltaHint = '(minimum meaningful difference for this main effect)';
     } else if (comp) {
       heading = comp.label;
       const differing = comp.a.map((x, i) => (x === comp.b[i] ? null : [x, comp.b[i]])).filter(Boolean);
@@ -885,15 +886,20 @@
       deltaLabel = comp.shared.length
         ? `For ${comp.shared.join(' × ')}, what's the smallest difference that would matter between ${left} and ${right}?`
         : `Between ${comp.a.join(' × ')} and ${comp.b.join(' × ')}, what's the smallest difference that would matter?`;
-      deltaHint = '(minimum meaningful difference for this comparison)';
     }
+    const unitWords = unit || 'units';
+    const pastData = inp.variability === 'sd';
 
+    // Question 2 (methods.md §3.1). Between subjects, k of 10 is read as pairs of
+    // participants, one from each condition.
     const kQuestion = paired
-      ? `${diffPhrase}, how many of 10 participants would ${better} on ${newName}?`
-      : `${diffPhrase}, pick one participant from each condition at random. Out of 10 such pairs, how often would the one on ${newName} ${better}?`;
-    const participantsQuestion = paired
-      ? `How many of 10 participants should do better on ${newName}?`
+      ? `Out of 10 participants, how many should do better on ${newName}?`
       : `Pick one participant from each condition at random. Out of 10 such pairs, how often should the one on ${newName} do better?`;
+    let kContext = null;
+    if (deltaShown !== null) {
+      const adj = timeAdjective(deltaShown, unit);
+      kContext = adj ? `Answer for a ${adj} difference.` : `Answer for a difference of ${fmtSig(deltaShown, 3)}${unit ? ` ${unit}` : ''}.`;
+    }
 
     let p1Label = 'Expected success rate on the condition you expect to do worse';
     let p2Label = 'Expected success rate on the condition you expect to do better';
@@ -906,30 +912,29 @@
       p1Label = `Expected success rate on ${names[0]}`;
       p2Label = `Expected success rate on ${names[1]}`;
     }
-    const scale = scaleOf(measure);
     return {
       heading,
-      modeUnits: unit ? `In ${unit}` : 'In units',
-      modeUnitsHint: 'You have a target in units: cost, a requirement, a benchmark.',
-      modeParticipants: 'In participants',
-      modeParticipantsHint: isTime ? 'No past data. "8 of 10 people should be faster."' : 'No past data. "8 of 10 people should do better."',
-      deltaLabel,
-      deltaHint,
+      measureHeading: measureHeading(form, measure),
       unit,
+      deltaLabel,
+      deltaHint: pastData
+        ? `Needed to use your past data, in ${unitWords}.`
+        : `Optional. Leave empty if you don't have a target in ${unitWords}.`,
+      deltaRequired: pastData,
       kQuestion,
-      participantsQuestion,
-      sdLabel: 'How much do values vary between participants? (standard deviation)',
-      consistencyLabel: 'How consistent are participants across conditions? (correlation)',
-      sdDiffToggle: 'I know the standard deviation of the differences instead',
-      sdDiffLabel: 'How much do the differences between conditions vary? (standard deviation of the differences)',
-      meanLabel: 'What average do you expect? (mean, optional)',
-      meanHint: scale ? `Used to check that the standard deviation is possible on a ${scale.min} to ${scale.max} scale.` : '',
+      kRange: '(6 to 9)',
+      kTip: { alpha: 'Why 6 to 9?', tip: K_TIP },
+      kContext,
+      resultsIn: pastData || deltaShown !== null ? `Results will be in ${unitWords}.` : 'Results will be in participants (how many of 10 do better).',
+      pastDataToggle: 'I have data from a past study',
+      pastData,
+      sdLabel: `Standard deviation of ${trimmed(measure.name) || 'this measure'} in your past data`,
+      consistencyNote: paired ? CONSISTENCY_NOTE : null,
       p1Label,
       p2Label,
       psiLabel: 'Share of participants who succeed in one condition and fail in the other (discordance, optional)',
       psiHint: psiHint(inp),
       paired,
-      scale,
     };
   }
 
@@ -945,11 +950,11 @@
   // Live variability readout under the inputs (values from the engine).
   function variabilityReadout(form, measure, key) {
     const inp = inputsFor(measure, key);
-    if (measure.type === 'binary' || inp.mode !== 'units') return null;
+    if (measure.type === 'binary') return null;
     const paired = form.design === 'within' && measure.linked;
     const d = parseNumber(inp.delta).value;
     try {
-      if (inp.variability === 'estimate') {
+      if (inp.variability !== 'sd') {
         const k = parseNumber(inp.k).value;
         if (d === undefined || k === undefined) return null;
         const sd = paired ? E.sdDiffFromK(d, k) : E.sdFromK(d, k);
@@ -958,11 +963,11 @@
       if (inp.variability === 'sd' && paired) {
         const sd = parseNumber(inp.sd).value;
         if (sd === undefined) return null;
-        const sdDiff = E.sdDiffFromSd(sd, E.rhoFromConsistency(inp.consistency || 'low'));
+        const sdDiff = E.sdDiffFromSd(sd, E.rhoFromConsistency('low'));
         return {
           value: `≈ ${fmtUnits(sdDiff, measure.unit)}`,
           label: 'Variability of the differences',
-          note: 'Calculated from the standard deviation you entered.',
+          note: 'Calculated from the standard deviation you entered, assuming Low consistency.',
         };
       }
     } catch (err) {
@@ -1048,11 +1053,19 @@
     return `${s.label}: ${value}${source}.${detail}`;
   }
 
+  // The interface always uses Low consistency (methods.md §3.1), so the engine's
+  // consistency input is shown as an assumption, not as an entered value.
+  const isConsistency = (st) => st.step === 'inputs' && /\(consistency\)$/.test(st.label);
+  const CONSISTENCY_ASSUMPTION = "Assumed: participants aren't especially consistent across conditions " +
+    '(consistency Low, ρ = 0.3), the cautious choice. If they are, your study may need fewer participants than shown.';
+
   function trailFor(m, plan) {
     const token = planAlphaToken(plan);
     const groups = [{ title: 'Planned method', lines: [`${m.method}. ${m.reason}`] }];
+    const groupOf = (st) => (isConsistency(st) ? 'assumption' : st.step);
+    const sentence = (st) => (isConsistency(st) ? CONSISTENCY_ASSUMPTION : stepSentence(st, token));
     TRAIL_GROUPS.forEach((g) => {
-      const lines = m.steps.filter((s) => g.steps.includes(s.step)).map((s) => stepSentence(s, token));
+      const lines = m.steps.filter((st) => g.steps.includes(groupOf(st))).map(sentence);
       if (g.title === 'Order plan' && m.primary && plan.participantsPerOrder !== null) {
         lines.push(`${m.total} fits ${plan.orders} orders: ${plan.participantsPerOrder} participant${plan.participantsPerOrder === 1 ? '' : 's'} each.`);
       }
@@ -1427,6 +1440,7 @@
     conditionName,
     newMeasure,
     presetMeasure,
+    applyPreset,
     inputsFor,
     inputKeys,
     parseNumber,
