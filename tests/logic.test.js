@@ -275,32 +275,30 @@ test('step 2: a preset fills the measure being edited', () => {
     ['NASA-TLX', 'points', 'rating', 'nasa-tlx', '0', '100', true]);
 });
 
-test('step 2: changing the type of a preset measure clears the preset', () => {
-  const m = L.presetMeasure('sus');
-  L.setType(m, 'rating'); // same type: nothing changes
-  assert.equal(m.preset, 'sus');
+test('step 2: switching the result type empties the measure', () => {
+  // Choosing the first type keeps the name typed so far.
+  const m = L.newMeasure(true);
+  m.name = 'Task time';
   L.setType(m, 'time');
-  assert.deepEqual([m.name, m.unit, m.type, m.preset, m.scaleMin, m.scaleMax], ['', 'seconds', 'time', null, '', '']);
+  assert.deepEqual([m.name, m.type], ['Task time', 'time']);
+  L.setUnit(m, 'seconds');
+  // Switching types empties the name and unit.
+  L.setType(m, 'count');
+  assert.deepEqual([m.name, m.unit, m.type], ['', '', 'count']);
+  // A preset measure also loses its scale range and badge.
+  const p = L.presetMeasure('sus');
+  L.setType(p, 'rating'); // same type: nothing changes
+  assert.equal(p.preset, 'sus');
+  L.setType(p, 'time');
+  assert.deepEqual([p.name, p.unit, p.type, p.preset, p.scaleMin, p.scaleMax], ['', '', 'time', null, '', '']);
 });
 
-test('step 2: default units follow the result type unless the user typed one', () => {
+test('step 2: the empty unit field shows the type\'s typical unit as placeholder text', () => {
+  assert.deepEqual(L.UNIT_PLACEHOLDERS, { time: 'e.g., seconds', count: 'e.g., errors', rating: 'e.g., points', numeric: 'e.g., mm' });
+  assert.equal(L.UNIT_PLACEHOLDERS.binary, undefined); // no unit field
   const m = L.newMeasure(true);
-  const units = ['time', 'count', 'rating', 'binary', 'numeric'].map((t) => {
-    L.setType(m, t);
-    return m.unit;
-  });
-  assert.deepEqual(units, ['seconds', 'count', 'points', '', '']);
   L.setType(m, 'time');
-  L.setUnit(m, 'minutes');
-  L.setType(m, 'count');
-  assert.equal(m.unit, 'minutes'); // typed by the user: kept
-  L.setUnit(m, '');
-  L.setType(m, 'rating');
-  assert.equal(m.unit, 'points'); // emptied: back to the default
-  // A unit from a preset follows the new type (the preset is cleared).
-  const p = L.presetMeasure('seq');
-  L.setType(p, 'count');
-  assert.equal(p.unit, 'count');
+  assert.equal(m.unit, ''); // a placeholder, not a value
 });
 
 test('runPlan: study-level errors land on alpha, power and the conditions', () => {

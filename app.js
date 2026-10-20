@@ -330,7 +330,7 @@
       `<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><h2 class="mono secondary" style="margin:0;font-size:14px;font-weight:400" id="mhead-${m.id}">Measure ${i + 1}</h2>` +
       `<button type="button" class="primary-toggle" id="primary-${m.id}" data-action="primary" data-measure="${m.id}" aria-pressed="${m.primary}">${m.primary ? '★ Primary' : '☆ Primary'}</button></div>` +
       `<div class="grid-2"><div class="field"><label for="${ids.measureName(m.id)}">Name</label>${textInput({ id: ids.measureName(m.id), bind: 'measure-name', data: { measure: m.id }, value: m.name, placeholder: 'e.g., Task time' })}${errorEl(ids.measureName(m.id), visibleIssue(ids.measureName(m.id)))}</div>` +
-      (m.type === 'binary' ? '' : `<div class="field"><label for="measure-${m.id}-unit">Unit</label>${textInput({ id: `measure-${m.id}-unit`, bind: 'measure-unit', data: { measure: m.id }, value: m.unit, placeholder: m.type === 'time' || !m.type ? 'e.g., seconds' : 'e.g., points' })}</div>`) +
+      (m.type === 'binary' ? '' : `<div class="field"><label for="measure-${m.id}-unit">Unit</label>${textInput({ id: `measure-${m.id}-unit`, bind: 'measure-unit', data: { measure: m.id }, value: m.unit, placeholder: L.UNIT_PLACEHOLDERS[m.type] || 'e.g., seconds' })}</div>`) +
       `</div>` + presets +
       group(ids.measureType(m.id), '<div id="%ID%" style="font-size:14px;font-weight:500">Result type</div>',
         `<div class="chip-row">${types}</div>${m.type ? `<p class="small-hint">${esc(L.TYPE_HELP[m.type])}</p>` : ''}`, 'field') +
@@ -696,6 +696,10 @@
   // focus, caret position and slider drags are kept.
   // ---------------------------------------------------------------------------
 
+  // While the user types, the focused field keeps its own value (and caret).
+  // After a click, every field shows the state, including the focused one.
+  let syncFocused = false;
+
   function morph(from, to) {
     if (from.nodeType !== to.nodeType || from.nodeName !== to.nodeName ||
       (from.nodeType === 1 && (from.id || '') !== (to.id || ''))) {
@@ -724,7 +728,7 @@
     for (let i = tc.length; i < fc.length; i++) fc[i].remove();
     if (from.nodeName === 'INPUT') {
       if (from.type === 'checkbox') from.checked = to.hasAttribute('checked');
-      else if (from !== document.activeElement && from.value !== (to.getAttribute('value') || '')) from.value = to.getAttribute('value') || '';
+      else if ((syncFocused || from !== document.activeElement) && from.value !== (to.getAttribute('value') || '')) from.value = to.getAttribute('value') || '';
     } else if (from.nodeName === 'SELECT') {
       const sel = to.querySelector('option[selected]');
       if (sel && from.value !== sel.value) from.value = sel.value;
@@ -748,7 +752,8 @@
     return `Step ${r.step}: ${STEP_NAMES[r.step - 1]} · Study Planner`;
   }
 
-  function update() {
+  function update(opts) {
+    syncFocused = !!(opts && opts.syncFocused);
     live = L.liveStatus(state.form);
     const activeId = document.activeElement && document.activeElement.id;
     tipSeq = 0;
@@ -989,7 +994,7 @@
     if (!fn) return;
     const after = fn(el);
     if (after === 'skip') return;
-    update();
+    update({ syncFocused: true });
     if (typeof after === 'function') after();
   });
 

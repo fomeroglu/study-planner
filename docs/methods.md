@@ -459,6 +459,9 @@ recorded in validation/answer-key.md.
 - 1.1 (interface): choosing how consistent participants are across
   conditions (Low, Medium, High) and entering the SD of the differences
   (σ_diff) directly. The engine supports both (section 3.1).
+- Later: planning for repeated trials per participant (mixed-effects
+  models), using simulation. Version 1 asks for one value per
+  participant per condition, averaged over trials.
 - Later: simulation-based planning for Fisher's protected LSD, which
   sizes the study for the chance that the overall test and the
   pairwise comparison are both significant (version 1.1).

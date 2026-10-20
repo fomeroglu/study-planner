@@ -92,7 +92,7 @@
 
   function newMeasure(primary) {
     return {
-      id: uid('m'), name: '', unit: '', unitSource: null, type: null, primary: !!primary,
+      id: uid('m'), name: '', unit: '', type: null, primary: !!primary,
       preset: null, scaleMin: '', scaleMax: '', inputs: {},
     };
   }
@@ -104,7 +104,6 @@
     const d = PRESET_DISPLAY[key];
     measure.name = d.name;
     measure.unit = d.unit;
-    measure.unitSource = 'preset';
     measure.type = p.type;
     measure.preset = key;
     measure.scaleMin = String(p.min);
@@ -112,35 +111,28 @@
     return measure;
   }
 
-  // Default unit for each result type (used when the unit is empty, a default,
-  // or came from a preset).
-  const DEFAULT_UNITS = { time: 'seconds', count: 'count', rating: 'points', binary: '', numeric: '' };
+  // Typical unit for each result type, shown as placeholder text in the empty
+  // unit field. Success / failure has no unit field.
+  const UNIT_PLACEHOLDERS = { time: 'e.g., seconds', count: 'e.g., errors', rating: 'e.g., points', numeric: 'e.g., mm' };
 
-  // Change a measure's result type. A preset's name, unit, scale range and badge
-  // are cleared when the type changes; the unit then follows the type's default
-  // unless the user typed one.
+  // Change a measure's result type. Switching from one type to another empties
+  // the name and unit and clears any scale range and preset; choosing the first
+  // type keeps the name typed so far.
   function setType(measure, type) {
     if (measure.type === type) return measure;
-    if (measure.preset) {
+    if (measure.type !== null) {
       measure.name = '';
       measure.unit = '';
-      measure.unitSource = null;
       measure.scaleMin = '';
       measure.scaleMax = '';
       measure.preset = null;
     }
     measure.type = type;
-    if (!trimmed(measure.unit) || measure.unitSource !== 'user') {
-      measure.unit = DEFAULT_UNITS[type] || '';
-      measure.unitSource = 'default';
-    }
     return measure;
   }
 
-  // A unit typed by the user; empty hands it back to the type's default.
   function setUnit(measure, value) {
     measure.unit = value;
-    measure.unitSource = trimmed(value) ? 'user' : null;
     return measure;
   }
 
@@ -1485,7 +1477,7 @@
     applyPreset,
     setType,
     setUnit,
-    DEFAULT_UNITS,
+    UNIT_PLACEHOLDERS,
     inputsFor,
     inputKeys,
     parseNumber,

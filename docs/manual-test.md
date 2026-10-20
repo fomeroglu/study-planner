@@ -43,20 +43,21 @@ you saw.
       conditions". Sidebar: Within subjects, 3, "3 (every pair)".
 - [ ] Step 2: the measure name is empty with the hint "e.g., Task time".
       There is no "Does each participant give one value per condition?"
-      question. Name measure 1 "Task time" and choose Time: the unit fills
-      in as "seconds".
-- [ ] Default units: switching the type to Count gives "count", Rating
-      scale gives "points", Other numeric leaves it empty, and Success /
-      failure hides the unit field. A unit you type yourself stays when you
-      switch types. Set it back to Time with "seconds".
+      question. Name measure 1 "Task time" and choose Time: the name stays,
+      and the empty unit field shows "e.g., seconds".
+- [ ] Switching the result type empties the name and unit. The unit
+      field's placeholder follows the type: Count "e.g., errors", Rating
+      scale "e.g., points", Other numeric "e.g., mm"; Success / failure
+      hides the unit field. Switch back to Time and enter "Task time" and
+      "seconds".
 - [ ] Each open card has "Fill from preset: NASA-TLX · SUS · SEQ" next to
       the Name field, and there are no presets below the cards.
 - [ ] "+ Add measure", then "NASA-TLX" in that card: it fills this measure
       (name, Rating scale, unit "points", scale 0 to 100, Preset badge when
       collapsed) and does not add another one.
 - [ ] On that measure, choose a different result type (for example Time):
-      the name, unit, scale range and Preset badge clear, and the unit
-      becomes the new type's default. Apply NASA-TLX again to restore it.
+      the name, unit, scale range and Preset badge clear. Apply NASA-TLX
+      again to restore it.
 - [ ] "+ Add measure" again: name it "Task success", type Success /
       failure. Sidebar: "3 (primary: Task time)".
 - [ ] Every measure card, open or collapsed, has a "Remove" button; with a

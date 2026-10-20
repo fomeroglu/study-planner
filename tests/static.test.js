@@ -171,3 +171,7 @@ test('limitations: within-subjects plans assume matched values (methods.md §14,
   assert.match(read('docs/methods.md'), sentence);
   assert.match(read('README.md'), sentence);
 });
+
+test('later versions list simulation-based planning for repeated trials (methods.md §13)', () => {
+  assert.match(read('docs/methods.md'), /repeated trials per participant \(mixed-effects\s+models\), using simulation/);
+});
