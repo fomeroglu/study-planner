@@ -3,10 +3,10 @@
 A free, browser-based tool that helps human factors and UX researchers plan
 two kinds of studies:
 
-- **Compare designs** (summative): how many participants you need, which
-  analysis to plan for, and what the sample you can recruit will support.
-- **Find problems** (formative): how many participants you need to see
-  usability problems of a given frequency.
+- **Compare designs**: compare two or more designs on measured outcomes
+  such as task time, success, workload, and ratings.
+- **Find problems**: plan how many participants a usability test needs to
+  uncover problems in an early design.
 
 It is built for applied work: small samples, plain-language inputs, results
 in your measure's own units, and honest uncertainty.
