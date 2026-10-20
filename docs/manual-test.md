@@ -11,7 +11,17 @@ you saw.
 ## 1. Running example (dark theme)
 
 - [ ] Start: two cards, "Compare designs" and "Find problems". The header
-      says "Runs in your browser. Nothing is uploaded."
+      shows only "Study Planner" and the round theme button (no privacy
+      line; that lives in the README).
+- [ ] Footer on every screen, below a thin line, in small grey text: left,
+      "Study Planner" (bold) and "Version 1.0 · How it calculates ·
+      Source on GitHub"; right, "Designed and built by Fatih Omeroglu"
+      and "fbomeroglu.com · GitHub · LinkedIn". Each link opens in a new
+      tab: How it calculates (docs/methods.md on GitHub), Source on GitHub
+      (the repository), fbomeroglu.com, GitHub (github.com/fomeroglu),
+      LinkedIn (linkedin.com/in/fomeroglu). A screen reader announces
+      "(opens in a new tab)" and skips the dots.
+- [ ] Below 640 px wide, the footer's two columns stack, both left-aligned.
 - [ ] Step 1 starts generic: the variable name is empty with the hint
       "e.g., Interface design"; the conditions read "Condition A" and
       "Condition B"; "+ Add condition" adds "Condition C". No wording
@@ -177,12 +187,17 @@ you saw.
 
 ## 3. Light theme
 
-- [ ] In the dark theme the header button reads "Switch to light mode".
-      Clicking it switches every screen to the light palette (Plan screen
-      should match design/screens/4-plan-light.html), and the button then
-      reads "Switch to dark mode".
+- [ ] The theme button is a small round icon in the header's right
+      corner, with no visible text: a moon in the dark theme, a sun in the
+      light theme. Hovering shows "Switch to light mode" (dark) or "Switch
+      to dark mode" (light), and a screen reader reads the same label.
+- [ ] Clicking it switches every screen to the light palette (Plan screen
+      should match design/screens/4-plan-light.html), and the icon turns
+      into a sun.
 - [ ] Reload the page: the light theme stays. Switch back: dark stays after
-      reload, and the button label matches.
+      reload, and the icon and label match.
+- [ ] In both themes the icon is clearly visible against the header, and
+      Tab shows the teal focus ring around the button.
 - [ ] In both themes, check the warning blocks, the amber "underpowered"
       numbers, error messages and the curves are clearly readable.
 

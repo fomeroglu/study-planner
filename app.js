@@ -11,6 +11,15 @@
   const THEME_KEY = 'study-planner-theme';
   const STEP_NAMES = ['Conditions', 'Measures', 'Inputs', 'Plan'];
   const METHODS_URL = 'https://github.com/fomeroglu/study-planner/blob/main/docs/methods.md';
+  const VERSION = '1.0';
+  // Footer links (opened by the user in a new tab, never requested by the page).
+  const FOOTER_LINKS = {
+    methods: METHODS_URL,
+    source: 'https://github.com/fomeroglu/study-planner',
+    site: 'https://fbomeroglu.com',
+    github: 'https://github.com/fomeroglu',
+    linkedin: 'https://linkedin.com/in/fomeroglu/',
+  };
 
   // ---------------------------------------------------------------------------
   // State (in memory only; nothing is stored except the theme)
@@ -130,9 +139,30 @@
   // ---------------------------------------------------------------------------
 
   // The label names the action, so it needs no pressed state.
+  // Moon in dark mode, sun in light mode (decorative; the button's label says what it does).
+  const ICON_MOON = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a7 7 0 1 0 10.5 10.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>';
+  const ICON_SUN = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4.5" fill="none" stroke="currentColor" stroke-width="2"/>' +
+    '<g stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="1.5" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22.5"/><line x1="1.5" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22.5" y2="12"/>' +
+    '<line x1="4.6" y1="4.6" x2="6.4" y2="6.4"/><line x1="17.6" y1="17.6" x2="19.4" y2="19.4"/><line x1="4.6" y1="19.4" x2="6.4" y2="17.6"/><line x1="17.6" y1="6.4" x2="19.4" y2="4.6"/></g></svg>';
+
+  // A small round icon button. The label is for screen readers and the hover tooltip.
   function themeToggle() {
-    const label = currentTheme() === 'light' ? 'Switch to dark mode' : 'Switch to light mode';
-    return `<button type="button" id="theme-toggle" class="theme-toggle" data-action="theme">${label}</button>`;
+    const light = currentTheme() === 'light';
+    const label = light ? 'Switch to dark mode' : 'Switch to light mode';
+    return `<button type="button" id="theme-toggle" class="theme-toggle" data-action="theme" aria-label="${label}" title="${label}">${light ? ICON_SUN : ICON_MOON}</button>`;
+  }
+
+  // Footer on every screen. External links open in a new tab; the dots between
+  // links are hidden from screen readers.
+  function footer() {
+    const link = (key, text) => `<a href="${FOOTER_LINKS[key]}" target="_blank" rel="noopener" id="footer-${key}">${esc(text)}<span class="sr-only"> (opens in a new tab)</span></a>`;
+    const dot = '<span class="footer-dot" aria-hidden="true">·</span>';
+    return `<footer class="site-footer"><div class="footer-inner">` +
+      `<div class="footer-col"><div class="footer-name">Study Planner</div>` +
+      `<div>Version ${VERSION}${dot}${link('methods', 'How it calculates')}${dot}${link('source', 'Source on GitHub')}</div></div>` +
+      `<div class="footer-col footer-end"><div>Designed and built by <span class="footer-person">Fatih Omeroglu</span></div>` +
+      `<div>${link('site', 'fbomeroglu.com')}${dot}${link('github', 'GitHub')}${dot}${link('linkedin', 'LinkedIn')}</div></div>` +
+      `</div></footer>`;
   }
 
   function stepComplete(s) {
@@ -149,7 +179,7 @@
     const r = state.route;
     if (r.screen === 'start') {
       return `<header class="header"><div class="brand">Study Planner</div><div class="header-end">` +
-        `<div class="header-note">Runs in your browser. Nothing is uploaded.</div>${themeToggle()}</div></header>`;
+        `${themeToggle()}</div></header>`;
     }
     if (r.screen === 'find') {
       return `<header class="header"><a class="brand" href="#/start" id="brand">Study Planner</a><div class="header-end">` +
@@ -777,7 +807,7 @@
     const activeId = document.activeElement && document.activeElement.id;
     tipSeq = 0;
     const t = document.createElement('template');
-    t.innerHTML = header() + screenHtml();
+    t.innerHTML = header() + screenHtml() + footer();
     const app = document.getElementById('app');
     const next = Array.from(t.content.childNodes);
     const cur = Array.from(app.childNodes);
