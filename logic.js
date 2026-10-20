@@ -506,7 +506,6 @@
         design: form.design,
         factors: engineFactors(form),
         comparisons: structure.comparisons,
-        adjust: true, // always adjusted: the goal is to pick a winner (methods.md §1.3)
         alpha: alpha.value,
         power: power.value,
         measures,
@@ -920,7 +919,7 @@
     const parts = [];
     if (p > 0 && p < 1) parts.push(`Power ${fmtPower(p)}`);
     if (a > 0 && a < 1) {
-      if (m > 1) parts.push(`alpha ${fmtAlpha(a)}, adjusted to ${fmtAlpha(E.alphaPerComparison(a, m, true))} for ${m} comparisons`);
+      if (m > 1) parts.push(`alpha ${fmtAlpha(a)}, adjusted to ${fmtAlpha(E.alphaPerComparison(a, m))} for ${m} comparisons`);
       else parts.push(`alpha ${fmtAlpha(a)}`);
     }
     if (form.measures.some((x) => x.type === 'time' || x.type === 'count')) parts.push('+5% for rank-based test (conservative)');

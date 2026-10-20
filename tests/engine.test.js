@@ -242,15 +242,18 @@ test('rank adjustment uses the exact 3/π', () => {
 // Comparisons, variability, effect size
 // ---------------------------------------------------------------------------
 
-test('comparison counts and alpha per comparison', () => {
-  assert.equal(E.countComparisons(2, 'baseline'), 1);
-  assert.equal(E.countComparisons(4, 'baseline'), 3);
+test('comparison counts and alpha per comparison (every pair, always adjusted)', () => {
+  assert.equal(E.countComparisons(2), 1);
+  assert.equal(E.countComparisons(3, 'all-pairs'), 3);
   assert.equal(E.countComparisons(4, 'all-pairs'), 6);
   assert.equal(E.countComparisons(6, 'all-pairs'), 15);
-  assert.equal(E.alphaPerComparison(0.05, 2, true), 0.025);
-  assert.equal(E.alphaPerComparison(0.05, 3, false), 0.05);
+  assert.equal(E.alphaPerComparison(0.05, 1), 0.05);
+  assert.equal(E.alphaPerComparison(0.05, 2), 0.025);
+  assert.equal(E.alphaPerComparison(0.05, 3), 0.05 / 3);
   throwsEngine(() => E.countComparisons(3, 'omnibus'));
-  throwsEngine(() => E.countComparisons(1, 'baseline'));
+  throwsEngine(() => E.countComparisons(1, 'all-pairs'));
+  // Each vs. a baseline is planned for a later version (methods.md §13).
+  throwsEngine(() => E.countComparisons(3, 'baseline'), /later version/);
 });
 
 test('cells are every combination of levels', () => {
@@ -417,24 +420,34 @@ test('plan: 3 conditions within, task time, alpha 0.0167 trail gives 18, 19, the
   assert.equal(m.comparisons.length, 3);
 });
 
-test('plan: unadjusted comparisons use the full alpha', () => {
-  const r = E.plan({
+test('plan: comparisons are always adjusted; one comparison keeps the full alpha', () => {
+  const study = (levels, extra) => Object.assign({
     design: 'within',
-    factors: [{ name: 'Design', levels: ['Current', 'A'] }],
-    comparisons: { scheme: 'baseline' },
-    adjust: false,
+    factors: [{ name: 'Design', levels }],
+    comparisons: { scheme: 'all-pairs' },
     measures: [{ name: 'Rating', type: 'rating', primary: true, effect: { mode: 'units', delta: 5, sdDiff: 10 } }],
-  });
-  assert.equal(r.alphaPerComparison, 0.05);
-  assert.equal(r.measures[0].n, 34);
-  assert.equal(r.measures[0].total, 34); // already even
+  }, extra);
+  const one = E.plan(study(['Current', 'A']));
+  assert.equal(one.m, 1);
+  assert.equal(one.adjust, true);
+  assert.equal(one.alphaPerComparison, 0.05);
+  assert.equal(one.measures[0].n, 34);
+  assert.equal(one.measures[0].total, 34); // already even
+  assert.match(one.measures[0].steps.find((x) => x.step === 'alpha').label, /\(one comparison\)/);
+  // No adjust flag needed: three conditions split alpha three ways.
+  const three = E.plan(study(['Current', 'A', 'B']));
+  assert.equal(three.m, 3);
+  assert.equal(three.alphaPerComparison, 0.05 / 3);
+  // Unadjusted and baseline-only comparisons are planned for a later version (methods.md §13).
+  throwsWhere(() => E.plan(study(['Current', 'A', 'B'], { adjust: false })), { field: 'comparisons' });
+  throwsWhere(() => E.plan(study(['Current', 'A', 'B'], { comparisons: { scheme: 'baseline' } })), { field: 'comparisons' });
 });
 
 test('plan: consistency defaults to Low (ρ = 0.3)', () => {
   const base = (consistency) => E.plan({
     design: 'within',
     factors: [{ name: 'Design', levels: ['Current', 'A'] }],
-    comparisons: { scheme: 'baseline' },
+    comparisons: { scheme: 'all-pairs' },
     measures: [{ name: 'Score', type: 'numeric', primary: true, effect: { mode: 'units', delta: 5, sd: 10, consistency } }],
   }).measures[0];
   const def = base(undefined);
@@ -490,7 +503,7 @@ test('plan: between, two proportions sized per condition', () => {
   const r = E.plan({
     design: 'between',
     factors: [{ name: 'Design', levels: ['Current', 'A'] }],
-    comparisons: { scheme: 'baseline' },
+    comparisons: { scheme: 'all-pairs' },
     measures: [{ name: 'Success', type: 'binary', primary: true, effect: { p1: 0.6, p2: 0.8 } }],
   });
   assert.equal(r.measures[0].method, 'Two-proportion test');
@@ -502,7 +515,7 @@ test('plan: within, success/failure uses McNemar and counterbalancing', () => {
   const r = E.plan({
     design: 'within',
     factors: [{ name: 'Design', levels: ['Current', 'A'] }],
-    comparisons: { scheme: 'baseline' },
+    comparisons: { scheme: 'all-pairs' },
     measures: [{ name: 'Success', type: 'binary', primary: true, effect: { p1: 0.6, p2: 0.8 } }],
   });
   assert.equal(r.measures[0].method, 'McNemar');
@@ -514,7 +527,7 @@ test('plan: unlinked measure in a within study is treated as independent', () =>
   const r = E.plan({
     design: 'within',
     factors: [{ name: 'Design', levels: ['Current', 'A'] }],
-    comparisons: { scheme: 'baseline' },
+    comparisons: { scheme: 'all-pairs' },
     measures: [{ name: 'Rating', type: 'rating', primary: true, linked: false, effect: { mode: 'units', delta: 5, sd: 10 } }],
   });
   assert.equal(r.measures[0].method, 'Independent t-test');
@@ -525,7 +538,7 @@ test('plan: primary sets the recommended n; secondaries flagged as underpowered'
   const r = E.plan({
     design: 'within',
     factors: [{ name: 'Design', levels: ['Current', 'A'] }],
-    comparisons: { scheme: 'baseline' },
+    comparisons: { scheme: 'all-pairs' },
     measures: [
       { name: 'Time', type: 'time', unit: 's', primary: true, effect: { mode: 'participants', k: 8 } },
       { name: 'Success', type: 'binary', effect: { p1: 0.6, p2: 0.8 } },
@@ -564,7 +577,7 @@ test('plan: rejects an SD above the scale bound, a missing primary, and Cohen\'s
   const study = (measures) => ({
     design: 'within',
     factors: [{ name: 'Design', levels: ['Current', 'A'] }],
-    comparisons: { scheme: 'baseline' },
+    comparisons: { scheme: 'all-pairs' },
     measures,
   });
   throwsEngine(() => E.plan(study([{ name: 'SEQ', type: 'rating', primary: true, scale: { min: 1, max: 7 }, effect: { mode: 'units', delta: 1, sd: 3, mean: 6 } }])), /at most/);
@@ -589,7 +602,7 @@ const oneFactor = { name: 'Design', levels: ['Current', 'A'] };
 const studyWith = (measures, extra) => Object.assign({
   design: 'within',
   factors: [oneFactor],
-  comparisons: { scheme: 'baseline' },
+  comparisons: { scheme: 'all-pairs' },
   measures,
 }, extra);
 const timeWith = (effect) => [{ name: 'Time', type: 'time', unit: 's', primary: true, effect }];
@@ -680,12 +693,11 @@ test('errors: problem discovery and helpers name their field', () => {
 // ---------------------------------------------------------------------------
 
 // The running example (design/README.md): three keyboard designs, within
-// subjects, each vs. Current, adjusted.
+// subjects, every pair compared (3 comparisons), always adjusted.
 const runningExample = () => E.plan({
   design: 'within',
   factors: [{ name: 'Keyboard design', levels: ['Current', 'Prototype A', 'Prototype B'] }],
-  comparisons: { scheme: 'baseline' },
-  adjust: true,
+  comparisons: { scheme: 'all-pairs' },
   measures: [
     { name: 'Task time', type: 'time', unit: 'seconds', primary: true, effect: { mode: 'units', delta: 10, k: 8 } },
     { name: 'NASA-TLX', type: 'rating', unit: 'points', scale: { min: 0, max: 100 }, effect: { mode: 'units', delta: 10, sd: 15, consistency: 'medium' } },
@@ -695,9 +707,10 @@ const runningExample = () => E.plan({
 
 test('plan: participants per order, and whether ψ was entered', () => {
   const r = runningExample();
-  assert.equal(r.recommendedN, 18);
+  // Answer-key rows 5b and 8: 18, then 19, then 24 for 6 orders.
+  assert.equal(r.recommendedN, 24);
   assert.equal(r.orders, 6);
-  assert.equal(r.participantsPerOrder, 3);
+  assert.equal(r.participantsPerOrder, 4);
   assert.equal(r.measures[2].comparisons[0].effect.psiEntered, false);
   const entered = E.plan(studyWith([{ name: 'Success', type: 'binary', primary: true, effect: { p1: 0.6, p2: 0.8, psi: 0.3 } }]));
   assert.equal(entered.measures[0].comparisons[0].effect.psiEntered, true);
@@ -716,6 +729,12 @@ test('problem discovery also returns the trail terms', () => {
 // confidenceReport() (methods.md §7)
 // ---------------------------------------------------------------------------
 
+test('answer key: rank-based confidence report, n = 12, alpha 0.025 (rows 7d, 7e)', () => {
+  const r = E.confidenceT({ design: 'within', n: 12, alpha: 0.025, power: 0.8, rank: true, effectSize: DZ_K8, sd: 10 / DZ_K8 });
+  near(r.power, 0.6036, 5e-5);
+  near(r.detectable.units, 12.3455, 5e-4);
+});
+
 test('confidence report: running example at 12 participants (rank-based task time)', () => {
   const p = runningExample();
   const r = E.confidenceReport(p, 12);
@@ -725,24 +744,25 @@ test('confidence report: running example at 12 participants (rank-based task tim
   assert.equal(r.rank, true);
   assert.equal(r.estimate, true);
   near(r.effectiveN, 12 * 3 / Math.PI, 1e-12);
-  near(r.power, 0.6036, 5e-5);
-  near(r.detectable.units, 12.3455, 5e-4);
+  // Alpha 0.05 / 3 per comparison.
+  near(r.power, 0.5261, 5e-5);
+  near(r.detectable.units, 13.2136, 5e-4);
   // 7.5494 with the exact σ_diff = 11.8818 (answer-key row 7c uses 11.88 and gives 7.5482).
   near(r.precision.halfWidth, 7.5494, 5e-4);
   near(r.precision.low, 10 - r.precision.halfWidth, 1e-12);
   near(r.precision.high, 10 + r.precision.halfWidth, 1e-12);
   assert.equal(r.target.units, 10);
   // Same as calling confidenceT directly with the plan's values.
-  const direct = E.confidenceT({ design: 'within', n: 12, alpha: 0.025, power: 0.8, rank: true, effectSize: DZ_K8, sd: 10 / DZ_K8 });
+  const direct = E.confidenceT({ design: 'within', n: 12, alpha: 0.05 / 3, power: 0.8, rank: true, effectSize: DZ_K8, sd: 10 / DZ_K8 });
   near(r.power, direct.power, 1e-15);
   near(r.detectable.units, direct.detectable.units, 1e-12);
 });
 
 test('confidence report: secondary measures by name', () => {
   const p = runningExample();
-  const tlx = E.confidenceReport(p, 18, 'NASA-TLX');
+  const tlx = E.confidenceReport(p, p.recommendedN, 'NASA-TLX');
   near(tlx.power, p.underpowered.find((u) => u.name === 'NASA-TLX').powerAtRecommended, 1e-12);
-  const success = E.confidenceReport(p, 18, 'Task success');
+  const success = E.confidenceReport(p, p.recommendedN, 'Task success');
   assert.equal(success.mode, 'binary');
   near(success.power, p.underpowered.find((u) => u.name === 'Task success').powerAtRecommended, 1e-12);
   near(success.target.percentagePoints, 15, 1e-9);
@@ -756,7 +776,7 @@ test('confidence report: total participants convert to the test n', () => {
   const between = E.plan({
     design: 'between',
     factors: [oneFactor],
-    comparisons: { scheme: 'baseline' },
+    comparisons: { scheme: 'all-pairs' },
     measures: [{ name: 'Rating', type: 'rating', primary: true, effect: { mode: 'units', delta: 5, sd: 10 } }],
   });
   const b = E.confidenceReport(between, 51);
@@ -841,7 +861,7 @@ const totalArea = (curve, key) => {
 };
 
 const curveCases = () => {
-  const between = (measures) => E.plan({ design: 'between', factors: [oneFactor], comparisons: { scheme: 'baseline' }, measures });
+  const between = (measures) => E.plan({ design: 'between', factors: [oneFactor], comparisons: { scheme: 'all-pairs' }, measures });
   return [
     ['t paired', E.confidenceReport(E.plan(studyWith([{ name: 'R', type: 'rating', unit: 'points', primary: true, effect: { mode: 'units', delta: 5, sdDiff: 10 } }])), 20)],
     ['t independent', E.confidenceReport(between([{ name: 'R', type: 'rating', unit: 'points', primary: true, effect: { mode: 'units', delta: 5, sd: 10 } }]), 80)],
@@ -891,7 +911,7 @@ test('power curve: units, ticks and centers', () => {
 });
 
 test('power curve: two-proportion ticks convert back to percentage points with p₁ fixed', () => {
-  const p = E.plan({ design: 'between', factors: [oneFactor], comparisons: { scheme: 'baseline' }, measures: [{ name: 'S', type: 'binary', primary: true, effect: { p1: 0.6, p2: 0.8 } }] });
+  const p = E.plan({ design: 'between', factors: [oneFactor], comparisons: { scheme: 'all-pairs' }, measures: [{ name: 'S', type: 'binary', primary: true, effect: { p1: 0.6, p2: 0.8 } }] });
   const c = E.powerCurve(E.confidenceReport(p, 120));
   assert.ok(c.axis.ticks.length >= 3);
   const a1 = Math.asin(Math.sqrt(0.6));
@@ -907,7 +927,7 @@ test('power curve: in participants mode, ticks are labeled as k of 10', () => {
   assert.equal(w.axis.kind, 'participants');
   assert.ok(w.axis.ticks.length >= 3);
   w.axis.ticks.forEach((t) => near(10 * E.normalCdf(t.x), t.value, 1e-9));
-  const between = E.plan({ design: 'between', factors: [oneFactor], comparisons: { scheme: 'baseline' }, measures: [{ name: 'R', type: 'rating', primary: true, effect: { mode: 'participants', k: 7 } }] });
+  const between = E.plan({ design: 'between', factors: [oneFactor], comparisons: { scheme: 'all-pairs' }, measures: [{ name: 'R', type: 'rating', primary: true, effect: { mode: 'participants', k: 7 } }] });
   const b = E.powerCurve(E.confidenceReport(between, 60));
   b.axis.ticks.forEach((t) => near(10 * E.normalCdf(t.x / Math.SQRT2), t.value, 1e-9));
 });

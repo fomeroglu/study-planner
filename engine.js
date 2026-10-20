@@ -574,19 +574,23 @@
   // Comparisons and alpha (methods.md §1.1, §1.2, §1.3, §1.5)
   // ---------------------------------------------------------------------------
 
-  /** m for "each vs. baseline" (k − 1) or "every pair" (k(k − 1)/2). methods.md §1.2. */
+  /**
+   * m for "every pair": k(k − 1)/2. methods.md §1.2. scheme defaults to
+   * 'all-pairs'; "each vs. a baseline" is planned for a later version (§13).
+   */
   function countComparisons(k, scheme) {
     if (!Number.isInteger(k) || k < 2) fail('A study needs at least 2 conditions.', 'levels');
-    if (scheme === 'baseline') return k - 1;
-    if (scheme === 'all-pairs') return (k * (k - 1)) / 2;
-    fail(`Unknown comparison choice "${scheme}". Use "baseline" or "all-pairs".`, 'comparisons');
+    const s = scheme === undefined ? 'all-pairs' : scheme;
+    if (s === 'all-pairs') return (k * (k - 1)) / 2;
+    if (s === 'baseline') fail('Comparing each condition with a baseline only is planned for a later version. In this version, every pair of conditions is compared.', 'comparisons');
+    fail(`Unknown comparison choice "${s}". Use "all-pairs".`, 'comparisons');
   }
 
-  /** Alpha per comparison: alpha / m (Bonferroni) when adjusting, else alpha. methods.md §1.3. */
-  function alphaPerComparison(alpha, m, adjust) {
+  /** Alpha per comparison: alpha / m (Bonferroni), always. methods.md §1.3. */
+  function alphaPerComparison(alpha, m) {
     requireOpenUnit(alpha, 'Alpha', 'alpha');
     if (!Number.isInteger(m) || m < 1) fail('There must be at least one comparison.', 'comparisons');
-    return adjust ? alpha / m : alpha;
+    return alpha / m;
   }
 
   /** Every combination of levels across the factors, in order. methods.md §1.1. */
@@ -977,21 +981,13 @@
       return cells[i];
     };
     if (spec.scheme) {
+      // Every pair (methods.md §1.2).
       const k = cells.length;
       countComparisons(k, spec.scheme);
-      const baseline = spec.baseline ? findCell(spec.baseline) : cells[0];
       const out = [];
-      if (spec.scheme === 'baseline') {
-        cells.forEach((c) => {
-          if (c !== baseline) {
-            out.push({ id: `${cellKey(c)} vs ${cellKey(baseline)}`, type: 'cell', a: c, b: baseline });
-          }
-        });
-      } else {
-        for (let i = 0; i < k; i++) {
-          for (let j = i + 1; j < k; j++) {
-            out.push({ id: `${cellKey(cells[j])} vs ${cellKey(cells[i])}`, type: 'cell', a: cells[j], b: cells[i] });
-          }
+      for (let i = 0; i < k; i++) {
+        for (let j = i + 1; j < k; j++) {
+          out.push({ id: `${cellKey(cells[j])} vs ${cellKey(cells[i])}`, type: 'cell', a: cells[j], b: cells[i] });
         }
       }
       return out;
@@ -1114,10 +1110,10 @@
    * study = {
    *   design: 'within' | 'between',
    *   factors: [{ name, levels: [...] }],
-   *   comparisons: { scheme: 'baseline' | 'all-pairs', baseline?: [levels] }
+   *   comparisons: { scheme: 'all-pairs' }
    *              | { list: [{ id, type: 'cell', a: [levels], b: [levels] }
    *                       | { id, type: 'main', factor, a: level, b: level }] },
-   *   adjust: true (pick a winner, Bonferroni) | false,
+   *   (comparisons are always adjusted, alpha / m; adjust: false is rejected),
    *   alpha: 0.05, power: 0.80,
    *   measures: [{ name, type: 'time'|'count'|'binary'|'rating'|'numeric',
    *     unit, primary, linked (default true), scale?: { min, max },
@@ -1138,8 +1134,9 @@
     const k = cells.length;
     const comparisons = resolveComparisons(study, cells);
     const m = comparisons.length;
-    const adjust = !!study.adjust;
-    const alphaEach = alphaPerComparison(alpha, m, adjust);
+    // Always adjusted: the goal is to pick a winner (methods.md §1.3).
+    if (study.adjust === false) fail('Unadjusted comparisons are planned for a later version. In this version, alpha is always split across the comparisons (Bonferroni).', 'comparisons');
+    const alphaEach = alphaPerComparison(alpha, m);
     const orders = design === 'within' ? orderCount(k) : null;
 
     if (!Array.isArray(study.measures) || study.measures.length === 0) fail('Add at least one measure.', 'measures');
@@ -1157,9 +1154,9 @@
       const steps = [];
       steps.push({
         step: 'alpha',
-        label: adjust
+        label: m > 1
           ? `Alpha per comparison = ${alpha} ÷ ${m} comparisons (Bonferroni)`
-          : `Alpha per comparison = ${alpha} (no adjustment; each comparison answers its own question)`,
+          : `Alpha per comparison = ${alpha} (one comparison)`,
         value: alphaEach,
         source: 'calculated',
       });
@@ -1329,7 +1326,7 @@
       k,
       comparisons: comparisons.map((c) => ({ id: c.id, type: c.type })),
       m,
-      adjust,
+      adjust: true,
       alpha,
       alphaPerComparison: alphaEach,
       power,

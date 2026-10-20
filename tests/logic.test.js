@@ -95,7 +95,8 @@ test('buildStudy: one variable, every pair, always adjusted, and the inputs it p
   const b = L.buildStudy(form);
   assert.deepEqual(b.issues, []);
   assert.deepEqual(b.study.comparisons, { scheme: 'all-pairs' });
-  assert.equal(b.study.adjust, true);
+  assert.equal(b.study.adjust, undefined); // the engine always adjusts (methods.md §1.3)
+  assert.equal(L.runPlan(form).plan.alphaPerComparison, 0.05 / 3);
   assert.deepEqual(b.study.factors, [{ name: 'Design', levels: ['Current', 'New', 'Other'] }]);
   assert.deepEqual(b.study.measures[0].effect, { mode: 'units', delta: 5, sd: 10, consistency: 'high' });
   assert.equal(b.study.alpha, 0.05);
