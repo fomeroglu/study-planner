@@ -196,12 +196,13 @@ you saw.
 ## 3. Light theme
 
 - [ ] The theme button is a small round icon in the header's right
-      corner, with no visible text. It shows the mode it switches to: a
-      sun in the dark theme, a moon in the light theme. Hovering shows "Switch to light mode" (dark) or "Switch
-      to dark mode" (light), and a screen reader reads the same label.
+      corner, with no visible text. It shows the current mode: a moon in
+      the dark theme, a sun in the light theme. Hovering shows "Dark mode.
+      Click for light mode." (dark) or "Light mode. Click for dark mode."
+      (light), and a screen reader reads the same label.
 - [ ] Clicking it switches every screen to the light palette (Plan screen
       should match design/screens/4-plan-light.html), and the icon turns
-      into a moon.
+      into a sun.
 - [ ] Reload the page: the light theme stays. Switch back: dark stays after
       reload, and the icon and label match.
 - [ ] In both themes the icon is clearly visible against the header, and

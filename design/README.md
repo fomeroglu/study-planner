@@ -59,11 +59,11 @@ screen uses the same role mapping.
   toggle. The mockups' "Runs in your browser. Nothing is uploaded." line
   is not shown; the privacy statement is in the README.
 - **Theme toggle**: a 40px round icon button in the header's right
-  corner, with no visible text. The icon shows the mode it switches to,
-  matching its label: a sun in the dark theme, a moon in the light
-  theme. Transparent background, decorative-line border, icon in
-  the secondary text color. Its label, "Switch to light mode" or "Switch
-  to dark mode", is the accessible name and the hover tooltip.
+  corner, with no visible text. The icon shows the current mode: a moon
+  in the dark theme, a sun in the light theme. Transparent background,
+  decorative-line border, icon in the secondary text color. Its label,
+  "Dark mode. Click for light mode." or "Light mode. Click for dark
+  mode.", is the accessible name and the hover tooltip.
 - **Footer** on every screen, at the bottom of the window when content
   is short (sticky footer) and after the content when it is long. Its
   edges match the header's: the left column lines up with "Study

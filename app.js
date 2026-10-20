@@ -139,8 +139,8 @@
   // ---------------------------------------------------------------------------
 
   // The label names the action, so it needs no pressed state.
-  // The icon shows the mode the button switches to, matching its label: a sun in
-  // dark mode ("Switch to light mode"), a moon in light mode. Decorative only.
+  // The icon shows the current mode: a moon in dark mode, a sun in light mode.
+  // The label says the current mode and what a click does. Decorative only.
   const ICON_MOON = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a7 7 0 1 0 10.5 10.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>';
   const ICON_SUN = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4.5" fill="none" stroke="currentColor" stroke-width="2"/>' +
     '<g stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="1.5" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22.5"/><line x1="1.5" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22.5" y2="12"/>' +
@@ -149,8 +149,8 @@
   // A small round icon button. The label is for screen readers and the hover tooltip.
   function themeToggle() {
     const light = currentTheme() === 'light';
-    const label = light ? 'Switch to dark mode' : 'Switch to light mode';
-    return `<button type="button" id="theme-toggle" class="theme-toggle" data-action="theme" aria-label="${label}" title="${label}">${light ? ICON_MOON : ICON_SUN}</button>`;
+    const label = light ? 'Light mode. Click for dark mode.' : 'Dark mode. Click for light mode.';
+    return `<button type="button" id="theme-toggle" class="theme-toggle" data-action="theme" aria-label="${label}" title="${label}">${light ? ICON_SUN : ICON_MOON}</button>`;
   }
 
   // Footer on every screen. External links open in a new tab; the dots between

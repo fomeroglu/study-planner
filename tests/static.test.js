@@ -194,8 +194,7 @@ test('header: no privacy line; the theme toggle is an icon button with a label a
   const app = read('app.js');
   assert.ok(!app.includes('Runs in your browser'), 'the privacy statement belongs in the README only');
   assert.match(read('README.md'), /## Privacy/);
-  assert.ok(app.includes('class="theme-toggle" data-action="theme" aria-label="${label}" title="${label}">${light ? ICON_MOON : ICON_SUN}</button>'));
-  assert.ok(app.includes("'Switch to dark mode' : 'Switch to light mode'"));
+  assert.ok(app.includes('class="theme-toggle" data-action="theme" aria-label="${label}" title="${label}">${light ? ICON_SUN : ICON_MOON}</button>'));
   const css = read('styles.css');
   assert.match(css, /\.theme-toggle \{[^}]*width: 40px;[^}]*height: 40px;[^}]*border-radius: 50%;[^}]*color: var\(--text-2\);/);
 });
@@ -210,11 +209,13 @@ test('footer: links open in a new tab with rel="noopener" and a screen-reader no
   assert.ok(app.includes('t.innerHTML = header() + screenHtml() + footer();'));
 });
 
-test('the theme icon shows the mode the button switches to', () => {
+test('the theme toggle shows the current mode, and its label says what a click does', () => {
   const app = read('app.js');
-  // Dark mode: "Switch to light mode" with a sun; light mode: "Switch to dark mode" with a moon.
-  assert.ok(app.includes("const label = light ? 'Switch to dark mode' : 'Switch to light mode';"));
-  assert.ok(app.includes('${light ? ICON_MOON : ICON_SUN}'));
+  // Dark mode: a moon, "Dark mode. Click for light mode."; light mode: a sun, "Light mode. Click for dark mode."
+  assert.ok(app.includes("const label = light ? 'Light mode. Click for dark mode.' : 'Dark mode. Click for light mode.';"));
+  assert.ok(app.includes('${light ? ICON_SUN : ICON_MOON}'));
+  // The same label is the screen-reader name and the hover tooltip.
+  assert.ok(app.includes('aria-label="${label}" title="${label}"'));
 });
 
 test('layout: sticky footer, and footer edges that match the header', () => {
