@@ -175,7 +175,7 @@ test('defaults are generic: unnamed variable and measure, conditions A, B, C ...
   assert.equal(L.conditionName(25), 'Condition Z');
   assert.equal(L.conditionName(26), 'Condition 27');
   assert.equal(L.newFactor().levels[1].name, 'Condition B');
-  assert.equal(L.step1View(form).comparisonLine.startsWith('With 3 conditions'), true);
+  assert.equal(L.step1View(form).conditionsNote.startsWith('With 3 conditions'), true);
   // Presets still fill their own names.
   assert.equal(L.presetMeasure('nasa-tlx').name, 'NASA-TLX');
 });
@@ -351,16 +351,16 @@ test('disabled options use the exact explanation text', () => {
 // Step text and sidebar
 // ---------------------------------------------------------------------------
 
-test('step 1 comparison line: one comparison, every pair, or the selected ones', () => {
+test('step 1 note: none for two conditions, every pair at three or more, or the selected ones', () => {
   const form = simpleForm('time', { delta: '10', k: '8' });
-  assert.equal(L.step1View(form).comparisonLine, 'One comparison: Current vs. New');
+  assert.equal(L.step1View(form).conditionsNote, null); // two conditions: no note
   form.factors[0].levels.push(L.newLevel('Other'));
   const v = L.step1View(form);
   assert.equal(v.conditions, 3);
-  assert.equal(v.comparisonLine,
+  assert.equal(v.conditionsNote,
     'With 3 conditions, every pair is compared (3 comparisons), using a stricter test for each so the overall chance of a false result stays at 5%.');
   form.alpha = '0.1';
-  assert.match(L.step1View(form).comparisonLine, /stays at 10%\.$/);
+  assert.match(L.step1View(form).conditionsNote, /stays at 10%\.$/);
 
   const two = twoFactorForm();
   assert.equal(L.step1View(two).comparisonLine, 'No comparisons selected yet.');

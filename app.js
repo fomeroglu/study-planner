@@ -196,7 +196,9 @@
   // Step 1: conditions
   // ---------------------------------------------------------------------------
 
-  function factorCard(f, i) {
+  // One independent variable inside the step 1 card. The comparison note
+  // (one variable, three or more conditions) sits under its conditions.
+  function factorBlock(f, i, note) {
     const many = state.form.factors.length > 1;
     const levelIssue = visibleIssue(ids.factorLevels(f.id));
     const levels = f.levels.map((l, j) => {
@@ -207,7 +209,7 @@
       })}${f.levels.length > 2 ? `<button type="button" class="icon-btn" id="remove-level-${l.id}" data-action="remove-level" data-factor="${f.id}" data-level="${l.id}" aria-label="Remove condition ${j + 1}${trimmed(l.name) ? `, ${esc(trimmed(l.name))}` : ''}">×</button>` : ''}</div>` +
         `${errorEl(ids.level(l.id), issue)}</div>`;
     }).join('');
-    return `<section class="card" aria-labelledby="factor-${f.id}-title"><h2 class="sr-only" id="factor-${f.id}-title">Independent variable ${i + 1}</h2>` +
+    return `<div class="factor-block" role="group" aria-labelledby="factor-${f.id}-title"><h2 class="sr-only" id="factor-${f.id}-title">Independent variable ${i + 1}</h2>` +
       `<div class="field"><label for="${ids.factorName(f.id)}">Independent variable ${i + 1}</label>${textInput({
         id: ids.factorName(f.id), bind: 'factor-name', data: { factor: f.id }, value: f.name, placeholder: i === 0 ? 'e.g., Interface design' : 'e.g., Posture',
       })}${errorEl(ids.factorName(f.id), visibleIssue(ids.factorName(f.id)))}</div>` +
@@ -215,8 +217,9 @@
       `<div id="${ids.factorLevels(f.id)}-label">Conditions</div><div class="level-grid">${levels}` +
       `<button type="button" class="dashed-btn" id="add-level-${f.id}" data-action="add-level" data-factor="${f.id}">+ Add condition</button></div>` +
       `${errorEl(ids.factorLevels(f.id), levelIssue)}</div>` +
+      (note !== undefined ? `<p class="soft-note" id="${ids.comparisons()}" aria-live="polite">${note ? esc(note) : ''}</p>` : '') +
       (many ? `<div><button type="button" class="small-btn" id="remove-factor-${f.id}" data-action="remove-factor" data-factor="${f.id}">Remove independent variable ${i + 1}</button></div>` : '') +
-      `</section>`;
+      `</div>`;
   }
 
   function comparisonChips(list, disabledText, kind) {
@@ -233,10 +236,10 @@
     const designBtns = `<div class="opt-grid">${optButton({ id: 'design-between', action: 'design', data: { value: 'between' }, pressed: form.design === 'between', title: 'One condition', sub: 'Between subjects' })}` +
       `${optButton({ id: 'design-within', action: 'design', data: { value: 'within' }, pressed: form.design === 'within', title: 'All conditions', sub: 'Within subjects' })}</div>`;
 
-    // One variable: every pair, always adjusted, shown as one line (methods.md §1.2, §1.3).
-    // Two or more: the comparison checklist.
+    // One variable: every pair, always adjusted (methods.md §1.2, §1.3), noted under
+    // the conditions once there are three or more. Two or more: the comparison checklist.
     const comparisons = v.single
-      ? `<section class="card" aria-label="Comparisons"><p class="hint" style="font-size:16px;color:var(--text)" id="${ids.comparisons()}">${esc(v.comparisonLine)}</p>${errorEl(ids.comparisons(), visibleIssue(ids.comparisons()))}</section>`
+      ? ''
       : `<section class="card" aria-labelledby="${ids.comparisons()}-label">${group(ids.comparisons(), '<h2 class="card-title" id="%ID%">Which comparisons matter?</h2>',
         `<p class="hint">${esc(v.comparisonLine)}</p>` +
         `<div class="field"><div class="card-title" style="font-size:16px">Main effects</div><p class="hint">One level against another, averaged across the other variable.</p>` +
@@ -249,9 +252,12 @@
 
     return `<div class="page"><main class="main" id="main">` +
       `<div class="intro"><h1 tabindex="-1" id="page-title">What are you comparing?</h1><p>Add what you manipulate (independent variables) and their conditions.</p></div>` +
-      form.factors.map(factorCard).join('') +
-      `<button type="button" class="dashed-btn block" id="add-factor" data-action="add-factor">+ Add independent variable</button>` +
-      `<section class="card" aria-labelledby="${ids.design()}-label">${group(ids.design(), '<h2 class="card-title" id="%ID%">Each participant experiences</h2>', designBtns)}</section>` +
+      `<section class="card step1-card" aria-label="Conditions and design">` +
+      form.factors.map((f, i) => factorBlock(f, i, v.single ? v.conditionsNote : undefined)).join('<hr class="divider">') +
+      `<button type="button" class="dashed-btn" id="add-factor" data-action="add-factor">+ Add independent variable</button>` +
+      `<hr class="divider">` +
+      group(ids.design(), '<h2 class="card-title" id="%ID%">Each participant experiences</h2>', designBtns, 'field') +
+      `</section>` +
       comparisons +
       generalError() +
       navRow('#/start', '<button type="button" class="btn primary" id="next-1" data-action="next" data-step="1">Next: Measures</button>') +

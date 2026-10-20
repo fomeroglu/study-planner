@@ -696,12 +696,11 @@
     const alpha = parseNumber(form.alpha).value;
     const overall = alpha > 0 && alpha < 1 ? fmtPercent(alpha) : 'the alpha you set';
     const stricter = `using a stricter test for each so the overall chance of a false result stays at ${overall}`;
-    let comparisonLine;
+    // One variable: a note under the conditions, only at three or more.
+    let conditionsNote = null;
+    let comparisonLine = null;
     if (form.factors.length < 2) {
-      const names = form.factors[0].levels.map((l, i) => trimmed(l.name) || `Condition ${i + 1}`);
-      comparisonLine = m === 1
-        ? `One comparison: ${names[0]} vs. ${names[1]}`
-        : `With ${k} conditions, every pair is compared (${m} comparisons), ${stricter}.`;
+      if (m > 1) conditionsNote = `With ${k} conditions, every pair is compared (${m} comparisons), ${stricter}.`;
     } else if (!m) {
       comparisonLine = 'No comparisons selected yet.';
     } else {
@@ -711,6 +710,7 @@
     return {
       conditions: k,
       single: form.factors.length < 2,
+      conditionsNote,
       comparisonLine,
       candidates,
       mainDisabled: mainEffectsDisabled(form),

@@ -190,6 +190,12 @@ a.pill:hover { color: var(--text); background: var(--selected); }
   color: var(--text-2);
 }
 
+.step1-card { gap: 20px; }
+.factor-block { display: flex; flex-direction: column; gap: 16px; }
+.divider { border: none; border-top: 1px solid var(--line); margin: 4px 0; width: 100%; }
+.soft-note { margin: 0; font-size: 14px; line-height: 1.5; color: var(--text-2); }
+.soft-note:empty { display: none; }
+
 .note-box {
   font-size: 14px;
   color: var(--text-2);

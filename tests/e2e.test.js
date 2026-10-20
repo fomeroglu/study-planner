@@ -52,7 +52,7 @@ test('running example: every pair, adjusted, recommends 24, driven by task time'
   assert.equal(view.design, 'Within · 3 conditions');
   assert.equal(view.powerAlpha, '0.80 · 0.0167');
   assert.equal(view.announce, 'Participants needed: 24');
-  assert.equal(L.step1View(form).comparisonLine,
+  assert.equal(L.step1View(form).conditionsNote,
     'With 3 conditions, every pair is compared (3 comparisons), using a stricter test for each so the overall chance of a false result stays at 5%.');
 });
 

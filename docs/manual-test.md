@@ -16,13 +16,17 @@ you saw.
       "e.g., Interface design"; the conditions read "Condition A" and
       "Condition B"; "+ Add condition" adds "Condition C". No wording
       mentions keyboards, prototypes or a "Current" condition.
+- [ ] Step 1 is one card: the variable, its conditions, "+ Add independent
+      variable", then "Each participant experiences". There are no
+      comparison questions.
+- [ ] With two conditions there is no note. Add a third condition: a small
+      grey note appears under the conditions, "With 3 conditions, every pair
+      is compared (3 comparisons), using a stricter test for each so the
+      overall chance of a false result stays at 5%." Remove it again: the
+      note goes away.
 - [ ] Name the variable "Keyboard design" and rename the conditions to
-      Current, Prototype A and Prototype B. Choose "All conditions". There are no comparison questions; one line reads "With 3
-      conditions, every pair is compared (3 comparisons), using a stricter
-      test for each so the overall chance of a false result stays at 5%."
-      Sidebar: Within subjects, 3, "3, every pair".
-- [ ] With only two conditions, the line reads "One comparison: [first]
-      vs. [second]".
+      Current, Prototype A and Prototype B (or keep A, B, C). Choose "All
+      conditions". Sidebar: Within subjects, 3, "3 (every pair)".
 - [ ] Step 2: the measure name is empty with the hint "e.g., Task time".
       Name measure 1 "Task time", unit "seconds", type Time. Add the
       NASA-TLX preset (it fills its own name). Add a measure "Task success", type Success / failure.
