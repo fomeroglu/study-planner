@@ -88,12 +88,12 @@ you saw.
 - [ ] NASA-TLX: enter 10 for question 1, then open "I have data from a
       past study": question 2 disappears, and the section shows only
       "Standard deviation of NASA-TLX in your past data" (points) and the
-      note "We assume people aren't especially consistent across
-      conditions, the cautious choice. If they are, your study may need
-      fewer participants than shown." Enter 15. Variability of the
-      differences shows "≈ 18 points". Closing the section brings
+      note "We assume moderate consistency across conditions (correlation
+      0.5), the common default. If people are less consistent, your study
+      may need more participants." Enter 15. Variability of the
+      differences shows "≈ 15 points". Closing the section brings
       question 2 back. Leave it open.
-- [ ] Task success: 70 and 85. Sidebar: 18, 30, 126. Before a measure is
+- [ ] Task success: 70 and 85. Sidebar: 18, 24, 126. Before a measure is
       filled in, its row reads "not filled in yet".
 - [ ] Plan screen sections, in order: Recommended sample; Your measures;
       How these numbers were reached; Confidence report; Running the study;
@@ -103,12 +103,12 @@ you saw.
       three-condition tooltip).
 - [ ] Your measures: columns Measure, Needs, "Chance of detecting your
       target at 18 (line = 80%)" and the percentage. Rows: ★ Task time,
-      needs 18, teal bar past the line, "91%"; NASA-TLX, needs 30, amber
-      bar short of the line, "62%"; Task success, needs 126, amber bar,
+      needs 18, teal bar past the line, "91%"; NASA-TLX, needs 24, amber
+      bar short of the line, "76%"; Task success, needs 126, amber bar,
       "18%". Each percentage matches its bar's color. Below: "To cover
       every measure: 126 participants. Report measures below the line as
       supporting evidence." No method or reason columns, no warning boxes.
-- [ ] With a screen reader, each bar reads like "NASA-TLX: 62% chance at
+- [ ] With a screen reader, each bar reads like "NASA-TLX: 76% chance at
       18 participants; target 80%."
 - [ ] "How these numbers were reached" comes right after Your measures:
       Task time open, others closed. Alpha reads "Alpha per comparison =
@@ -119,10 +119,11 @@ you saw.
       planned for version 1.1." Sample size reads "n = 13.1301, rounded up:
       14" and "14 ÷ 0.955 (3/π) = 14.66, rounded up: 15", and the order
       plan "18 fits 6 orders: 3 participants each."
-- [ ] NASA-TLX's trail: "Assumption" includes "Assumed: participants
-      aren't especially consistent across conditions (consistency Low,
-      ρ = 0.3), the cautious choice…"; sample size "n = 26.7083, rounded up:
-      27", order plan "…: 30".
+- [ ] NASA-TLX's trail: variability "σ_diff = σ × √(2(1 − 0.5)): 15
+      points"; "Assumption" includes "Assumed: moderate consistency across
+      conditions (correlation ρ = 0.5), the common default. If people are
+      less consistent, your study may need more participants."; sample
+      size "n = 19.6669, rounded up: 20", order plan "…: 24".
 - [ ] Confidence report at 18 (the default): under the tiles, "Your plan
       rounds up to 18 for the rank-based adjustment and counterbalancing,
       so it can detect differences slightly smaller than your 10-second

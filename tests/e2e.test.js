@@ -10,7 +10,7 @@ const L = require(path.join(__dirname, '..', 'logic.js'));
 // The running example as a user would fill in the form: three keyboard designs,
 // within subjects; one variable with exactly three conditions, so every pair is
 // compared with Fisher's protected LSD at alpha 0.05 (methods.md §1.2, §1.3); task time primary (10 s, 8 of 10
-// faster); NASA-TLX (10 points, SD 15 from past data, Low consistency, the
+// faster); NASA-TLX (10 points, SD 15 from past data, Medium consistency, the
 // only setting in this version); task success (70% vs. 85%).
 function runningExampleForm() {
   const form = L.newForm();
@@ -70,12 +70,12 @@ test('running example: your measures as power bars at the recommended n', () => 
   assert.equal(view.targetPower, 0.8);
   assert.deepEqual(view.measures.map((b) => [b.name, b.primary, b.needs, b.percent, b.reaches]), [
     ['Task time', true, 18, '91%', true],
-    ['NASA-TLX', false, 30, '62%', false],
+    ['NASA-TLX', false, 24, '76%', false],
     ['Task success', false, 126, '18%', false],
   ]);
   assert.deepEqual(view.measures.map((b) => b.ariaLabel), [
     'Task time: 91% chance at 18 participants; target 80%.',
-    'NASA-TLX: 62% chance at 18 participants; target 80%.',
+    'NASA-TLX: 76% chance at 18 participants; target 80%.',
     'Task success: 18% chance at 18 participants; target 80%.',
   ]);
   // The bars match the engine's power for underpowered measures.
@@ -220,10 +220,12 @@ test('running example: NASA-TLX from past data states the consistency assumption
   const form = runningExampleForm();
   const trail = L.planView(L.runPlan(form).plan, form).trails.find((t) => t.name === 'NASA-TLX');
   const group = (title) => trail.groups.find((g) => g.title === title).lines.map(L.plainText).join(' ');
-  assert.match(group('Variability'), /σ_diff = σ × √\(2\(1 − 0\.3\)\): 17\.7 points\./);
-  assert.match(group('Assumption'), /consistency Low, ρ = 0\.3/);
-  assert.match(group('Sample size'), /n = 26\.7083, rounded up: 27\./);
-  assert.match(group('Order plan'), /27 rounded up to a multiple of 6 orders \(balanced Latin square\): 30\./);
+  // Answer-key row 14: σ_diff = 15 × √(2 × 0.5) = 15, dz = 10/15.
+  assert.match(group('Variability'), /σ_diff = σ × √\(2\(1 − 0\.5\)\): 15 points\./);
+  assert.equal(group('Assumption').split('. A simulation check is planned for version 1.1. ')[1],
+    'Assumed: moderate consistency across conditions (correlation ρ = 0.5), the common default. If people are less consistent, your study may need more participants.');
+  assert.match(group('Sample size'), /n = 19\.6669, rounded up: 20\./);
+  assert.match(group('Order plan'), /20 rounded up to a multiple of 6 orders \(balanced Latin square\): 24\./);
 });
 
 test('running example: the analysis plan asks to average repeated values (within subjects)', () => {

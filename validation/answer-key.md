@@ -61,10 +61,12 @@ Tolerance (methods.md §12): exact match on the rounded-up n, except McNemar
   version of the running example. They remain valid reference cases for
   the engine's arithmetic. Rows 7a to 7e (alpha 0.025) likewise come from
   an earlier version (each design vs. Current, 2 comparisons).
-- Rows 14 and 14b: the interface now always uses Low consistency (ρ = 0.3)
-  for an SD from past data (methods.md §3.1), so the running example's
-  NASA-TLX follows row 14b (27, rounded to 30). Row 14 (dz = 10/15, which
-  is Medium consistency) remains a valid case for the engine.
+- Rows 14 and 14b: the interface now always uses Medium consistency
+  (ρ = 0.5, G*Power's default) for an SD from past data (methods.md
+  §3.1). With SD 15, σ_diff = 15 × √(2 × 0.5) = 15, so dz = 10/15 and the
+  running example's NASA-TLX follows row 14 (20, rounded to 24). Row 14b
+  (Low consistency, 27 rounded to 30) remains a valid case for the
+  engine.
 - Row 15: Connor's (1987) formula, so the ±2 tolerance applies, as for
   row 10.
 - Rows 7d and 7e: Task time is rank-based, so power and detectable

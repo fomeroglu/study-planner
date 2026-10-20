@@ -214,8 +214,10 @@ variability. Variability is given one of two ways:
   Within subjects, how consistent participants are across conditions
   (consistency) sets a correlation ρ: Low 0.3, Medium 0.5, or High 0.7.
   Then σ_diff = σ·√(2(1 − ρ)). In version 1 the interface always uses
-  Low, the cautious choice (it gives the largest σ_diff), and states
-  this assumption in the trail (section 8). Choosing the consistency,
+  Medium (ρ = 0.5), the common default and G*Power's default for
+  repeated measures, and states this assumption in the trail (section
+  8). If people are less consistent, σ_diff is larger and the study
+  needs more participants; Low (ρ = 0.3) is the cautious choice. Choosing the consistency,
   and entering σ_diff directly, are supported by the engine and planned
   for the interface in version 1.1 (section 13).
 - Your estimate: k from question 2, read as "at a difference of Δ, how
@@ -457,8 +459,9 @@ recorded in validation/answer-key.md.
   groups (section 2). The engine supports it; the version 1 interface
   treats every within-subjects measure as paired.
 - 1.1 (interface): choosing how consistent participants are across
-  conditions (Low, Medium, High) and entering the SD of the differences
-  (σ_diff) directly. The engine supports both (section 3.1).
+  conditions (Low, Medium, High; version 1 always uses Medium) and
+  entering the SD of the differences (σ_diff) directly. The engine
+  supports both (section 3.1).
 - Later: planning for repeated trials per participant (mixed-effects
   models), using simulation. Version 1 asks for one value per
   participant per condition, averaged over trials.

@@ -98,8 +98,8 @@ test('buildStudy: one variable, every pair, and the inputs it passes on', () => 
   assert.equal(b.study.adjust, undefined); // the engine picks the procedure (methods.md §1.3)
   assert.equal(L.runPlan(form).plan.procedure, 'protected-lsd');
   assert.deepEqual(b.study.factors, [{ name: 'Design', levels: ['Current', 'New', 'Other'] }]);
-  // Past data: consistency is always Low in this version (methods.md §3.1).
-  assert.deepEqual(b.study.measures[0].effect, { mode: 'units', delta: 5, sd: 10, consistency: 'low' });
+  // Past data: consistency is always Medium in this version (methods.md §3.1).
+  assert.deepEqual(b.study.measures[0].effect, { mode: 'units', delta: 5, sd: 10, consistency: 'medium' });
   assert.equal(b.study.alpha, 0.05);
   assert.equal(b.study.power, 0.8);
 });
@@ -124,7 +124,7 @@ test('buildStudy: between subjects, always-paired within, presets and participan
   const within = simpleForm('rating', { variability: 'sd', delta: '5', sd: '10' }, (f, m) => { m.linked = false; });
   const u = L.buildStudy(within);
   assert.equal(u.study.measures[0].linked, true);
-  assert.equal(u.study.measures[0].effect.consistency, 'low');
+  assert.equal(u.study.measures[0].effect.consistency, 'medium');
   assert.equal(L.runPlan(within).plan.measures[0].method, 'Paired t-test');
 
   const preset = L.presetMeasure('seq');
@@ -250,9 +250,9 @@ test('one flow: the answers pick the mode (methods.md §3.1)', () => {
   assert.deepEqual(L.buildStudy(simpleForm('time', { delta: '10', k: '8' })).study.measures[0].effect, { mode: 'units', delta: 10, k: 8 });
   // Question 1 empty: in participants.
   assert.deepEqual(L.buildStudy(simpleForm('time', { delta: '', k: '8' })).study.measures[0].effect, { mode: 'participants', k: 8 });
-  // Past data replaces question 2: in units with the SD, consistency Low.
+  // Past data replaces question 2: in units with the SD, consistency Medium.
   assert.deepEqual(L.buildStudy(simpleForm('time', { variability: 'sd', delta: '10', sd: '12', k: '8' })).study.measures[0].effect,
-    { mode: 'units', delta: 10, sd: 12, consistency: 'low' });
+    { mode: 'units', delta: 10, sd: 12, consistency: 'medium' });
   // Between subjects: no consistency.
   const between = simpleForm('time', { variability: 'sd', delta: '10', sd: '12' }, (f) => { f.design = 'between'; });
   assert.deepEqual(L.buildStudy(between).study.measures[0].effect, { mode: 'units', delta: 10, sd: 12 });
@@ -260,7 +260,7 @@ test('one flow: the answers pick the mode (methods.md §3.1)', () => {
   const form = simpleForm('rating', { variability: 'sd', delta: '10', sd: '15' });
   const trail = L.planView(L.runPlan(form).plan, form).trails[0];
   const assumption = trail.groups.find((g) => g.title === 'Assumption').lines.map(L.plainText).join(' ');
-  assert.equal(assumption, "Assumed: participants aren't especially consistent across conditions (consistency Low, ρ = 0.3), the cautious choice. If they are, your study may need fewer participants than shown.");
+  assert.equal(assumption, 'Assumed: moderate consistency across conditions (correlation ρ = 0.5), the common default. If people are less consistent, your study may need more participants.');
   const inputs = trail.groups.find((g) => g.title === 'Your inputs').lines.map(L.plainText).join(' ');
   assert.ok(!/consistency/.test(inputs));
 });
@@ -472,7 +472,7 @@ test('step 3 wording follows the design and the comparison', () => {
   assert.equal(t.resultsIn, 'Results will be in seconds.');
   assert.equal(t.pastDataToggle, 'I have data from a past study');
   assert.equal(t.sdLabel, 'Standard deviation of Task time in your past data');
-  assert.equal(t.consistencyNote, "We assume people aren't especially consistent across conditions, the cautious choice. If they are, your study may need fewer participants than shown.");
+  assert.equal(t.consistencyNote, 'We assume moderate consistency across conditions (correlation 0.5), the common default. If people are less consistent, your study may need more participants.');
   form.measures[0].inputs.all.delta = '';
   const noTarget = L.inputText(form, form.measures[0], 'all');
   assert.equal(noTarget.kContext, null);
@@ -518,9 +518,9 @@ test('step 3 readouts: variability from the engine, labeled your estimate or cal
     /^From your two answers: if the average difference is 10 seconds and the better condition wins 8 of 10 random pairs of participants, it loses the other 2, which happens when values vary by about 8\.4 seconds between participants/);
   form.design = 'within';
   assert.equal(est.note, 'Your estimate, not measured.');
-  // Past data: σ_diff from the SD at Low consistency, 15 × √1.4 ≈ 18.
+  // Past data: σ_diff from the SD at Medium consistency, 15 × √(2 × 0.5) = 15.
   const sd = simpleForm('rating', { variability: 'sd', delta: '10', sd: '15' });
-  assert.equal(L.variabilityReadout(sd, sd.measures[0], 'all').value, '≈ 18 points');
+  assert.equal(L.variabilityReadout(sd, sd.measures[0], 'all').value, '≈ 15 points');
   // No target: no variability readout.
   const noTarget = simpleForm('time', { delta: '', k: '8' });
   assert.equal(L.variabilityReadout(noTarget, noTarget.measures[0], 'all'), null);

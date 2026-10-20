@@ -65,7 +65,7 @@
   // One empty set of inputs for a measure and comparison.
   function emptyInputs() {
     return {
-      mode: 'units', variability: 'estimate', delta: '', k: '', sd: '', consistency: 'low',
+      mode: 'units', variability: 'estimate', delta: '', k: '', sd: '', consistency: 'medium',
       sdDiff: '', mean: '', p1: '', p2: '', psi: '',
     };
   }
@@ -434,7 +434,7 @@
       return out;
     }
     // One flow (methods.md §3.1). With data from a past study: the difference
-    // and the SD, consistency Low. Otherwise: k of 10, in units when the
+    // and the SD, consistency Medium. Otherwise: k of 10, in units when the
     // difference is given (variability from the estimate), in participants
     // when it is left empty.
     const paired = form.design === 'within';
@@ -442,7 +442,7 @@
       const out = { mode: 'units' };
       out.delta = numberField(issues, inp.delta, t('delta'), o(true, { missing: 'Enter the smallest difference that would matter to use your past data.' }));
       out.sd = numberField(issues, inp.sd, t('sd'), o(true, { missing: 'Enter the standard deviation from your past data.' }));
-      if (paired) out.consistency = 'low';
+      if (paired) out.consistency = 'medium';
       return out;
     }
     const k = numberField(issues, inp.k, t('k'), o(true, { missing: 'Enter a number from 6 to 9.' }));
@@ -880,8 +880,8 @@
 
   const K_TIP = '5 of 10 means no improvement: half would do better by chance. 10 of 10 means everyone improves by the same amount, ' +
     'which never happens in real data. So the tool accepts 6 to 9.';
-  const CONSISTENCY_NOTE = "We assume people aren't especially consistent across conditions, the cautious choice. " +
-    'If they are, your study may need fewer participants than shown.';
+  const CONSISTENCY_NOTE = 'We assume moderate consistency across conditions (correlation 0.5), the common default. ' +
+    'If people are less consistent, your study may need more participants.';
 
   // Heading for a measure in step 3: "[name] (Measure i of n)".
   function measureHeading(form, measure) {
@@ -1004,11 +1004,11 @@
       if (inp.variability === 'sd' && paired) {
         const sd = parseNumber(inp.sd).value;
         if (sd === undefined) return null;
-        const sdDiff = E.sdDiffFromSd(sd, E.rhoFromConsistency('low'));
+        const sdDiff = E.sdDiffFromSd(sd, E.rhoFromConsistency('medium'));
         return {
           value: `≈ ${fmtUnits(sdDiff, measure.unit)}`,
           label: 'Variability of the differences',
-          note: 'Calculated from the standard deviation you entered, assuming Low consistency.',
+          note: 'Calculated from the standard deviation you entered, assuming moderate consistency (correlation 0.5).',
         };
       }
     } catch (err) {
@@ -1074,11 +1074,11 @@
     return `${s.label}: ${value}${source}.${detail}`;
   }
 
-  // The interface always uses Low consistency (methods.md §3.1), so the engine's
+  // The interface always uses Medium consistency (methods.md §3.1), so the engine's
   // consistency input is shown as an assumption, not as an entered value.
   const isConsistency = (st) => st.step === 'inputs' && /\(consistency\)$/.test(st.label);
-  const CONSISTENCY_ASSUMPTION = "Assumed: participants aren't especially consistent across conditions " +
-    '(consistency Low, ρ = 0.3), the cautious choice. If they are, your study may need fewer participants than shown.';
+  const CONSISTENCY_ASSUMPTION = 'Assumed: moderate consistency across conditions (correlation ρ = 0.5), the common default. ' +
+    'If people are less consistent, your study may need more participants.';
 
   function trailFor(m, plan) {
     const token = planAlphaToken(plan);
