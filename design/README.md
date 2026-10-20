@@ -5,10 +5,15 @@ mockups, not code to copy: build the real interface from scratch in
 index.html, matching them. When a mockup and docs/methods.md disagree on
 behavior or numbers, methods.md wins.
 
-Open any file in screens/ in a browser to see it. The numbers shown are
-the running example: three keyboard designs (Current, Prototype A,
-Prototype B), within subjects, each vs. Current, adjusted, with task
-time as the primary measure.
+Open any file in screens/ in a browser to see it. The running example
+is three keyboard designs (Current, Prototype A, Prototype B), within
+subjects, with task time as the primary measure. Every pair of
+conditions is compared, using Fisher's protected LSD because there are
+exactly three conditions (methods.md §1.3), and the plan recommends 18
+participants. The mockups were drawn under an earlier comparison rule,
+so some of their numbers differ; tests/e2e.test.js holds the current
+values. Where a mockup and the built interface differ in layout, the
+notes below describe the built interface.
 
 ## Screens
 
@@ -65,31 +70,45 @@ screen uses the same role mapping.
 
 ## Plan screen details
 
-- Readout grid: participants, driven by, design, power and alpha.
-- Per-measure table: needed n (accent if covered, warning color if
-  underpowered), planned method, one-line reason. Underpowered
-  warnings below it.
-- Confidence report: a participants slider (n you can recruit), three
-  stat tiles (detectable difference, ± precision, chance of detecting
-  the target), the two-curve power visual, and the precision bar. All
-  update live as the slider moves. The displayed numbers always come
-  from engine.js, never from the drawing.
-- "How these numbers were reached": the step-by-step trail from plan(),
-  one expandable section per measure, primary open by default.
-- Order plan: the Latin square orders, with the condition letter key.
-- Reporting guidance.
+Sections, in order (the built interface differs from 4-plan.html here):
+
+1. Recommendation readout: participants, driven by, design, power and
+   alpha. The per-comparison alpha has a tooltip.
+2. Your measures: one row per measure with its name (★ for the
+   primary), the n it needs (monospace), a horizontal bar of its chance
+   of detecting its target at the recommended n with a thin marker at
+   the target power (80% by default), and the percentage as text. Bar
+   and text use the accent color at or above the target and the warning
+   color below it, so the meaning never rests on color alone. Below the
+   list: "To cover every measure: [n] participants. Report measures
+   below the line as supporting evidence." This replaces the mockup's
+   per-measure table and warning boxes; the method and reason are in
+   the trail and the analysis plan.
+3. How these numbers were reached: the step-by-step trail from plan(),
+   one expandable section per measure, primary open by default.
+4. Confidence report: a participants slider (n you can recruit), three
+   stat tiles (detectable difference, ± precision, chance of detecting
+   the target), a note when the plan's rounding lets it detect slightly
+   less than the target, the two-curve power visual, and the precision
+   bar. All update live as the slider moves. The displayed numbers
+   always come from engine.js, never from the drawing.
+5. Running the study: the order plan (Latin square orders, with the
+   condition letter key), or equal groups between subjects.
+6. Analyzing the results: the analysis plan, then reporting guidance.
 
 ## Behavior not drawn in the mockups
 
 Build these from methods.md; they follow the same patterns.
 
-- **"In participants" mode** (step 3): one input, "How many of 10
-  participants should do better on the new condition?" (6 to 9). The
-  confidence report states the detectable difference in the same
-  terms, e.g. "at least 8.4 of 10 participants do better".
-- **"I know the standard deviation"** (step 3): the SD input, plus
-  "How consistent are participants across conditions? (correlation)"
-  with Low, Medium, High. Low is the default, labeled "cautious".
+- **Step 3, one flow per measure** (no mode buttons): question 1, the
+  smallest difference in the measure's unit, is optional; question 2
+  asks how many of 10 participants should do better on the better
+  condition (6 to 9). With both answers the results are in units; with
+  question 1 empty they are in participants, and the confidence report
+  says e.g. "at least 8.4 of 10 participants do better".
+- **"I have data from a past study"** (step 3): replaces question 2
+  with the SD. Consistency across conditions is always moderate
+  (correlation 0.5), stated in a note and in the trail.
 - **Two or more independent variables** (step 1): conditions are every
   combination of levels. Comparisons can include specific combinations
   and main effects ("averaged across the other variable"). Step 3
@@ -101,8 +120,9 @@ Build these from methods.md; they follow the same patterns.
   - Main effects on a success/failure measure: "For success/failure
     measures, only comparisons between specific conditions are
     supported in this version."
-- **Success/failure inputs** (step 3): expected success rate per
-  condition, in percent.
+- **Success/failure inputs** (step 3): one question, "What improvement
+  in success rate would matter?", answered as "From [p1]% of
+  participants succeeding to [p2]%".
 - **Find problems curve**: the black line follows the participants
   slider.
 

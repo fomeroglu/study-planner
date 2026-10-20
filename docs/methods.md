@@ -30,34 +30,75 @@ re-validated (see validation/).
 ### 1.2 Comparisons
 
 The study is sized for the comparisons the decision rests on, not for
-an omnibus test. The user chooses:
+an omnibus test. The goal is to pick a winner.
 
-- Each condition vs. a baseline: m = k − 1 comparisons
-- Every pair: m = k(k − 1)/2 comparisons
-- With two or more independent variables: comparisons between specific
-  combinations of levels, and main-effect comparisons (levels of one
-  variable, averaged across the others). See section 1.5. Interaction
-  comparisons are planned for a later version (section 13).
+- One independent variable: every pair of conditions is compared,
+  m = k(k − 1)/2 comparisons. With two conditions, that is one
+  comparison. The user does not choose the comparisons.
+- With two or more independent variables: the user chooses comparisons
+  between specific combinations of levels, and main-effect comparisons
+  (levels of one variable, averaged across the others). See section
+  1.5. Interaction comparisons are planned for a later version
+  (section 13).
+
+Comparing each condition with a baseline only is planned for a later
+version (section 13).
 
 ### 1.3 Adjusting for multiple comparisons
 
-The user chooses how the comparisons will be used:
+The goal is to pick a winner, so the overall chance of a false result
+is kept at alpha. How depends on the number of conditions:
 
-- Pick a winner among the conditions: each comparison uses alpha / m
-  (Bonferroni), keeping the overall false-alarm risk at alpha. Holm's
-  procedure can be used at analysis and is never less powerful.
-- Each comparison answers its own question: no adjustment; each uses
-  alpha. This is a defensible position when each comparison stands as a
-  separate claim (Rothman, 1990).
+- **Two conditions** (one comparison): one test at alpha.
+- **Exactly three conditions, one independent variable:** Fisher's
+  protected least significant difference (LSD). At analysis, the
+  overall test (section 1.4) is run at alpha; only if it is
+  significant, each pair is compared at alpha, unadjusted. With three
+  groups this keeps the familywise false-alarm risk at alpha (Hayter,
+  1986). For planning, each pairwise comparison is sized at alpha.
+  Assumption: planned assuming the overall test is significant; the
+  true chance of finding a winner is slightly lower. A simulation check
+  is planned for version 1.1 (section 13).
+- **Four or more conditions, or two or more independent variables:**
+  each comparison is planned at alpha / m (Bonferroni), keeping the
+  overall false-alarm risk at alpha. With four or more groups, Fisher's
+  protected LSD no longer does this (Hayter, 1986). At analysis, Holm's
+  procedure is used: it is never stricter than Bonferroni (only the
+  first, smallest p-value is compared with alpha / m), so the planned
+  sample covers it.
+
+Treating each comparison as its own question, without adjustment, is
+planned for a later version (section 13).
 
 ### 1.4 Planned analysis
 
-- Two conditions: the pairwise test for the measure (section 2).
-- Three or more conditions: an omnibus test first (repeated-measures
-  ANOVA within subjects, one-way ANOVA between; Friedman or
-  Kruskal–Wallis for rank-based measures), followed by the adjusted
-  pairwise comparisons.
-- The sample size is based on the pairwise comparisons.
+- Two conditions: one step, the pairwise test for the measure
+  (section 2).
+- Exactly three conditions, one independent variable: two steps
+  (Fisher's protected LSD, section 1.3).
+  1. The overall test across all conditions, at alpha.
+  2. If it is significant, the pairwise test for each pair, at alpha.
+- Four or more conditions, one independent variable: two steps.
+  1. The overall test across all conditions.
+  2. The pairwise test for every pair, with the Holm adjustment across
+     the m comparisons.
+- Two or more independent variables: the selected comparisons
+  (section 1.5), each with the pairwise test, with the Holm adjustment
+  across the m comparisons. A factorial omnibus analysis is not planned
+  in this version.
+- The sample size is based on the pairwise comparisons, planned at the
+  per-comparison alpha from section 1.3: alpha for two or three
+  conditions, alpha / m (Bonferroni) otherwise. Holm is never stricter
+  than Bonferroni, so the planned sample covers the Holm analysis.
+
+| Result type | Step 1, within subjects | Step 1, between subjects | Step 2, within subjects | Step 2, between subjects |
+|---|---|---|---|---|
+| Time, Count | Friedman test | Kruskal–Wallis test | Wilcoxon signed-rank | Mann–Whitney |
+| Rating scale, Other numeric | Repeated-measures ANOVA | One-way ANOVA | Paired t-test | Independent t-test |
+| Success / failure | Cochran's Q test | Chi-square test of independence | McNemar | Two-proportion test |
+
+A measure whose values can't be linked to a participant uses the
+between-subjects columns (section 2).
 
 ### 1.5 Comparisons with two or more independent variables
 
@@ -148,21 +189,40 @@ Presets: NASA-TLX (rating scale, 0 to 100, raw TLX), SUS (rating scale,
 
 ## 3. Describing the improvement
 
-### 3.1 Continuous measures: three options
+### 3.1 Continuous measures
 
-The user chooses one per measure.
+The interface asks the same questions for every continuous measure and
+picks the mode from the answers:
+
+1. "Smallest difference that would matter" (Δ), in the measure's own
+   unit. Optional.
+2. "Out of 10 participants, how many should do better on the better
+   condition?" (k, from 6 to 9). Between subjects, it is asked as pairs
+   of participants, one from each condition (see below). 5 of 10 means
+   no improvement; 10 of 10 would mean everyone improves by the same
+   amount, which never happens in real data.
+
+With both answers: in units, with variability from the estimate. With
+question 1 left empty: in participants. With data from a past study,
+the SD replaces question 2: in units, with the SD known, and question 1
+is then required.
 
 **In units.** Inputs: smallest difference that matters (Δ), and
 variability. Variability is given one of two ways:
 
-- Known: the SD between participants (σ). Within subjects, also how
-  consistent participants are across conditions (consistency): Low,
-  Medium, or High, mapped to a correlation ρ of 0.3, 0.5, or 0.7. Then
-  σ_diff = σ·√(2(1 − ρ)). The default is Low, labeled as the cautious
-  choice (it gives the largest σ_diff).
-  Advanced: enter σ_diff directly.
-- Your estimate: "At a difference of Δ, how many of 10 participants
-  would do better on the new condition?" (k, from 6 to 9).
+- Known (data from a past study): the SD between participants (σ).
+  Within subjects, how consistent participants are across conditions
+  (consistency) sets a correlation ρ: Low 0.3, Medium 0.5, or High 0.7.
+  Then σ_diff = σ·√(2(1 − ρ)). In version 1 the interface always uses
+  Medium (ρ = 0.5), the common default and G*Power's default for
+  repeated measures, and states this assumption in the trail (section
+  8). If people are less consistent, σ_diff is larger and the study
+  needs more participants; Low (ρ = 0.3) is the cautious choice. Choosing the consistency,
+  and entering σ_diff directly, are supported by the engine and planned
+  for the interface in version 1.1 (section 13).
+- Your estimate: k from question 2, read as "at a difference of Δ, how
+  many of 10 participants would do better on the better condition?"
+  (k, from 6 to 9).
   - Within: σ_diff = Δ / Φ⁻¹(k/10)
   - Between: σ = Δ / (√2 · Φ⁻¹(k/10)), where k/10 is read as the chance
     that a randomly chosen participant on the new condition outperforms
@@ -172,7 +232,7 @@ variability. Variability is given one of two ways:
     answers are labeled "your estimate" wherever they appear; typed
     values are labeled "entered".
 
-**In participants.** Input: k of 10 participants should do better.
+**In participants** (question 1 left empty). Input: k of 10 participants should do better.
 - Within: dz = Φ⁻¹(k/10)
 - Between: d = √2 · Φ⁻¹(k/10)
 - This is the common language effect size (probability of
@@ -182,6 +242,10 @@ variability. Variability is given one of two ways:
 
 These are the two input modes in version 1. Entering Cohen's d directly
 is planned for a later version (section 13).
+
+In version 1 the interface does not ask for an expected average, so the
+bounded-scale check in section 2.2 is not applied to entered SDs. The
+engine still supports it.
 
 ### 3.2 Success / failure
 
@@ -194,6 +258,12 @@ not the largest possible ψ: negatively related outcomes give a larger
 one (for 0.60 vs. 0.80, ψ can reach 0.60, against 0.44 when unrelated).
 An entered ψ must be at least |p₂ − p₁|, and no more than
 min(p₁, 1 − p₂) + min(p₂, 1 − p₁), the largest share the two rates allow.
+
+The version 1 interface asks one question, "What improvement in success
+rate would matter?", answered as "from p₁% to p₂%" (p₁ the weaker
+condition, p₂ the better). It always uses the default ψ and states that
+assumption in the trail (section 8). Entering ψ is supported by the
+engine and planned for the interface in a later version (section 13).
 
 ## 4. Sample size
 
@@ -279,13 +349,35 @@ Power and detectable difference use the per-comparison alpha (section
 
 ### 7.1 Visuals
 
-- **Power curves:** two curves of the possible study results, one
-  centered on zero (no real difference), one centered on the target
-  difference, each with width SE; the significance bar at the critical
-  value; the share of the second curve past the bar shaded and labeled
-  as the chance of detecting it. Redrawn as n changes. The displayed
-  power number always comes from the exact calculation above.
-- **Precision bar:** the expected result with its ± range.
+**Power curves.** Two curves of the possible study results: one if there
+is no real difference, one if the target difference is real. Both come
+from the same distributions as the power number above, so the shaded
+share of the second curve equals the reported power. Redrawn as n
+changes.
+
+- *t-based measures:* the test statistic under no difference (central
+  t) and under the target (noncentral t, ncp as in section 4), each
+  multiplied by SE to put it in the measure's units. SE = σ_diff / √n
+  (paired test) or σ·√(2/n) (independent test, n per condition).
+  Rank-based measures use the effective n (n × 3/π) for df, ncp and SE,
+  as for power. Densities are numerical derivatives of the section 4
+  CDFs. The significance bar is at t_c·SE. The shaded share is the
+  target curve's area beyond ±t_c·SE (both rejection regions; the
+  region below −t_c·SE is normally too small to see).
+- *McNemar:* normal curves centered on 0 with SD √(ψ/n) and on |δ| with
+  SD √((ψ − δ²)/n). The bar is at z₁₋α/₂·√(ψ/n). Axis in percentage
+  points.
+- *Two proportions:* normal curves on the Cohen's h scale, centered on 0
+  and |h|, each with SD √(2/n). Bars at ±z₁₋α/₂·√(2/n). Tick labels are
+  converted to percentage points with p₁ held fixed:
+  p₂ = sin²(arcsin√p₁ ± h/2).
+- *"In participants" mode:* drawn as for t-based measures with σ = 1.
+  Axis title: "Result your study finds: how many of 10 participants do
+  better". A tick at standardized difference x is labeled 10·Φ(x)
+  within subjects, 10·Φ(x/√2) between subjects (section 7).
+
+**Precision bar:** the target difference, with low and high ends at ±
+the half-width above.
 
 ## 8. How these numbers were reached
 
@@ -317,9 +409,14 @@ Values from the user's own estimate are labeled as such.
   labor cost, since it counts every slow task in full.
 - Count: the geometric mean can't be used when any value is zero.
 - Success / failure: report rates and differences in percentage points.
-- Three or more conditions: report the omnibus test, then the adjusted
-  pairwise comparisons. Declare a winner only when the top conditions
-  differ significantly from each other; otherwise report a tie.
+- Three conditions: report the overall test; if it is significant,
+  report the pairwise comparisons at alpha (Fisher's protected LSD). If
+  it is not, report that no difference was found.
+- Four or more conditions: report the overall test, then the
+  Holm-adjusted pairwise comparisons.
+- Three or more conditions: declare a winner only when the top
+  conditions differ significantly from each other; otherwise report a
+  tie.
 
 ## 11. Measure library defaults
 
@@ -342,7 +439,12 @@ recorded in validation/answer-key.md.
 | Same, alpha 0.0167 | pwr.t.test | 18 (confirm) |
 | Variability from your estimate: Δ = 10, k = 8 | Hand calculation | σ_diff = 11.88 s |
 | Confidence report: n = 12, σ_diff = 11.88, alpha 0.025 | Hand / R | power 0.63; detectable 12.0 s; ± 7.5 s |
+| Same, rank-based (effective n = 12 × 3/π) | Hand / R | power 0.60; detectable 12.3 s; ± 7.5 s |
 | Rank adjustment and Latin square: 18 ÷ 0.955, 3 conditions | Hand calculation | 19, rounded to 24 |
+| Running example, protected LSD (alpha 0.05): task time, 14 ÷ 0.955 | Hand calculation | 15, rounded to 18 |
+| Running example, protected LSD: NASA-TLX, dz = 10 / 15, alpha 0.05 | pwr.t.test | 20, rounded to 24 |
+| Running example, protected LSD: McNemar, 0.70 vs. 0.85, default ψ, alpha 0.05 | Hand / G*Power | 124, rounded to 126 |
+| Running example confidence report: n = 12, rank-based, alpha 0.05 | Hand / R | power 0.73; detectable 10.9 s; ± 7.5 s |
 | Two proportions, 0.60 vs. 0.80 | pwr.2p.test | 81 per condition |
 | McNemar, 0.60 vs. 0.80, default ψ | G*Power | 84 |
 | Problem discovery, p = 0.31, P = 0.85 | Hand calculation | 6 |
@@ -353,6 +455,28 @@ recorded in validation/answer-key.md.
 - 1.1: log-scale planning for time (O'Keeffe, Ambler & Barber, 2017);
   a simulation check of the plan against skewed data.
 - Later: check mode (upload data, confirm the method), mixed designs.
+- Later: comparing each condition with a baseline only (m = k − 1
+  comparisons), for one independent variable.
+- Later: unadjusted comparisons, where each comparison answers its own
+  question and uses the full alpha. This is a defensible position when
+  each comparison stands as a separate claim (Rothman, 1990).
+- Later (interface): marking a within-subjects measure whose values
+  can't be linked to a participant, which is analysed as independent
+  groups (section 2). The engine supports it; the version 1 interface
+  treats every within-subjects measure as paired.
+- Later (interface): entering the discordance ψ for a success / failure
+  measure within subjects (section 3.2). The engine supports it; the
+  version 1 interface always uses the default.
+- 1.1 (interface): choosing how consistent participants are across
+  conditions (Low, Medium, High; version 1 always uses Medium) and
+  entering the SD of the differences (σ_diff) directly. The engine
+  supports both (section 3.1).
+- Later: planning for repeated trials per participant (mixed-effects
+  models), using simulation. Version 1 asks for one value per
+  participant per condition, averaged over trials.
+- Later: simulation-based planning for Fisher's protected LSD, which
+  sizes the study for the chance that the overall test and the
+  pairwise comparison are both significant (version 1.1).
 - Later: interaction comparisons (a difference of differences). These
   are usually smaller than main effects and need many more
   participants; between subjects they need a different calculation.
@@ -368,6 +492,8 @@ recorded in validation/answer-key.md.
 ## 14. Limitations
 
 - Interaction comparisons are planned for a later version (section 13).
+- Within-subjects plans assume you can match each participant's values
+  across conditions.
 - For success / failure measures, only comparisons between specific
   conditions are supported; main effects are not.
 - In the interface, these options are shown as disabled with a short
@@ -386,6 +512,9 @@ recorded in validation/answer-key.md.
 - Fagerland, M. W. (2012). t-tests, non-parametric tests, and large
   studies: a paradox of statistical practice? BMC Medical Research
   Methodology, 12, 78.
+- Hayter, A. J. (1986). The maximum familywise error rate of Fisher's
+  least significant difference test. Journal of the American
+  Statistical Association, 81(396), 1000–1004.
 - Hodges, J. L., & Lehmann, E. L. (1956). The efficiency of some
   nonparametric competitors of the t-test. The Annals of Mathematical
   Statistics, 27(2), 324–335.

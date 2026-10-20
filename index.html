@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Study Planner</title>
+<meta name="description" content="Plan comparison and problem-discovery studies: how many participants, which analysis, and what your sample can support. Runs in your browser.">
+<script>
+  // Apply the saved theme before the page draws. Dark is the default.
+  (function () {
+    try {
+      if (window.localStorage.getItem('study-planner-theme') === 'light') {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    } catch (err) { /* storage unavailable: keep dark */ }
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="app"></div>
+<div id="announcer" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+<noscript>
+  <p style="padding: 32px">Study Planner needs JavaScript to calculate. Nothing you enter leaves your browser.</p>
+</noscript>
+<script src="engine.js"></script>
+<script src="logic.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
