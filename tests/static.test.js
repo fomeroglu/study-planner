@@ -194,7 +194,7 @@ test('header: no privacy line; the theme toggle is an icon button with a label a
   const app = read('app.js');
   assert.ok(!app.includes('Runs in your browser'), 'the privacy statement belongs in the README only');
   assert.match(read('README.md'), /## Privacy/);
-  assert.ok(app.includes('class="theme-toggle" data-action="theme" aria-label="${label}" title="${label}">${light ? ICON_SUN : ICON_MOON}</button>'));
+  assert.ok(app.includes('class="theme-toggle" data-action="theme" aria-label="${label}" title="${label}">${light ? ICON_MOON : ICON_SUN}</button>'));
   assert.ok(app.includes("'Switch to dark mode' : 'Switch to light mode'"));
   const css = read('styles.css');
   assert.match(css, /\.theme-toggle \{[^}]*width: 40px;[^}]*height: 40px;[^}]*border-radius: 50%;[^}]*color: var\(--text-2\);/);
@@ -208,4 +208,22 @@ test('footer: links open in a new tab with rel="noopener" and a screen-reader no
   ['How it calculates', 'Source on GitHub', 'fbomeroglu.com', "'GitHub'", "'LinkedIn'", 'Designed and built by',
     'Fatih Omeroglu', 'Version ${VERSION}'].forEach((text) => assert.ok(app.includes(text), text));
   assert.ok(app.includes('t.innerHTML = header() + screenHtml() + footer();'));
+});
+
+test('the theme icon shows the mode the button switches to', () => {
+  const app = read('app.js');
+  // Dark mode: "Switch to light mode" with a sun; light mode: "Switch to dark mode" with a moon.
+  assert.ok(app.includes("const label = light ? 'Switch to dark mode' : 'Switch to light mode';"));
+  assert.ok(app.includes('${light ? ICON_MOON : ICON_SUN}'));
+});
+
+test('layout: sticky footer, and footer edges that match the header', () => {
+  const css = read('styles.css');
+  assert.match(css, /#app \{[^}]*display: flex;[^}]*flex-direction: column;[^}]*min-height: 100vh;[^}]*min-height: 100dvh;/);
+  assert.match(css, /#app > :not\(\.header\):not\(\.site-footer\) \{[^}]*flex: 1 0 auto;/);
+  const footerInner = css.match(/\.footer-inner \{([^}]*)\}/)[1];
+  assert.ok(!/max-width/.test(footerInner), 'the footer spans the full width, like the header');
+  assert.match(footerInner, /padding: 20px 32px 32px;/); // header: 16px 32px
+  assert.match(css, /\.header \{ padding: 16px 20px; \}\s*\.footer-inner \{ padding: 20px 20px 28px; \}/);
+  assert.ok(!read('app.js').includes('Methods and validation'), 'the footer link replaces the Start line');
 });

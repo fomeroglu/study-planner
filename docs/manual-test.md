@@ -22,6 +22,14 @@ you saw.
       LinkedIn (linkedin.com/in/fomeroglu). A screen reader announces
       "(opens in a new tab)" and skips the dots.
 - [ ] Below 640 px wide, the footer's two columns stack, both left-aligned.
+- [ ] The footer's left column lines up with "Study Planner" in the header,
+      and its right column with the theme button, at any width.
+- [ ] Sticky footer: on a tall window (or zoomed out), the Start screen and
+      Find problems with empty inputs leave the footer at the very bottom
+      of the window, not floating mid-page. On a short window, the footer
+      follows the content and appears only after scrolling.
+- [ ] Start has no "Methods and validation" line under the cards; the
+      footer's "How it calculates" link replaces it.
 - [ ] Step 1 starts generic: the variable name is empty with the hint
       "e.g., Interface design"; the conditions read "Condition A" and
       "Condition B"; "+ Add condition" adds "Condition C". No wording
@@ -188,12 +196,12 @@ you saw.
 ## 3. Light theme
 
 - [ ] The theme button is a small round icon in the header's right
-      corner, with no visible text: a moon in the dark theme, a sun in the
-      light theme. Hovering shows "Switch to light mode" (dark) or "Switch
+      corner, with no visible text. It shows the mode it switches to: a
+      sun in the dark theme, a moon in the light theme. Hovering shows "Switch to light mode" (dark) or "Switch
       to dark mode" (light), and a screen reader reads the same label.
 - [ ] Clicking it switches every screen to the light palette (Plan screen
       should match design/screens/4-plan-light.html), and the icon turns
-      into a sun.
+      into a moon.
 - [ ] Reload the page: the light theme stays. Switch back: dark stays after
       reload, and the icon and label match.
 - [ ] In both themes the icon is clearly visible against the header, and
