@@ -656,3 +656,30 @@ test('rounding note: none between subjects without a rank-based test', () => {
   const plan = L.runPlan(form).plan;
   assert.equal(L.roundingNote(plan, L.confidence(plan, plan.recommendedN, form).report), null);
 });
+
+test('success-rate engine errors are shown in percent, matching the inputs', () => {
+  const form = simpleForm('binary', { p1: '60', p2: '80' });
+  const m = form.measures[0];
+  const placed = (fn) => {
+    try {
+      fn();
+    } catch (err) {
+      err.measure = m.name;
+      return L.placeError(err, form, {});
+    }
+    throw new Error('expected an EngineError');
+  };
+  // Real engine messages, unchanged in the engine, converted for display.
+  const range = placed(() => E.cohensH(1.5, 0.8));
+  assert.equal(range.message, 'Success rate 1 must be between 0% and 100%, not 150%.');
+  assert.equal(range.target, L.ids.input(m.id, 'all', 'p1'));
+  const small = placed(() => E.nMcNemar(0.6, 0.8, 0.05, 0.8, 0.1));
+  assert.equal(small.message, 'The share who differ between conditions (discordance) must be at least the difference in success rates (20%).');
+  const large = placed(() => E.nMcNemar(0.6, 0.8, 0.05, 0.8, 0.7));
+  assert.equal(large.message, 'With success rates of 60% and 80%, the share who differ between conditions (discordance) can be at most 60%.');
+  assert.equal(placed(() => E.nTwoProportions(0.85, 0.85, 0.05, 0.8)).message, 'The two success rates must differ.');
+  // Other fields keep the engine's message as it is.
+  const k = L.runPlan(simpleForm('time', { delta: '10', k: '5' })).error;
+  assert.match(k.message, /from 6 to 9, not 5\.$/);
+  assert.equal(L.ratesInPercent('With success rates of 0.15 and 0.85'), 'With success rates of 15% and 85%');
+});

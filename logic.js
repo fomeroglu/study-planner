@@ -544,6 +544,18 @@
   // Engine fields the interface does not show, mapped to the field that feeds them.
   const SHOWN_FIELD = { sdDiff: 'sd', mean: 'sd', consistency: 'sd', mode: 'k', psi: 'p2' };
 
+  // Success rates are typed in percent, but the engine's messages use
+  // proportions ("0.85"). Show those numbers in percent ("85%"), matching the
+  // inputs; the engine's messages stay unchanged.
+  const RATE_FIELDS = ['p1', 'p2', 'psi'];
+  function ratesInPercent(message) {
+    const pct = (x) => `${Number((Number(x) * 100).toFixed(2))}%`;
+    return message
+      .replace(/between 0 and 1\b/g, 'between 0% and 100%')
+      .replace(/\bnot (-?\d+(?:\.\d+)?)/g, (m, x) => `not ${pct(x)}`)
+      .replace(/(^|[^\w.%])(\d*\.\d+)(?![\d%])/g, (m, pre, x) => `${pre}${pct(x)}`);
+  }
+
   /**
    * Place an EngineError next to the input that caused it, by its field,
    * measure, comparison and factor. Returns an issue.
@@ -574,7 +586,8 @@
     if (measure && INPUT_FIELDS.includes(f)) {
       const key = keyOf();
       const field = f === 'effect' ? (measure.type === 'binary' ? 'p1' : 'k') : SHOWN_FIELD[f] || f;
-      return issue(3, ids.input(measure.id, key, field), err.message, kind, Object.assign({ key }, extra));
+      const message = RATE_FIELDS.includes(f) ? ratesInPercent(err.message) : err.message;
+      return issue(3, ids.input(measure.id, key, field), message, kind, Object.assign({ key }, extra));
     }
     if (measure) return issue(3, ids.measureInputs(measure.id), err.message, kind, extra);
     return issue(3, 'general', err.message, kind);
@@ -1509,6 +1522,7 @@
     binaryTypeDisabled,
     buildStudy,
     placeError,
+    ratesInPercent,
     runPlan,
     liveStatus,
     alphaToken,

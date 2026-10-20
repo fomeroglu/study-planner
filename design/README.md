@@ -5,15 +5,15 @@ mockups, not code to copy: build the real interface from scratch in
 index.html, matching them. When a mockup and docs/methods.md disagree on
 behavior or numbers, methods.md wins.
 
-Open any file in screens/ in a browser to see it. The numbers shown are
-the running example as first drawn: three keyboard designs (Current,
-Prototype A, Prototype B), within subjects, each vs. Current, adjusted,
-with task time as the primary measure. The tool has since changed the
-comparison rule (every pair; Fisher's protected LSD with three
-conditions, methods.md §1.3), so the running example now recommends 18
-participants; tests/e2e.test.js holds the current values. Where a
-mockup and the built interface differ in layout, the notes below
-describe the built interface.
+Open any file in screens/ in a browser to see it. The running example
+is three keyboard designs (Current, Prototype A, Prototype B), within
+subjects, with task time as the primary measure. Every pair of
+conditions is compared, using Fisher's protected LSD because there are
+exactly three conditions (methods.md §1.3), and the plan recommends 18
+participants. The mockups were drawn under an earlier comparison rule,
+so some of their numbers differ; tests/e2e.test.js holds the current
+values. Where a mockup and the built interface differ in layout, the
+notes below describe the built interface.
 
 ## Screens
 
@@ -100,13 +100,15 @@ Sections, in order (the built interface differs from 4-plan.html here):
 
 Build these from methods.md; they follow the same patterns.
 
-- **"In participants" mode** (step 3): one input, "How many of 10
-  participants should do better on the new condition?" (6 to 9). The
-  confidence report states the detectable difference in the same
-  terms, e.g. "at least 8.4 of 10 participants do better".
-- **"I know the standard deviation"** (step 3): the SD input, plus
-  "How consistent are participants across conditions? (correlation)"
-  with Low, Medium, High. Low is the default, labeled "cautious".
+- **Step 3, one flow per measure** (no mode buttons): question 1, the
+  smallest difference in the measure's unit, is optional; question 2
+  asks how many of 10 participants should do better on the better
+  condition (6 to 9). With both answers the results are in units; with
+  question 1 empty they are in participants, and the confidence report
+  says e.g. "at least 8.4 of 10 participants do better".
+- **"I have data from a past study"** (step 3): replaces question 2
+  with the SD. Consistency across conditions is always moderate
+  (correlation 0.5), stated in a note and in the trail.
 - **Two or more independent variables** (step 1): conditions are every
   combination of levels. Comparisons can include specific combinations
   and main effects ("averaged across the other variable"). Step 3
@@ -118,8 +120,9 @@ Build these from methods.md; they follow the same patterns.
   - Main effects on a success/failure measure: "For success/failure
     measures, only comparisons between specific conditions are
     supported in this version."
-- **Success/failure inputs** (step 3): expected success rate per
-  condition, in percent.
+- **Success/failure inputs** (step 3): one question, "What improvement
+  in success rate would matter?", answered as "From [p1]% of
+  participants succeeding to [p2]%".
 - **Find problems curve**: the black line follows the participants
   slider.
 
