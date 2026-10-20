@@ -93,7 +93,12 @@ you saw.
       may need more participants." Enter 15. Variability of the
       differences shows "≈ 15 points". Closing the section brings
       question 2 back. Leave it open.
-- [ ] Task success: 70 and 85. Sidebar: 18, 24, 126. Before a measure is
+- [ ] Task success: one question, "What improvement in success rate would
+      matter?", with the helper "For example, if 70% succeed with the
+      weakest design, the best design should reach at least 85% to be
+      worth choosing." and the line "From [ ]% of participants succeeding
+      to [ ]%". No "Advanced: share who succeed…" section. Enter 70 and 85.
+      Sidebar: 18, 24, 126. Before a measure is
       filled in, its row reads "not filled in yet".
 - [ ] Plan screen sections, in order: Recommended sample; Your measures;
       How these numbers were reached; Confidence report; Running the study;
@@ -124,6 +129,10 @@ you saw.
       conditions (correlation ρ = 0.5), the common default. If people are
       less consistent, your study may need more participants."; sample
       size "n = 19.6669, rounded up: 20", order plan "…: 24".
+- [ ] Task success's trail: "Assumption" includes "Assumes a
+      participant's success on one condition is unrelated to the other,
+      the cautious default." and "Your inputs" no longer lists the
+      discordance.
 - [ ] Confidence report at 18 (the default): under the tiles, "Your plan
       rounds up to 18 for the rank-based adjustment and counterbalancing,
       so it can detect differences slightly smaller than your 10-second
@@ -242,8 +251,7 @@ On step 3 (each message comes from the engine unless marked):
       than 0."
 - [ ] Success rate 150 (interface): "Enter a percentage between 0 and 100."
 - [ ] Rates 70 and 70: "The two success rates must differ."
-- [ ] Discordance 5 with rates 70 and 85: "...must be at least the
-      difference in success rates (0.15)."
+- [ ] Each rate's message appears under the "From … to …" line.
 - [ ] Alpha 5 (Advanced): "Alpha must be between 0 and 1, not 5."
 - [ ] While any error shows, the sidebar reads "–" and "Fix the
       highlighted input to see it.", the measure's row reads "fix the

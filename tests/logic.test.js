@@ -134,9 +134,16 @@ test('buildStudy: between subjects, always-paired within, presets and participan
   assert.deepEqual(L.buildStudy(participants).study.measures[0].effect, { mode: 'participants', k: 8 });
 });
 
-test('buildStudy: success / failure rates are percentages; ψ only within subjects', () => {
+test('buildStudy: success / failure rates are percentages; the default discordance is always used', () => {
   const form = simpleForm('binary', { p1: '60', p2: '80', psi: '30' });
-  assert.deepEqual(L.buildStudy(form).study.measures[0].effect, { p1: 0.6, p2: 0.8, psi: 0.3 });
+  // Any old discordance value is ignored: the engine uses its default (methods.md §3.2).
+  assert.deepEqual(L.buildStudy(form).study.measures[0].effect, { p1: 0.6, p2: 0.8 });
+  const plan = L.runPlan(form).plan;
+  assert.equal(plan.measures[0].comparisons[0].effect.psiEntered, false);
+  const trail = L.planView(plan, form).trails[0];
+  assert.equal(trail.groups.find((g) => g.title === 'Assumption').lines.map(L.plainText).join(' '),
+    "Assumes a participant's success on one condition is unrelated to the other, the cautious default.");
+  assert.ok(!trail.groups.find((g) => g.title === 'Your inputs').lines.map(L.plainText).join(' ').includes('discordance'));
   form.design = 'between';
   assert.deepEqual(L.buildStudy(form).study.measures[0].effect, { p1: 0.6, p2: 0.8 });
   const bad = simpleForm('binary', { p1: '150', p2: '80' });
@@ -231,8 +238,6 @@ test('runPlan: each engine error lands on the input that caused it, with the eng
     ['zero difference', simpleForm('time', { delta: '0', k: '8' }), 'delta', /must not be zero|greater than 0/],
     ['negative SD', simpleForm('rating', { variability: 'sd', delta: '5', sd: '-2' }), 'sd', /Standard deviation must be greater than 0/],
     ['equal rates', simpleForm('binary', { p1: '60', p2: '60' }), 'p2', /must differ/],
-    ['ψ too small', simpleForm('binary', { p1: '60', p2: '80', psi: '10' }), 'psi', /discordance/],
-    ['ψ too large', simpleForm('binary', { p1: '60', p2: '80', psi: '70' }), 'psi', /at most/],
     ['participants k', simpleForm('numeric', { k: '9.5' }), 'k', /whole number/],
   ];
   cases.forEach(([name, form, field, pattern]) => {
@@ -489,12 +494,15 @@ test('step 3 wording follows the design and the comparison', () => {
   assert.equal(between.kTip.alpha, 'Why 6 to 9?');
   assert.equal(t.kSentence, null); // within subjects: a plain question
   assert.equal(L.inputText(form, form.measures[0], 'all').consistencyNote, null);
-  // Success / failure: two conditions are named; three or more are described.
-  const rates = simpleForm('binary', { p1: '', p2: '' });
-  assert.equal(L.inputText(rates, rates.measures[0], 'all').p1Label, 'Expected success rate on Current');
-  assert.equal(L.inputText(rates, rates.measures[0], 'all').p2Label, 'Expected success rate on New');
-  rates.factors[0].levels.push(L.newLevel('Other'));
-  assert.equal(L.inputText(rates, rates.measures[0], 'all').p2Label, 'Expected success rate on the condition you expect to do better');
+  // Success / failure: one question with both rates in one line.
+  const rates = L.inputText(simpleForm('binary', { p1: '', p2: '' }), simpleForm('binary', {}).measures[0], 'all');
+  assert.equal(rates.rateTitle, 'What improvement in success rate would matter?');
+  assert.equal([rates.rateFrom, '[p1]', rates.rateMiddle, '[p2]', rates.rateTo].join(' '),
+    'From [p1] % of participants succeeding to [p2] %');
+  assert.equal(rates.rateHelp, 'For example, if 70% succeed with the weakest design, the best design should reach at least 85% to be worth choosing.');
+  assert.equal(rates.p1Label, 'Success rate on the weaker condition, percent');
+  assert.equal(rates.p2Label, 'Success rate on the better condition, percent');
+  assert.equal(rates.psiLabel, undefined);
 
   const two = twoFactorForm();
   const c = L.candidateComparisons(two);

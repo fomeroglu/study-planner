@@ -374,14 +374,18 @@
     const head = t.heading ? `<h3 class="comparison-head">${esc(t.heading)}</h3>` : '';
 
     if (m.type === 'binary') {
-      const psi = t.paired
-        ? `<details class="advanced" data-open-key="psi-${m.id}-${key}"${state.ui.open[`psi-${m.id}-${key}`] || inp.psi ? ' open' : ''}><summary>Advanced: share who succeed in one condition and fail in the other</summary><div class="details-body">` +
-          numberField({ id: id('psi'), data: d('psi'), label: t.psiLabel, hint: t.psiHint, value: inp.psi, after: '%', width: 'w-100' }) + '</div></details>'
-        : '';
+      // One question, both rates in one line: "From [p1]% ... to [p2]%".
+      const titleId = `rate-${m.id}-${key}-title`;
+      const helpId = `rate-${m.id}-${key}-help`;
+      const rate = (field, label, placeholder) => textInput({
+        id: id(field), bind: 'input', data: d(field), value: inp[field], placeholder, cls: 'number w-80', inputmode: 'decimal', label, hintId: helpId,
+      });
       return `<section class="card focus-card" aria-label="${esc(t.heading || `${trimmed(m.name)} inputs`)}">${head}` +
-        numberField({ id: id('p1'), data: d('p1'), label: t.p1Label, value: inp.p1, placeholder: '70', after: '%', width: 'w-100', large: true }) +
-        numberField({ id: id('p2'), data: d('p2'), label: t.p2Label, value: inp.p2, placeholder: '85', after: '%', width: 'w-100', large: true }) +
-        psi + '</section>';
+        `<div role="group" class="field large" aria-labelledby="${titleId}"><div id="${titleId}">${esc(t.rateTitle)}</div>` +
+        `<span class="field-hint" id="${helpId}">${esc(t.rateHelp)}</span>` +
+        `<span class="field-row sentence-row"><span class="after">${esc(t.rateFrom)}</span>${rate('p1', t.p1Label, '70')}` +
+        `<span class="after">${esc(t.rateMiddle)}</span>${rate('p2', t.p2Label, '85')}<span class="after">${esc(t.rateTo)}</span></span>` +
+        `${errorEl(id('p1'), visibleIssue(id('p1')))}${errorEl(id('p2'), visibleIssue(id('p2')))}</div></section>`;
     }
 
     const readout = L.variabilityReadout(form, m, key);

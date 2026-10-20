@@ -259,6 +259,12 @@ one (for 0.60 vs. 0.80, ψ can reach 0.60, against 0.44 when unrelated).
 An entered ψ must be at least |p₂ − p₁|, and no more than
 min(p₁, 1 − p₂) + min(p₂, 1 − p₁), the largest share the two rates allow.
 
+The version 1 interface asks one question, "What improvement in success
+rate would matter?", answered as "from p₁% to p₂%" (p₁ the weaker
+condition, p₂ the better). It always uses the default ψ and states that
+assumption in the trail (section 8). Entering ψ is supported by the
+engine and planned for the interface in a later version (section 13).
+
 ## 4. Sample size
 
 **Paired t-test.** dz = Δ / σ_diff. Solved with the noncentral t
@@ -458,6 +464,9 @@ recorded in validation/answer-key.md.
   can't be linked to a participant, which is analysed as independent
   groups (section 2). The engine supports it; the version 1 interface
   treats every within-subjects measure as paired.
+- Later (interface): entering the discordance ψ for a success / failure
+  measure within subjects (section 3.2). The engine supports it; the
+  version 1 interface always uses the default.
 - 1.1 (interface): choosing how consistent participants are across
   conditions (Low, Medium, High; version 1 always uses Medium) and
   entering the SD of the differences (σ_diff) directly. The engine

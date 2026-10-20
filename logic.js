@@ -66,7 +66,7 @@
   function emptyInputs() {
     return {
       mode: 'units', variability: 'estimate', delta: '', k: '', sd: '', consistency: 'medium',
-      sdDiff: '', mean: '', p1: '', p2: '', psi: '',
+      sdDiff: '', mean: '', p1: '', p2: '',
     };
   }
 
@@ -426,12 +426,8 @@
     if (measure.type === 'binary') {
       const p1 = numberField(issues, inp.p1, t('p1'), o(true, { percent: true, missing: 'Enter the expected success rate.' }));
       const p2 = numberField(issues, inp.p2, t('p2'), o(true, { percent: true, missing: 'Enter the expected success rate.' }));
-      const psi = form.design === 'within'
-        ? numberField(issues, inp.psi, t('psi'), o(false, { percent: true }))
-        : undefined;
-      const out = { p1, p2 };
-      if (psi !== undefined) out.psi = psi;
-      return out;
+      // The default discordance is always used (methods.md §3.2).
+      return { p1, p2 };
     }
     // One flow (methods.md §3.1). With data from a past study: the difference
     // and the SD, consistency Medium. Otherwise: k of 10, in units when the
@@ -546,7 +542,7 @@
 
   const INPUT_FIELDS = ['delta', 'k', 'sd', 'sdDiff', 'mean', 'consistency', 'p1', 'p2', 'psi', 'mode', 'effect'];
   // Engine fields the interface does not show, mapped to the field that feeds them.
-  const SHOWN_FIELD = { sdDiff: 'sd', mean: 'sd', consistency: 'sd', mode: 'k' };
+  const SHOWN_FIELD = { sdDiff: 'sd', mean: 'sd', consistency: 'sd', mode: 'k', psi: 'p2' };
 
   /**
    * Place an EngineError next to the input that caused it, by its field,
@@ -931,16 +927,14 @@
       kContext = adj ? `Answer for a ${adj} difference.` : `Answer for a difference of ${fmtSig(deltaShown, 3)}${unit ? ` ${unit}` : ''}.`;
     }
 
-    let p1Label = 'Expected success rate on the condition you expect to do worse';
-    let p2Label = 'Expected success rate on the condition you expect to do better';
+    // Success / failure: one question, the two rates in one line. The labels
+    // name each rate for screen readers.
+    let p1Label = 'Success rate on the weaker condition, percent';
+    let p2Label = 'Success rate on the better condition, percent';
     if (comp) {
       const b = comp.type === 'main' ? comp.b : comp.b.join(' × ');
-      p1Label = `Expected success rate on ${b}`;
-      p2Label = `Expected success rate on ${newName}`;
-    } else if (form.factors[0].levels.length === 2) {
-      const names = form.factors[0].levels.map((l, i) => trimmed(l.name) || `Condition ${i + 1}`);
-      p1Label = `Expected success rate on ${names[0]}`;
-      p2Label = `Expected success rate on ${names[1]}`;
+      p1Label = `Success rate on ${b}, percent`;
+      p2Label = `Success rate on ${newName}, percent`;
     }
     return {
       heading,
@@ -961,21 +955,15 @@
       pastData,
       sdLabel: `Standard deviation of ${trimmed(measure.name) || 'this measure'} in your past data`,
       consistencyNote: paired ? CONSISTENCY_NOTE : null,
+      rateTitle: 'What improvement in success rate would matter?',
+      rateFrom: 'From',
+      rateMiddle: '% of participants succeeding to',
+      rateTo: '%',
+      rateHelp: 'For example, if 70% succeed with the weakest design, the best design should reach at least 85% to be worth choosing.',
       p1Label,
       p2Label,
-      psiLabel: 'Share of participants who succeed in one condition and fail in the other (discordance, optional)',
-      psiHint: psiHint(inp),
       paired,
     };
-  }
-
-  // "Leave blank ... (default 36%)" for the discordance field.
-  function psiHint(inp) {
-    const base = 'Leave blank to assume outcomes are unrelated, the cautious default.';
-    const p1 = parseNumber(inp.p1).value;
-    const p2 = parseNumber(inp.p2).value;
-    if (!(p1 > 0 && p1 < 100 && p2 > 0 && p2 < 100)) return base;
-    return `${base} With these rates the default is ${fmtSig(100 * E.defaultDiscordance(p1 / 100, p2 / 100), 3)}%.`;
   }
 
   // Live variability readout under the inputs (values from the engine).
@@ -1080,11 +1068,16 @@
   const CONSISTENCY_ASSUMPTION = 'Assumed: moderate consistency across conditions (correlation ρ = 0.5), the common default. ' +
     'If people are less consistent, your study may need more participants.';
 
+  // The default discordance (methods.md §3.2) is likewise an assumption.
+  const isDiscordance = (st) => st.step === 'inputs' && st.source === 'calculated' && /\(discordance\)$/.test(st.label);
+  const DISCORDANCE_ASSUMPTION = "Assumes a participant's success on one condition is unrelated to the other, the cautious default.";
+
   function trailFor(m, plan) {
     const token = planAlphaToken(plan);
     const groups = [{ title: 'Planned method', lines: [`${m.method}. ${m.reason}`] }];
-    const groupOf = (st) => (isConsistency(st) ? 'assumption' : st.step);
-    const sentence = (st) => (isConsistency(st) ? CONSISTENCY_ASSUMPTION : stepSentence(st, token));
+    const groupOf = (st) => (isConsistency(st) || isDiscordance(st) ? 'assumption' : st.step);
+    const sentence = (st) => (isConsistency(st) ? CONSISTENCY_ASSUMPTION
+      : isDiscordance(st) ? DISCORDANCE_ASSUMPTION : stepSentence(st, token));
     TRAIL_GROUPS.forEach((g) => {
       const lines = m.steps.filter((st) => g.steps.includes(groupOf(st))).map(sentence);
       if (g.title === 'Order plan' && m.primary && plan.participantsPerOrder !== null) {
