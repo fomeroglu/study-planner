@@ -1023,11 +1023,10 @@
       if (a.comparisons === 1) {
         steps.push(`${a.pairwise} comparing ${plan.conditions[0]} and ${plan.conditions[1]}, at ${alpha(a.alphaPerComparison)}.`);
       } else {
-        const what = plan.comparisons.every((c) => c.type === 'cell') && a.omnibus
-          ? `each of the ${a.comparisons} pairs`
-          : `each of the ${a.comparisons} selected comparisons`;
-        steps.push(`${a.pairwise} for ${what}, at ${alpha(a.alphaPerComparison)} each (Bonferroni). ` +
-          "Holm's procedure can be used instead and is never less powerful.");
+        // Analysed with Holm; sized at the stricter Bonferroni level (methods.md §1.4).
+        const what = plan.comparisons.every((c) => c.type === 'cell') && a.omnibus ? 'each pair' : 'each selected comparison';
+        steps.push(`${a.pairwise} for ${what}, with the Holm adjustment (${a.comparisons} comparisons). ` +
+          `The sample size is planned with the stricter Bonferroni level, ${alpha(a.alphaPerComparison)}, so it's covered either way.`);
       }
       return { name: m.name, primary: m.primary, steps };
     });

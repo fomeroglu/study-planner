@@ -505,7 +505,7 @@ test('analysis plan: one step for two conditions, two for three or more, selecte
   const a3 = L.planView(L.runPlan(three).plan, three).analysis[0];
   assert.deepEqual(a3.steps, [
     "Cochran's Q test across all 3 conditions, to see whether they differ at all.",
-    "McNemar for each of the 3 pairs, at alpha 0.0167 each (Bonferroni). Holm's procedure can be used instead and is never less powerful.",
+    "McNemar for each pair, with the Holm adjustment (3 comparisons). The sample size is planned with the stricter Bonferroni level, alpha 0.0167, so it's covered either way.",
   ]);
 
   const factorial = twoFactorForm();
@@ -514,5 +514,5 @@ test('analysis plan: one step for two conditions, two for three or more, selecte
   c.main.slice(0, 1).concat(c.cell.slice(0, 1)).forEach((x) => Object.assign(L.inputsFor(factorial.measures[0], x.key), { mode: 'participants', k: '8' }));
   const af = L.planView(L.runPlan(factorial).plan, factorial).analysis[0];
   assert.equal(af.steps.length, 1);
-  assert.match(af.steps[0], /^Wilcoxon signed-rank for each of the 2 selected comparisons, at alpha 0\.025 each \(Bonferroni\)\./);
+  assert.equal(af.steps[0], "Wilcoxon signed-rank for each selected comparison, with the Holm adjustment (2 comparisons). The sample size is planned with the stricter Bonferroni level, alpha 0.025, so it's covered either way.");
 });

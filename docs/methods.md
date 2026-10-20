@@ -60,11 +60,15 @@ planned for a later version (section 13).
   (section 2).
 - One independent variable with three or more conditions: two steps.
   1. An omnibus test across all conditions.
-  2. The pairwise test for every pair, each at alpha / m (section 1.3).
+  2. The pairwise test for every pair, with the Holm adjustment across
+     the m comparisons.
 - Two or more independent variables: the selected comparisons
-  (section 1.5), each with the pairwise test at alpha / m. A factorial
-  omnibus analysis is not planned in this version.
-- The sample size is based on the pairwise comparisons.
+  (section 1.5), each with the pairwise test, with the Holm adjustment
+  across the m comparisons. A factorial omnibus analysis is not planned
+  in this version.
+- The sample size is based on the pairwise comparisons, planned at the
+  Bonferroni level alpha / m (section 1.3). Holm is never stricter than
+  Bonferroni, so the planned sample covers the Holm analysis either way.
 
 | Result type | Step 1, within subjects | Step 1, between subjects | Step 2, within subjects | Step 2, between subjects |
 |---|---|---|---|---|

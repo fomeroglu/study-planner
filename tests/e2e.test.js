@@ -173,7 +173,7 @@ test('find problems: the slider at 8 participants', () => {
 test('running example: your analysis plan lists two steps for each measure', () => {
   const form = runningExampleForm();
   const a = L.planView(L.runPlan(form).plan, form).analysis;
-  const tail = " for each of the 3 pairs, at alpha 0.0167 each (Bonferroni). Holm's procedure can be used instead and is never less powerful.";
+  const tail = " for each pair, with the Holm adjustment (3 comparisons). The sample size is planned with the stricter Bonferroni level, alpha 0.0167, so it's covered either way.";
   const across = ' across all 3 conditions, to see whether they differ at all.';
   assert.deepEqual(a.map((m) => [m.name, ...m.steps]), [
     ['Task time', `Friedman test${across}`, `Wilcoxon signed-rank${tail}`],

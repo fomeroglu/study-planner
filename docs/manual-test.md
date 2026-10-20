@@ -12,8 +12,6 @@ you saw.
 
 - [ ] Start: two cards, "Compare designs" and "Find problems". The header
       says "Runs in your browser. Nothing is uploaded."
-- [ ] Start shows the amber "Early version." notice above the cards, in
-      both themes.
 - [ ] Step 1 starts generic: the variable name is empty with the hint
       "e.g., Interface design"; the conditions read "Condition A" and
       "Condition B"; "+ Add condition" adds "Condition C". No wording
@@ -48,7 +46,8 @@ you saw.
       supporting evidence." and the same for Task success with 11% and 168.
 - [ ] "Your analysis plan" lists two steps for each measure: Task time,
       Friedman test across all 3 conditions, then Wilcoxon signed-rank for
-      each of the 3 pairs at alpha 0.0167; NASA-TLX, repeated-measures
+      each pair with the Holm adjustment (3 comparisons), noting the sample
+      size is planned at the stricter Bonferroni level, alpha 0.0167; NASA-TLX, repeated-measures
       ANOVA then paired t-test; Task success, Cochran's Q test then
       McNemar. With two conditions there is a single step.
 - [ ] Move the slider to 12: tiles show 13 s, ± 7.5 s, 53%. The shaded
