@@ -997,7 +997,7 @@
         : 'each participant experiences one condition';
     if (t.binary) {
       return paired
-        ? `Success / failure, and ${who}: McNemar's test compares the paired outcomes.`
+        ? `Success / failure, and ${who}: McNemar's test, without continuity correction, compares the paired outcomes.`
         : `Success / failure, and ${who}: the two-proportion test compares the success rates.`;
     }
     if (t.rank) {

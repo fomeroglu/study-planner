@@ -622,7 +622,8 @@
     const analysis = v.analysis.map((a) => `<div class="analysis-measure"><h4 class="analysis-name">${a.primary ? '★ ' : ''}${esc(a.name)}</h4>` +
       (a.steps.length > 1
         ? `<ul class="analysis-steps">${a.steps.map((st) => `<li>${rich(st)}</li>`).join('')}</ul>`
-        : `<p class="analysis-one">${rich(a.steps[0])}</p>`) + '</div>').join('');
+        : `<p class="analysis-one">${rich(a.steps[0])}</p>`) +
+      (a.note ? `<p class="hint">${esc(a.note)}</p>` : '') + '</div>').join('');
     return `<main class="plan-main" id="main"><h1 class="sr-only" tabindex="-1" id="page-title">Your study plan</h1>` +
       // 1. Recommendation readout
       `<section class="card square" style="gap:20px" aria-labelledby="readout-title"><h2 class="label-caps" style="margin:0" id="readout-title">Recommended sample</h2>` +

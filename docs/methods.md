@@ -293,8 +293,31 @@ not used for n.
 
 **McNemar's test.** With δ = p₂ − p₁ (Connor, 1987):
 n = [z₁₋α/₂·√ψ + z₁₋β·√(ψ − δ²)]² / δ².
-A normal approximation; its accuracy at small n is checked against
-exact results during validation.
+A normal approximation. It sizes the study for McNemar's test without
+continuity correction (the asymptotic test, χ² = (b − c)² / (b + c),
+with b and c the two discordant counts), so that is the planned
+analysis. In R, use mcnemar.test(..., correct = FALSE); R applies the
+continuity correction by default.
+
+The uncorrected test is the most powerful of the common versions. Its
+type I error rate can sit slightly above alpha (at most 5.37% at a
+nominal 5% in Fagerland, Lydersen & Laake, 2013, who recommend it when
+small, frequent violations of that size are acceptable). The same study
+recommends against the continuity-corrected test and the exact
+conditional test (binomial test on the discordant pairs) in any
+situation: both are overly conservative. Its other recommendation, the
+mid-p test, needed 0 to 3 more pairs than the uncorrected test for the
+same power in that study.
+
+Validation checks the n by simulation in R (section 12;
+validation/mcnemar-simulation.R): 10,000 simulated studies at the
+planned n. At the planned n, the corrected and exact tests fall short
+of the target:
+
+| Planned n | Uncorrected | Continuity-corrected | Exact conditional |
+|---|---|---|---|
+| 84 (0.60 vs. 0.80, default ψ) | 0.81 | 0.76 | 0.76 |
+| 124 (0.70 vs. 0.85, default ψ) | 0.81 | 0.76 | 0.77 |
 
 The noncentral t distribution is computed with Lenth's (1989)
 Algorithm AS 243, the method underlying R's pt() function, so results
@@ -442,27 +465,31 @@ Otherwise the tool asks the user. Sources: to be researched.
 ## 12. Validation
 
 Every calculation is compared against a reference before release.
-Tolerance: exact match on the rounded-up n, except McNemar (±2).
-Each value's status (confirmed in R or G*Power, or provisional) is
-recorded in validation/answer-key.md.
+Tolerance: exact match on the rounded-up n. McNemar's n is checked by
+simulation in R instead (validation/mcnemar-simulation.R): 10,000
+simulated studies at the planned n, analysed with McNemar's test
+without continuity correction (section 4). The power must reach the
+target within simulation noise (about ±0.008). Each value's status
+(confirmed in R, or provisional) is recorded in
+validation/answer-key.md.
 
 | Case | Reference | Expected |
 |---|---|---|
 | Paired, dz = 0.5, power 0.80 | pwr.t.test | 34 |
 | Independent, d = 0.5, power 0.80 | pwr.t.test | 64 per condition |
-| Paired, dz = Φ⁻¹(0.8) ≈ 0.842, alpha 0.05 | pwr.t.test | 14 (confirm) |
-| Same, alpha 0.025 | pwr.t.test | 17 (confirm) |
-| Same, alpha 0.0167 | pwr.t.test | 18 (confirm) |
+| Paired, dz = Φ⁻¹(0.8) ≈ 0.842, alpha 0.05 | pwr.t.test | 14 |
+| Same, alpha 0.025 | pwr.t.test | 17 |
+| Same, alpha 0.0167 | pwr.t.test | 18 |
 | Variability from your estimate: Δ = 10, k = 8 | Hand calculation | σ_diff = 11.88 s |
 | Confidence report: n = 12, σ_diff = 11.88, alpha 0.025 | Hand / R | power 0.63; detectable 12.0 s; ± 7.5 s |
 | Same, rank-based (effective n = 12 × 3/π) | Hand / R | power 0.60; detectable 12.3 s; ± 7.5 s |
 | Rank adjustment and Latin square: 18 ÷ 0.955, 3 conditions | Hand calculation | 19, rounded to 24 |
 | Running example, protected LSD (alpha 0.05): task time, 14 ÷ 0.955 | Hand calculation | 15, rounded to 18 |
 | Running example, protected LSD: NASA-TLX, dz = 10 / 15, alpha 0.05 | pwr.t.test | 20, rounded to 24 |
-| Running example, protected LSD: McNemar, 0.70 vs. 0.85, default ψ, alpha 0.05 | Hand / G*Power | 124, rounded to 126 |
+| Running example, protected LSD: McNemar, 0.70 vs. 0.85, default ψ, alpha 0.05 | Simulation in R | 124, rounded to 126 |
 | Running example confidence report: n = 12, rank-based, alpha 0.05 | Hand / R | power 0.73; detectable 10.9 s; ± 7.5 s |
 | Two proportions, 0.60 vs. 0.80 | pwr.2p.test | 81 per condition |
-| McNemar, 0.60 vs. 0.80, default ψ | G*Power | 84 |
+| McNemar, 0.60 vs. 0.80, default ψ | Simulation in R | 84 |
 | Problem discovery, p = 0.31, P = 0.85 | Hand calculation | 6 |
 | Problem discovery, p = 0.10, P = 0.80 | Hand calculation | 16 |
 
@@ -528,6 +555,9 @@ recorded in validation/answer-key.md.
 - Fagerland, M. W. (2012). t-tests, non-parametric tests, and large
   studies: a paradox of statistical practice? BMC Medical Research
   Methodology, 12, 78.
+- Fagerland, M. W., Lydersen, S., & Laake, P. (2013). The McNemar test
+  for binary matched-pairs data: mid-p and asymptotic are better than
+  exact conditional. BMC Medical Research Methodology, 13, 91.
 - Hayter, A. J. (1986). The maximum familywise error rate of Fisher's
   least significant difference test. Journal of the American
   Statistical Association, 81(396), 1000–1004.

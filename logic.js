@@ -1152,7 +1152,11 @@
           ? [`Step 1: ${a.omnibus} across all ${plan.k} conditions, to see whether they differ at all.`, ['Step 2: '].concat(holm('each pair'))]
           : [holm('each selected comparison')];
       }
-      return { name: m.name, primary: m.primary, steps };
+      // McNemar is sized for the test without continuity correction (methods.md §4).
+      const note = a.pairwise === 'McNemar'
+        ? "Run McNemar's test without the continuity correction (in R, mcnemar.test(..., correct = FALSE), since R applies the correction by default). The sample size is planned for that version of the test."
+        : null;
+      return { name: m.name, primary: m.primary, steps, note };
     });
   }
 

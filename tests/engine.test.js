@@ -80,7 +80,7 @@ test('answer key: two proportions 0.60 vs 0.80 gives 81 per condition (CONFIRMED
   near(Math.abs(r.h), 0.4421, 5e-5);
 });
 
-test('answer key: McNemar 0.60 vs 0.80, default ψ gives 84 (±2)', () => {
+test('answer key: McNemar 0.60 vs 0.80, default ψ gives 84 (CONFIRMED by simulation)', () => {
   const r = E.nMcNemar(0.6, 0.8, 0.05, 0.8);
   near(r.psi, 0.44, 1e-12);
   assert.ok(Math.abs(r.n - 84) <= 2, `got ${r.n}`);
@@ -1040,7 +1040,7 @@ test('plan: analysis steps, omnibus only with one variable and three or more con
   assert.equal(factorial.measures[0].analysis.omnibus, null);
 });
 
-test('answer key: running example under protected LSD, rows 13 to 16 (CONFIRMED except row 15)', () => {
+test('answer key: running example under protected LSD, rows 13 to 16 (CONFIRMED)', () => {
   near(14 / E.RANK_EFFICIENCY, 14.6608, 5e-5);
   assert.equal(E.rankAdjust(14), 15);
   assert.equal(E.roundToOrders(15, 6), 18);
