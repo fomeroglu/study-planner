@@ -31,19 +31,19 @@ test('answer key: independent, d = 0.5, power 0.80 gives 64 per condition (CONFI
   near(r.exact, 63.7656, 5e-5, 'pwr reports 63.76561');
 });
 
-test('answer key: paired, dz = Φ⁻¹(0.8), alpha 0.05 gives 14', () => {
+test('answer key: paired, dz = Φ⁻¹(0.8), alpha 0.05 gives 14 (CONFIRMED)', () => {
   const r = E.nPairedT(DZ_K8, 0.05, 0.8);
   assert.equal(r.n, 14);
   near(r.exact, 13.1301, 5e-5);
 });
 
-test('answer key: same, alpha 0.025 gives 17 (near a rounding boundary)', () => {
+test('answer key: same, alpha 0.025 gives 17, near a rounding boundary (CONFIRMED)', () => {
   const r = E.nPairedT(DZ_K8, 0.025, 0.8);
   assert.equal(r.n, 17);
   near(r.exact, 16.0373, 5e-5);
 });
 
-test('answer key: same, alpha 0.0167 gives 18 (literal and 0.05/3)', () => {
+test('answer key: same, alpha 0.0167 gives 18, literal and 0.05/3 (CONFIRMED)', () => {
   const literal = E.nPairedT(DZ_K8, 0.0167, 0.8);
   assert.equal(literal.n, 18);
   near(literal.exact, 17.7282, 5e-5);
@@ -52,11 +52,11 @@ test('answer key: same, alpha 0.0167 gives 18 (literal and 0.05/3)', () => {
   near(third.exact, 17.7366, 5e-5);
 });
 
-test('answer key: variability from your estimate, Δ = 10, k = 8 gives σ_diff = 11.88', () => {
+test('answer key: variability from your estimate, Δ = 10, k = 8 gives σ_diff = 11.88 (CONFIRMED)', () => {
   near(E.sdDiffFromK(10, 8), 11.8818, 5e-5);
 });
 
-test('answer key: confidence report, n = 12, σ_diff = 11.88, alpha 0.025', () => {
+test('answer key: confidence report, n = 12, σ_diff = 11.88, alpha 0.025 (CONFIRMED)', () => {
   const sd = 11.88;
   const r = E.confidenceT({ design: 'within', n: 12, alpha: 0.025, power: 0.8, effectSize: 10 / sd, sd });
   near(r.power, 0.63, 0.005, 'power');
@@ -67,7 +67,7 @@ test('answer key: confidence report, n = 12, σ_diff = 11.88, alpha 0.025', () =
   near(r.precision.halfWidth, 7.5482, 5e-5, 'precision to 4 places');
 });
 
-test('answer key: rank adjustment and Latin square, 18 ÷ 0.955, 3 conditions gives 19, then 24', () => {
+test('answer key: rank adjustment and Latin square, 18 ÷ 0.955, 3 conditions gives 19, then 24 (CONFIRMED)', () => {
   assert.equal(E.rankAdjust(18), 19);
   assert.equal(E.orderCount(3), 6);
   assert.equal(E.roundToOrders(19, 6), 24);
@@ -783,7 +783,7 @@ test('problem discovery also returns the trail terms', () => {
 // confidenceReport() (methods.md §7)
 // ---------------------------------------------------------------------------
 
-test('answer key: rank-based confidence report, n = 12, alpha 0.025 (rows 7d, 7e)', () => {
+test('answer key: rank-based confidence report, n = 12, alpha 0.025, rows 7d and 7e (CONFIRMED)', () => {
   const r = E.confidenceT({ design: 'within', n: 12, alpha: 0.025, power: 0.8, rank: true, effectSize: DZ_K8, sd: 10 / DZ_K8 });
   near(r.power, 0.6036, 5e-5);
   near(r.detectable.units, 12.3455, 5e-4);
@@ -1034,7 +1034,7 @@ test('plan: analysis steps, omnibus only with one variable and three or more con
   assert.equal(factorial.measures[0].analysis.omnibus, null);
 });
 
-test('answer key: running example under protected LSD (rows 13 to 16)', () => {
+test('answer key: running example under protected LSD, rows 13 to 16 (CONFIRMED except row 15)', () => {
   near(14 / E.RANK_EFFICIENCY, 14.6608, 5e-5);
   assert.equal(E.rankAdjust(14), 15);
   assert.equal(E.roundToOrders(15, 6), 18);
