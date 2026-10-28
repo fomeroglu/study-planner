@@ -25,8 +25,12 @@
 #
 # Run the whole script in order: set.seed(1) is set once for the first
 # two checks, as in the run recorded in the answer key (R 4.6.1:
-# 0.8104 and 0.8089). The last section, for the corrected and exact
-# tests, resets the seed before each run.
+# 0.8104 and 0.8089). The section for the corrected and exact tests
+# resets the seed before each run.
+#
+# A second check at the end computes the same power exactly, with no
+# simulation noise, by summing over every possible outcome. It also
+# prints the n the exact conditional test would need (91 and 132).
 
 set.seed(1)   # makes the random results repeatable
 
@@ -69,3 +73,37 @@ for (variant in c("corrected", "exact")) {
   set.seed(1); p15 <- simulate_power(124, row15, test = test)
   cat(sprintf("%-9s row 10, n = 84: %.4f   row 15, n = 124: %.4f\n", variant, p10, p15))
 }
+
+# Second check: exact power, no simulation noise. Rather than drawing
+# studies, sum over every possible outcome. The number of discordant
+# pairs d is binomial (n, psi), where psi is the chance of a discordant
+# pair; given d, the "A only" count b is binomial (d, p_A_only / psi).
+# Power is the total probability of the outcomes the test rejects.
+exact_power <- function(n, cells, rejects) {
+  psi <- cells[2] + cells[3]
+  share <- cells[2] / psi
+  total <- 0
+  for (d in 1:n) {   # d = 0 never rejects
+    b <- 0:d
+    total <- total + dbinom(d, n, psi) * sum(dbinom(b, d, share)[rejects(b, d)])
+  }
+  total
+}
+uncorrected_rejects <- function(b, d) pchisq((2 * b - d)^2 / d, 1, lower.tail = FALSE) < 0.05
+exact_rejects <- function(b, d) sapply(b, function(x) binom.test(x, d)$p.value) < 0.05
+
+cat("\nExact power at the planned n\n")
+cat(sprintf("uncorrected row 10, n = 84: %.4f   row 15, n = 124: %.4f\n",
+            exact_power(84, row10, uncorrected_rejects), exact_power(124, row15, uncorrected_rejects)))
+cat(sprintf("exact       row 10, n = 84: %.4f   row 15, n = 124: %.4f\n",
+            exact_power(84, row10, exact_rejects), exact_power(124, row15, exact_rejects)))
+
+# The n the exact conditional test would need: the first n, counting up
+# from the planned n, at which its power reaches 0.80. This is the n to
+# expect from a tool that plans for the exact test.
+first_n <- function(n, cells) {
+  while (exact_power(n, cells, exact_rejects) < 0.8) n <- n + 1
+  n
+}
+cat("Exact test reaches 0.80 at: row 10, n =", first_n(84, row10),
+    "  row 15, n =", first_n(124, row15), "\n")

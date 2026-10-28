@@ -94,6 +94,11 @@ places.
   continuity-corrected 0.7575 and 0.7644, exact conditional 0.7591 and
   0.7709. That is why the planned analysis is the uncorrected test
   (methods.md §4).
+- Rows 10 and 15, second check: the same script computes the power
+  exactly, with no simulation noise, by summing over every possible
+  outcome. Uncorrected test: 0.8111 (n = 84) and 0.8119 (n = 124).
+  Exact conditional test: 0.7617 and 0.7728. The exact conditional test
+  first reaches 0.80 at n = 91 and n = 132.
 - Row 9: n is solved from the two-region power, as pwr.2p.test does
   (methods.md section 4). Both R runs give 80.2991. The earlier key value,
   80.2993, came from the one-region closed form 2·((z₁₋α/₂ + z₁₋β)/h)²,
@@ -121,5 +126,6 @@ places.
   0.32/0.12 and proportion of discordant pairs 0.44 for row 10, and odds
   ratio 0.255/0.105 and proportion of discordant pairs 0.36 for row 15.
   Check which version of the test G*Power computes before comparing. If
-  it is the exact conditional test, expect a larger n than 84 and 124,
-  since that test is more conservative (methods.md §4).
+  it is the exact conditional test, expect about 91 and 132 (the script's
+  exact power check), not 84 and 124, since that test is more
+  conservative (methods.md §4).
