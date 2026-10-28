@@ -3,10 +3,18 @@
 Reference values for docs/methods.md section 12. tests/engine.test.js checks
 every row.
 
-**Status.** CONFIRMED values have been checked in R (pwr) or by hand
-against a published source. PROVISIONAL values were computed by Claude and
-have not yet been confirmed in R or G*Power. **The tool must not be
-described as validated while any value below is PROVISIONAL.**
+**Status.** CONFIRMED values have been checked in R or by hand against a
+published source. PROVISIONAL values were computed by Claude and have not
+yet been confirmed in R or G*Power. **The tool must not be described as
+validated while any value below is PROVISIONAL.**
+
+**R confirmation.** R 4.6.1, pwr 1.3-0, 2026-10-28: two runs of
+`validation/reference.R`, one with pwr's default tolerance and one with
+the current script (tol = 1e-10). Rows 3 to 8, 13, 14, 14b, 16a, and 16b
+were confirmed by these runs. Rows 1, 2, 11, and 12 were already
+CONFIRMED and also matched. Rows 7b, 14, and 16b match only in the precise
+run; at the default tolerance they differ in the fourth decimal place
+(11.9778, 19.66695, 10.86235).
 
 Tolerance (methods.md §12): exact match on the rounded-up n, except McNemar
 (±2). Unrounded values are tested to 4 decimal places.
@@ -15,27 +23,27 @@ Tolerance (methods.md §12): exact match on the rounded-up n, except McNemar
 |---|---|---|---|---|---|
 | 1 | Paired, dz = 0.5, power 0.80, alpha 0.05 | pwr.t.test | 34 | 33.3671 | CONFIRMED |
 | 2 | Independent, d = 0.5, power 0.80, alpha 0.05 | pwr.t.test | 64 per condition | 63.7656 | CONFIRMED |
-| 3 | Paired, dz = Φ⁻¹(0.8) ≈ 0.8416, alpha 0.05 | pwr.t.test | 14 | 13.1301 | PROVISIONAL |
-| 4 | Same, alpha 0.025 | pwr.t.test | 17 | 16.0373 | PROVISIONAL |
-| 5a | Same, alpha 0.0167 (literal) | pwr.t.test | 18 | 17.7282 | PROVISIONAL |
-| 5b | Same, alpha 0.05/3 | pwr.t.test | 18 | 17.7366 | PROVISIONAL |
-| 6 | Variability from your estimate: Δ = 10, k = 8 | Hand calculation | σ_diff = 11.88 s | 11.8818 | PROVISIONAL |
-| 7a | Confidence report: n = 12, σ_diff = 11.88, Δ = 10, alpha 0.025: power | pwr.t.test | 0.63 | 0.6323 | PROVISIONAL |
-| 7b | Same: detectable difference at power 0.80 | pwr.t.test | 12.0 s | 11.9776 | PROVISIONAL |
-| 7c | Same: 95% precision half-width | qt() by hand | ± 7.5 s | 7.5482 | PROVISIONAL |
-| 7d | Same, rank-based (Task time): power at effective n = 12 × 3/π | pwr.t.test | 0.60 | 0.6036 | PROVISIONAL |
-| 7e | Same, rank-based: detectable difference at power 0.80 | pwr.t.test | 12.3 s | 12.3455 | PROVISIONAL |
-| 8 | Rank adjustment and Latin square: 18 ÷ (3/π), 3 conditions | Hand calculation | 19, rounded to 24 | 18.8496 | PROVISIONAL |
+| 3 | Paired, dz = Φ⁻¹(0.8) ≈ 0.8416, alpha 0.05 | pwr.t.test | 14 | 13.1301 | CONFIRMED |
+| 4 | Same, alpha 0.025 | pwr.t.test | 17 | 16.0373 | CONFIRMED |
+| 5a | Same, alpha 0.0167 (literal) | pwr.t.test | 18 | 17.7282 | CONFIRMED |
+| 5b | Same, alpha 0.05/3 | pwr.t.test | 18 | 17.7366 | CONFIRMED |
+| 6 | Variability from your estimate: Δ = 10, k = 8 | Hand calculation | σ_diff = 11.88 s | 11.8818 | CONFIRMED |
+| 7a | Confidence report: n = 12, σ_diff = 11.88, Δ = 10, alpha 0.025: power | pwr.t.test | 0.63 | 0.6323 | CONFIRMED |
+| 7b | Same: detectable difference at power 0.80 | pwr.t.test | 12.0 s | 11.9776 | CONFIRMED |
+| 7c | Same: 95% precision half-width | qt() by hand | ± 7.5 s | 7.5482 | CONFIRMED |
+| 7d | Same, rank-based (Task time): power at effective n = 12 × 3/π | pwr.t.test | 0.60 | 0.6036 | CONFIRMED |
+| 7e | Same, rank-based: detectable difference at power 0.80 | pwr.t.test | 12.3 s | 12.3455 | CONFIRMED |
+| 8 | Rank adjustment and Latin square: 18 ÷ (3/π), 3 conditions | Hand calculation | 19, rounded to 24 | 18.8496 | CONFIRMED |
 | 9 | Two proportions, 0.60 vs. 0.80, alpha 0.05, power 0.80 | pwr.2p.test | 81 per condition | 80.2993 | PROVISIONAL |
 | 10 | McNemar, 0.60 vs. 0.80, default ψ = 0.44 | G*Power | 84 (±2) | 83.9405 | PROVISIONAL |
 | 11 | Problem discovery, p = 0.31, P = 0.85 | Hand calculation | 6 | 5.1127 | CONFIRMED |
 | 12 | Problem discovery, p = 0.10, P = 0.80 | Hand calculation | 16 | 15.2755 | CONFIRMED |
-| 13 | Running example, protected LSD (alpha 0.05): task time 14 ÷ (3/π), 6 orders | Hand calculation | 15, rounded to 18 | 14.6608 | PROVISIONAL |
-| 14 | Running example, protected LSD: NASA-TLX, paired dz = 10/15, alpha 0.05 | pwr.t.test | 20, rounded to 24 | 19.6669 | PROVISIONAL |
-| 14b | Running example, protected LSD: NASA-TLX, SD 15 at Low consistency (σ_diff = 15 × √1.4), alpha 0.05 | pwr.t.test | 27, rounded to 30 | 26.7083 | PROVISIONAL |
+| 13 | Running example, protected LSD (alpha 0.05): task time 14 ÷ (3/π), 6 orders | Hand calculation | 15, rounded to 18 | 14.6608 | CONFIRMED |
+| 14 | Running example, protected LSD: NASA-TLX, paired dz = 10/15, alpha 0.05 | pwr.t.test | 20, rounded to 24 | 19.6669 | CONFIRMED |
+| 14b | Running example, protected LSD: NASA-TLX, SD 15 at Low consistency (σ_diff = 15 × √1.4), alpha 0.05 | pwr.t.test | 27, rounded to 30 | 26.7083 | CONFIRMED |
 | 15 | Running example, protected LSD: McNemar, 0.70 vs. 0.85, default ψ = 0.36, alpha 0.05 | G*Power | 124 (±2), rounded to 126 | 123.1976 | PROVISIONAL |
-| 16a | Running example confidence report: n = 12, rank-based (effective n = 12 × 3/π), alpha 0.05: power | pwr.t.test | 0.73 | 0.7327 | PROVISIONAL |
-| 16b | Same: detectable difference at power 0.80 | pwr.t.test | 10.9 s | 10.8621 | PROVISIONAL |
+| 16a | Running example confidence report: n = 12, rank-based (effective n = 12 × 3/π), alpha 0.05: power | pwr.t.test | 0.73 | 0.7327 | CONFIRMED |
+| 16b | Same: detectable difference at power 0.80 | pwr.t.test | 10.9 s | 10.8621 | CONFIRMED |
 
 ## Notes
 
@@ -68,7 +76,14 @@ Tolerance (methods.md §12): exact match on the rounded-up n, except McNemar
   (Low consistency, 27 rounded to 30) remains a valid case for the
   engine.
 - Row 15: Connor's (1987) formula, so the ±2 tolerance applies, as for
-  row 10.
+  row 10. R matches the formula's arithmetic (123.1976), but like row 10
+  it stays PROVISIONAL until it is checked in G*Power.
+- Row 9 does not match R. pwr.2p.test solves its two-region power for n
+  and gives 80.2991. The key's 80.2993 comes from the closed form
+  2·((z₁₋α/₂ + z₁₋β)/h)² in methods.md section 4, which counts one
+  rejection region. The rounded n (81) is the same. Row 9 stays
+  PROVISIONAL until methods.md, the engine, and this row are aligned
+  with pwr.2p.test.
 - Rows 7d and 7e: Task time is rank-based, so power and detectable
   difference use the effective n 12 × 3/π ≈ 11.46 (methods.md section 7).
   Precision (7c) uses the actual n, so it is unchanged.
@@ -92,3 +107,5 @@ Run `validation/reference.R` in R with the pwr package installed. Then:
 - Row 10 also needs G*Power: Exact, Proportions: Inequality, two
   dependent groups (McNemar). Use odds ratio 0.32/0.12 and proportion of
   discordant pairs 0.44.
+- Row 15 needs the same G*Power check, with odds ratio 0.255/0.105 and
+  proportion of discordant pairs 0.36.
