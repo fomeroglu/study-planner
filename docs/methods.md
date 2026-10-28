@@ -280,10 +280,16 @@ df) and T′ is noncentral t. n is solved as a continuous value, then
 rounded up.
 
 **Two-proportion test.** Cohen's h = 2·arcsin(√p₁) − 2·arcsin(√p₂)
-(Cohen, 1988). n per condition = 2·((z₁₋α/₂ + z₁₋β) / h)², as in
-pwr.2p.test. The factor 2 is there because the difference of two
-arcsine-transformed proportions, each from n participants, has variance
-2/n.
+(Cohen, 1988). Two-sided power counts both rejection regions, as
+pwr.2p.test does: power = Φ(|h|·√(n/2) − z₁₋α/₂) +
+Φ(−|h|·√(n/2) − z₁₋α/₂), the same formula as section 7, with n per
+condition. n is solved as the continuous value at which this power
+reaches the target, then rounded up. The √(n/2) is there because the
+difference of two arcsine-transformed proportions, each from n
+participants, has variance 2/n. The closed form
+2·((z₁₋α/₂ + z₁₋β) / h)² counts only the first region, so it gives a
+slightly larger n (80.2993 rather than 80.2991 for 0.60 vs. 0.80). It is
+not used for n.
 
 **McNemar's test.** With δ = p₂ − p₁ (Connor, 1987):
 n = [z₁₋α/₂·√ψ + z₁₋β·√(ψ − δ²)]² / δ².
@@ -293,6 +299,16 @@ exact results during validation.
 The noncentral t distribution is computed with Lenth's (1989)
 Algorithm AS 243, the method underlying R's pt() function, so results
 match R's pwr package.
+
+**Open item: target power at or below alpha.** Not yet specified. A
+two-sided test rejects with probability alpha even when there is no
+difference, so its power is never below alpha, and a target at or below
+alpha is met by any n. The engine does not reject such a target. The
+t-tests return n = 2, their smallest n. The two-proportion test falls
+back to the one-region closed form. McNemar uses Connor's formula as
+written. Both can give n = 1 (for example, power 0.03 at alpha 0.05). The
+rule for this case, such as rejecting the input, is to be decided and
+specified here before the engine changes.
 
 ## 5. Multiple measures
 

@@ -10,7 +10,7 @@ validated while any value below is PROVISIONAL.**
 
 **R confirmation.** R 4.6.1, pwr 1.3-0, 2026-10-28: two runs of
 `validation/reference.R`, one with pwr's default tolerance and one with
-the current script (tol = 1e-10). Rows 3 to 8, 13, 14, 14b, 16a, and 16b
+the current script (tol = 1e-10). Rows 3 to 9, 13, 14, 14b, 16a, and 16b
 were confirmed by these runs. Rows 1, 2, 11, and 12 were already
 CONFIRMED and also matched. Rows 7b, 14, and 16b match only in the precise
 run; at the default tolerance they differ in the fourth decimal place
@@ -34,7 +34,7 @@ Tolerance (methods.md §12): exact match on the rounded-up n, except McNemar
 | 7d | Same, rank-based (Task time): power at effective n = 12 × 3/π | pwr.t.test | 0.60 | 0.6036 | CONFIRMED |
 | 7e | Same, rank-based: detectable difference at power 0.80 | pwr.t.test | 12.3 s | 12.3455 | CONFIRMED |
 | 8 | Rank adjustment and Latin square: 18 ÷ (3/π), 3 conditions | Hand calculation | 19, rounded to 24 | 18.8496 | CONFIRMED |
-| 9 | Two proportions, 0.60 vs. 0.80, alpha 0.05, power 0.80 | pwr.2p.test | 81 per condition | 80.2993 | PROVISIONAL |
+| 9 | Two proportions, 0.60 vs. 0.80, alpha 0.05, power 0.80 | pwr.2p.test | 81 per condition | 80.2991 | CONFIRMED |
 | 10 | McNemar, 0.60 vs. 0.80, default ψ = 0.44 | G*Power | 84 (±2) | 83.9405 | PROVISIONAL |
 | 11 | Problem discovery, p = 0.31, P = 0.85 | Hand calculation | 6 | 5.1127 | CONFIRMED |
 | 12 | Problem discovery, p = 0.10, P = 0.80 | Hand calculation | 16 | 15.2755 | CONFIRMED |
@@ -78,12 +78,10 @@ Tolerance (methods.md §12): exact match on the rounded-up n, except McNemar
 - Row 15: Connor's (1987) formula, so the ±2 tolerance applies, as for
   row 10. R matches the formula's arithmetic (123.1976), but like row 10
   it stays PROVISIONAL until it is checked in G*Power.
-- Row 9 does not match R. pwr.2p.test solves its two-region power for n
-  and gives 80.2991. The key's 80.2993 comes from the closed form
-  2·((z₁₋α/₂ + z₁₋β)/h)² in methods.md section 4, which counts one
-  rejection region. The rounded n (81) is the same. Row 9 stays
-  PROVISIONAL until methods.md, the engine, and this row are aligned
-  with pwr.2p.test.
+- Row 9: n is solved from the two-region power, as pwr.2p.test does
+  (methods.md section 4). Both R runs give 80.2991. The earlier key value,
+  80.2993, came from the one-region closed form 2·((z₁₋α/₂ + z₁₋β)/h)²,
+  which the engine used before; the rounded n (81) is the same.
 - Rows 7d and 7e: Task time is rank-based, so power and detectable
   difference use the effective n 12 × 3/π ≈ 11.46 (methods.md section 7).
   Precision (7c) uses the actual n, so it is unchanged.
