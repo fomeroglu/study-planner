@@ -300,6 +300,16 @@ The noncentral t distribution is computed with Lenth's (1989)
 Algorithm AS 243, the method underlying R's pt() function, so results
 match R's pwr package.
 
+**Open item: target power at or below alpha.** Not yet specified. A
+two-sided test rejects with probability alpha even when there is no
+difference, so its power is never below alpha, and a target at or below
+alpha is met by any n. The engine does not reject such a target. The
+t-tests return n = 2, their smallest n. The two-proportion test falls
+back to the one-region closed form. McNemar uses Connor's formula as
+written. Both can give n = 1 (for example, power 0.03 at alpha 0.05). The
+rule for this case, such as rejecting the input, is to be decided and
+specified here before the engine changes.
+
 ## 5. Multiple measures
 
 - Each measure is sized separately.
