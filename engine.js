@@ -487,13 +487,26 @@
     return 2 * Math.asin(Math.sqrt(p1)) - 2 * Math.asin(Math.sqrt(p2));
   }
 
-  /** n per condition = 2·((z₁₋α/₂ + z₁₋β)/h)². methods.md §4. */
+  // methods.md §4 and §7: two-sided power counts both rejection regions, as
+  // pwr.2p.test does: Φ(|h|·√(n/2) − z₁₋α/₂) + Φ(−|h|·√(n/2) − z₁₋α/₂).
+  function twoRegionProportionPower(absH, n, za) {
+    const shift = absH * Math.sqrt(n / 2);
+    return normalCdf(shift - za) + normalCdf(-shift - za);
+  }
+
+  /**
+   * n per condition where the two-region power reaches the target, solved as a
+   * continuous value. methods.md §4. The one-region closed form
+   * 2·((z₁₋α/₂ + z₁₋β)/h)² is never below it, so it bounds the search.
+   */
   function nTwoProportions(p1, p2, alpha, power) {
     requireAlphaPower(alpha, power);
     const h = cohensH(p1, p2);
     if (h === 0) fail('The two success rates must differ.', 'p2');
-    const z = normalQuantile(1 - alpha / 2) + normalQuantile(power);
-    const exact = 2 * (z / h) * (z / h);
+    const za = normalQuantile(1 - alpha / 2);
+    const z = za + normalQuantile(power);
+    const closedForm = 2 * (z / h) * (z / h);
+    const exact = bisect((n) => twoRegionProportionPower(Math.abs(h), n, za), power, 0, closedForm, 1e-10);
     return { h, exact, n: ceilN(exact) };
   }
 
@@ -502,9 +515,7 @@
     requireAlphaPower(alpha);
     requirePositive(n, 'Participants', 'participants');
     const h = Math.abs(cohensH(p1, p2));
-    const za = normalQuantile(1 - alpha / 2);
-    const shift = h * Math.sqrt(n / 2);
-    return normalCdf(shift - za) + normalCdf(-shift - za);
+    return twoRegionProportionPower(h, n, normalQuantile(1 - alpha / 2));
   }
 
   /** Default discordance ψ = p₁(1 − p₂) + p₂(1 − p₁). methods.md §3.2. */

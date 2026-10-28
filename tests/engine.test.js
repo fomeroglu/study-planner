@@ -73,10 +73,10 @@ test('answer key: rank adjustment and Latin square, 18 ÷ 0.955, 3 conditions gi
   assert.equal(E.roundToOrders(19, 6), 24);
 });
 
-test('answer key: two proportions 0.60 vs 0.80 gives 81 per condition', () => {
+test('answer key: two proportions 0.60 vs 0.80 gives 81 per condition (CONFIRMED)', () => {
   const r = E.nTwoProportions(0.6, 0.8, 0.05, 0.8);
   assert.equal(r.n, 81);
-  near(r.exact, 80.2993, 5e-5);
+  near(r.exact, 80.2991, 5e-5, 'pwr.2p.test gives 80.29911');
   near(Math.abs(r.h), 0.4421, 5e-5);
 });
 
@@ -219,10 +219,16 @@ test('binary confidence report: detectable p₂ reaches the target power exactly
   assert.ok(down.detectable.p2 < 0.8);
 });
 
-test('two-proportion power at the closed-form n matches the target (pwr.2p.test form)', () => {
+test('two-proportion n is solved from the two-region power, as pwr.2p.test does', () => {
   const r = E.nTwoProportions(0.6, 0.8, 0.05, 0.8);
-  // The closed form ignores the far rejection region, which adds about 1e-6.
-  near(E.powerTwoProportions(r.exact, 0.6, 0.8, 0.05), 0.8, 1e-5);
+  near(E.powerTwoProportions(r.exact, 0.6, 0.8, 0.05), 0.8, 1e-9);
+  assert.ok(E.powerTwoProportions(r.n, 0.6, 0.8, 0.05) >= 0.8);
+  assert.ok(E.powerTwoProportions(r.n - 1, 0.6, 0.8, 0.05) < 0.8);
+  // The one-region closed form ignores the far rejection region and gives a slightly larger n.
+  const z = E.normalQuantile(0.975) + E.normalQuantile(0.8);
+  const closedForm = 2 * (z / r.h) ** 2;
+  assert.ok(r.exact < closedForm);
+  near(closedForm, 80.2993, 5e-5);
 });
 
 test('McNemar with an entered ψ', () => {
