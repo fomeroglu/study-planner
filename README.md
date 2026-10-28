@@ -34,9 +34,11 @@ choice.
 ## What it does
 
 - Independent variables and conditions, within or between subjects. With one
-  variable, every pair of conditions is compared, always adjusted
-  (Bonferroni). With two or more, you choose specific combinations and main
-  effects.
+  variable, every pair of conditions is compared: with three conditions,
+  after a significant overall test (Fisher's protected LSD), and with four
+  or more, with the Holm adjustment. With two or more variables, you choose
+  specific combinations and main effects, compared with the Holm
+  adjustment.
 - Measures: time, count, success / failure, rating scales (with NASA-TLX,
   SUS and SEQ presets) and other numeric measures, each with a planned test.
 - The difference that matters, in your units or as "how many of 10
@@ -62,6 +64,24 @@ choice.
 The code implements that document. Reference values and their validation
 status are in [validation/](validation/).
 
+The calculations are validated against R. Every reference case in
+[validation/answer-key.md](validation/answer-key.md) matches R 4.6.1:
+
+- t-test sample sizes and detectable differences: base R's `power.t.test`
+  with `strict = TRUE`, which counts both rejection regions, as the pwr
+  package does.
+- t-test power and the two-proportion test: the pwr package (1.3-0).
+- McNemar's test: 10,000 simulated studies at the planned sample size,
+  analysed with `mcnemar.test` without continuity correction, the planned
+  analysis.
+- Variability from your estimate, precision, the rank-based adjustment,
+  counterbalancing and problem discovery: the arithmetic, computed in R.
+  The problem-discovery cases were also checked by hand against a
+  published source.
+
+One rule is still open: what happens when the chosen power is at or below
+alpha (methods.md section 4).
+
 ## Project structure
 
 | Path | Contents |
@@ -72,7 +92,7 @@ status are in [validation/](validation/).
 | `tests/` | Automated tests (Node's built-in test runner) |
 | `docs/methods.md` | Methods and sources |
 | `docs/manual-test.md` | Click-through checklist for the browser |
-| `validation/` | Answer key and reference R script |
+| `validation/` | Answer key and reference R scripts |
 | `design/` | Design reference screens |
 
 No build step and no dependencies.

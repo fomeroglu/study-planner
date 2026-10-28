@@ -216,6 +216,19 @@ test('running example: your analysis plan lists two steps for each measure (prot
   assert.deepEqual(tokenOf(a[0].steps[1]), { alpha: '0.05', tip: LSD_TIP });
 });
 
+test('running example: McNemar is planned without continuity correction (methods.md §4)', () => {
+  const form = runningExampleForm();
+  const v = L.planView(L.runPlan(form).plan, form);
+  assert.deepEqual(v.analysis.map((m) => [m.name, m.note]), [
+    ['Task time', null],
+    ['NASA-TLX', null],
+    ['Task success', "Run McNemar's test without the continuity correction (in R, mcnemar.test(..., correct = FALSE), since R applies the correction by default). The sample size is planned for that version of the test."],
+  ]);
+  const trail = v.trails.find((t) => t.name === 'Task success');
+  const method = trail.groups.find((g) => g.title === 'Planned method').lines.map(L.plainText).join(' ');
+  assert.match(method, /McNemar's test, without continuity correction, compares the paired outcomes\./);
+});
+
 test('running example: NASA-TLX from past data states the consistency assumption', () => {
   const form = runningExampleForm();
   const trail = L.planView(L.runPlan(form).plan, form).trails.find((t) => t.name === 'NASA-TLX');
